@@ -1,0 +1,283 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  passwordHash String?
+  fullName     String
+  phone        String?    @db.VarChar(32)
+  role         Role       @default(CUSTOMER)
+  addresses    Address[]
+  orders       Order[]
+  wishlists    Wishlist[]
+  carts        Cart[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  Review       Review[]
+}
+
+enum Role {
+  ADMIN
+  STAFF
+  CUSTOMER
+}
+
+model Address {
+  id        String  @id @default(uuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+  title     String
+  fullName  String
+  phone     String
+  city      String
+  district  String
+  address1  String
+  address2  String?
+  zip       String?
+  isDefault Boolean @default(false)
+  Order     Order[]
+}
+
+model Brand {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  slug     String    @unique
+  logoUrl  String?
+  products Product[]
+}
+
+model Category {
+  id       String     @id @default(uuid())
+  name     String
+  slug     String     @unique
+  parentId String?
+  parent   Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryToCategory")
+  products Product[]
+}
+model Product {
+  id          String           @id @default(uuid())
+  name        String
+  slug        String           @unique
+  description String?
+  brandId     String?
+  brand       Brand?           @relation(fields: [brandId], references: [id])
+  categoryId  String
+  category    Category         @relation(fields: [categoryId], references: [id])
+  images      ProductImage[]   // Genel ürün görselleri
+  variants    ProductVariant[] // Varyasyonlar (renk/beden vb.)
+  price       Decimal?         @db.Decimal(10, 2)  // Opsiyonel: temel fiyat
+  currency    String           @default("TRY")
+  status      ProductStatus    @default(DRAFT)
+  inStock     Boolean          @default(true)
+  ratingAvg   Float            @default(0)
+  ratingCount Int              @default(0)
+  seoTitle    String?
+  seoDesc     String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  CartItem    CartItem[]
+  OrderItem   OrderItem[]
+  Review      Review[]
+  Wishlist    Wishlist?        @relation(fields: [wishlistId], references: [id])
+  wishlistId  String?
+}
+
+
+model ProductVariant {
+  id         String           @id @default(uuid())
+  productId  String
+  product    Product          @relation(fields: [productId], references: [id])
+  sku        String?          @unique
+  attributes Json             // Örn: { "COLOR": "Kahverengi", "SIZE": "M" }
+  price      Decimal?         @db.Decimal(10, 2) // Varyasyon özel fiyatı
+  stockQty   Int              @default(0)
+  barcode    String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  CartItem   CartItem[]
+  OrderItem  OrderItem[]
+  images     VariantImage[]   // Her varyasyona özel görsel
+}
+
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  url       String
+  alt       String?
+  order     Int      @default(0)
+}
+
+model VariantImage {
+  id         String          @id @default(uuid())
+  variantId  String
+  variant    ProductVariant  @relation(fields: [variantId], references: [id])
+  url        String
+  alt        String?
+  order      Int             @default(0)
+}
+
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum VariantAttribute {
+  SIZE
+  COLOR
+  MATERIAL
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String?
+  user      User?      @relation(fields: [userId], references: [id])
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String          @id @default(uuid())
+  cartId    String
+  cart      Cart            @relation(fields: [cartId], references: [id])
+  productId String
+  product   Product         @relation(fields: [productId], references: [id])
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+  qty       Int             @default(1)
+  unitPrice Decimal         @db.Decimal(10, 2)
+}
+
+model Coupon {
+  id        String     @id @default(uuid())
+  code      String     @unique
+  type      CouponType
+  value     Decimal    @db.Decimal(10, 2)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  maxUses   Int?
+  usedCount Int        @default(0)
+  isActive  Boolean    @default(true)
+}
+
+enum CouponType {
+  PERCENT
+  FIXED
+}
+
+model Order {
+  id            String      @id @default(uuid())
+  orderNo       String      @unique
+  userId        String?
+  user          User?       @relation(fields: [userId], references: [id])
+  email         String
+  phone         String?
+  status        OrderStatus @default(PENDING)
+  addressId     String?
+  address       Address?    @relation(fields: [addressId], references: [id])
+  items         OrderItem[]
+  subtotal      Decimal     @db.Decimal(10, 2)
+  discountTotal Decimal     @default(0) @db.Decimal(10, 2)
+  shippingTotal Decimal     @default(0) @db.Decimal(10, 2)
+  taxTotal      Decimal     @default(0) @db.Decimal(10, 2)
+  total         Decimal     @db.Decimal(10, 2)
+  currency      String      @default("TRY")
+  payment       Payment?
+  shipment      Shipment?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @default(now()) @updatedAt
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FULFILLED
+  CANCELLED
+  REFUNDED
+}
+
+model OrderItem {
+  id        String          @id @default(uuid())
+  orderId   String
+  order     Order           @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product         @relation(fields: [productId], references: [id])
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+  name      String
+  qty       Int
+  unitPrice Decimal         @db.Decimal(10, 2)
+}
+
+model Payment {
+  id       String        @id @default(uuid())
+  orderId  String        @unique
+  order    Order         @relation(fields: [orderId], references: [id])
+  provider String
+  status   PaymentStatus @default(PENDING)
+  txId     String?
+  raw      Json?
+}
+
+enum PaymentStatus {
+  PENDING
+  REQUIRES_ACTION
+  SUCCEEDED
+  FAILED
+  REFUNDED
+  CANCELED
+}
+
+model Shipment {
+  id         String         @id @default(uuid())
+  orderId    String         @unique
+  order      Order          @relation(fields: [orderId], references: [id])
+  provider   String
+  trackingNo String?
+  status     ShipmentStatus @default(PENDING)
+  raw        Json?
+}
+
+enum ShipmentStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  IN_TRANSIT
+  DELIVERED
+  RETURNED
+  CANCELED
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  rating     Int
+  title      String?
+  content    String?
+  isApproved Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model Wishlist {
+  id       String    @id @default(uuid())
+  userId   String
+  user     User      @relation(fields: [userId], references: [id])
+  products Product[]
+}
