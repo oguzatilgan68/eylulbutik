@@ -1,10 +1,9 @@
 "use client";
 
 import React from "react";
-import { Product } from "@prisma/client"; // Prisma Product tipi
 import { Button } from "../button";
 import { Decimal } from "@prisma/client/runtime/library";
-
+import Image from "next/image";
 interface ProductCardProps {
   product: {
     id: string;
@@ -20,11 +19,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-      <a href={`/shop/product/${product.slug}`}>
-        <img
+      <a href={`/product/${product.slug}`}>
+        <Image
           src={imageUrl}
           alt={product.name}
-          className="w-full h-48 object-cover"
+          className="w-full h-32 object-cover rounded-lg border"
+          width={1280}
+          height={720}
+          priority
         />
       </a>
       <div className="p-4">
@@ -39,7 +41,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </p>
         <div className="mt-4">
           <Button>
-            <a href={`/shop/product/${product.slug}`}>Ürünü Gör</a>
+            <a href={`/product/${product.slug}`}>Ürünü Gör</a>
           </Button>
         </div>
       </div>

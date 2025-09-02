@@ -16,13 +16,13 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { VariantAttributes } from "./VariantAttributes";
-import { createClient } from "@supabase/supabase-js";
 import { v4 as uuidv4 } from "uuid";
+import { supabase } from "../../lib/supabase/supabaseClient";
 
 const productSchema = z.object({
   name: z.string().min(2),
   sku: z.string().optional(),
-  price: z.string().optional(),
+  price: z.number().min(0).optional(),
   description: z.string().optional(),
   categoryId: z.string(),
   brandId: z.string().optional(),
@@ -37,8 +37,8 @@ const productSchema = z.object({
     .array(
       z.object({
         sku: z.string().optional(),
-        price: z.string().optional(),
-        stockQty: z.string().optional(),
+        price: z.number().min(0).optional(),
+        stockQty: z.number().optional(),
         attributes: z.record(z.string(), z.string()).optional(),
         images: z
           .array(
@@ -71,14 +71,14 @@ export function ProductForm({
     defaultValues: {
       name: initialData.name || "",
       sku: initialData.sku || "",
-      price: initialData.price || "",
+      price: initialData.price || 0,
       description: initialData.description || "",
       categoryId: initialData.categoryId || (categories[0]?.id ?? ""),
       brandId: initialData.brandId || "",
       images: initialData.images || [],
       variants: initialData.variants || [],
-      status: initialData.status ?? "DRAFT", // kesin default
-      inStock: initialData.inStock ?? true, // kesin default
+      status: initialData.status ?? "DRAFT",
+      inStock: initialData.inStock ?? true,
       seoTitle: initialData.seoTitle || "",
       seoDesc: initialData.seoDesc || "",
     },
@@ -108,10 +108,6 @@ export function ProductForm({
     control,
     name: "variants",
   });
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
 
   const uploadImage = async (file: File) => {
     const fileExt = file.name.split(".").pop();
@@ -142,7 +138,7 @@ export function ProductForm({
             placeholder="Fiyat"
             type="number"
             step="0.01"
-            {...register("price")}
+            {...register("price", { valueAsNumber: true })}
           />
           {errors.name && <p className="text-red-500">{errors.name.message}</p>}
 
@@ -288,10 +284,16 @@ export function ProductForm({
                 placeholder="Varyant Fiyat"
                 type="number"
                 step="0.01"
-                {...register(`variants.${idx}.price` as const, {
+                className="dark:bg-neutral-900 dark:text-white"
+                {...register(`variants.${idx}.price`, {
                   valueAsNumber: true,
                 })}
               />
+              {errors.variants?.[idx]?.price && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.variants[idx]?.price?.message}
+                </p>
+              )}
               <Input
                 placeholder="Stok Adedi"
                 type="number"
@@ -381,8 +383,8 @@ export function ProductForm({
             onClick={() =>
               addVariant({
                 sku: "",
-                price: "",
-                stockQty: "",
+                price: undefined,
+                stockQty: undefined,
                 attributes: {},
                 images: [], // 👈 boş array olarak başlat
               })
