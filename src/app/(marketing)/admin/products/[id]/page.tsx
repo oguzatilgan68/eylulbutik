@@ -4,26 +4,40 @@ import {
 } from "@/app/(marketing)/components/forms/ProductForm";
 import { db } from "@/app/(marketing)/lib/db";
 import { redirect } from "next/navigation";
+import { Decimal } from "@prisma/client/runtime/library";
 
-const EditProductPage = async ({ params }: { params: { id: string } }) => {
+const EditProductPage = async ({ params }: { params: Promise<{ id: string }> }) => {
   const product = await db.product.findUnique({
-    where: { id: params.id },
-    include: { images: { orderBy: { order: "asc" } } },
+    where: { id: (await params).id },
+    include: {
+      images: { orderBy: { order: "asc" } },
+      variants: { include: { images: { orderBy: { order: "asc" } } } },
+    },
   });
 
   if (!product) return <p>Ürün bulunamadı</p>;
 
   const initialData: ProductFormData = {
     name: product.name,
-    slug: product.slug,
-    sku: product.sku || "",
-    price: product.price.toString(),
+    price: product.price?.toString() || "",
     description: product.description || "",
     categoryId: product.categoryId,
     brandId: product.brandId || "",
+    status: product.status === "ARCHIVED" ? "DRAFT" : product.status,
+    inStock: product.inStock,
     images: product.images.map((img) => ({ url: img.url, alt: img.alt || "" })),
+    variants: product.variants.map((v) => ({
+      sku: v.sku || "",
+      price: v.price?.toString() || "",
+      stockQty: v.stockQty?.toString() || "",
+      attributes: Object.fromEntries(
+        Object.entries(v.attributes || {}).map(([k, val]) => [k, String(val)])
+      ),
+      images: v.images.map((img) => ({ url: img.url, alt: img.alt || "" })),
+    })),
+    seoTitle: product.seoTitle || "",
+    seoDesc: product.seoDesc || "",
   };
-
   const categories = await db.category.findMany({
     select: { id: true, name: true },
   });
@@ -31,29 +45,29 @@ const EditProductPage = async ({ params }: { params: { id: string } }) => {
 
   const handleUpdate = async (data: ProductFormData) => {
     "use server";
-
-    // 1. Ürünü güncelle (images relation hariç)
+    // 1. Ürünü güncelle
     await db.product.update({
       where: { id: product.id },
       data: {
         name: data.name,
-        slug: data.slug,
-        sku: data.sku || undefined,
-        price: new Prisma.Decimal(data.price),
+        slug: data.sku, // eğer slug alanı SKU ile aynı olacaksa
+        price: new Decimal(data.price || 0),
         description: data.description,
         category: { connect: { id: data.categoryId } },
         brand: data.brandId ? { connect: { id: data.brandId } } : undefined,
+        status: data.status,
+        inStock: data.inStock,
+        seoTitle: data.seoTitle || undefined,
+        seoDesc: data.seoDesc || undefined,
       },
     });
-
-    // 2. Önce eski görselleri sil
-    await db.image.deleteMany({ where: { productId: product.id } });
-
+    // 2. Eski görselleri sil
+    await db.productImage.deleteMany({ where: { productId: product.id } });
     // 3. Yeni görselleri ekle
     if (data.images && data.images.length > 0) {
       await Promise.all(
         data.images.map((img, idx) =>
-          db.image.create({
+          db.productImage.create({
             data: {
               productId: product.id,
               url: img.url,
@@ -62,6 +76,41 @@ const EditProductPage = async ({ params }: { params: { id: string } }) => {
             },
           })
         )
+      );
+    }
+
+    // 4. Varyantlar: önce eski varyantları ve görselleri sil
+    await db.productVariant.deleteMany({ where: { productId: product.id } });
+
+    if (data.variants && data.variants.length > 0) {
+      await Promise.all(
+        data.variants.map(async (v) => {
+          const variant = await db.productVariant.create({
+            data: {
+              productId: product.id,
+              sku: v.sku || undefined,
+              price: v.price ? new Decimal(v.price) : undefined,
+              stockQty: v.stockQty ? parseInt(v.stockQty) : 0,
+              attributes: v.attributes || {},
+            },
+          });
+
+          // Varyant görselleri
+          if (v.images && v.images.length > 0) {
+            await Promise.all(
+              v.images.map((img, idx) =>
+                db.variantImage.create({
+                  data: {
+                    variantId: variant.id,
+                    url: img.url,
+                    alt: img.alt || "",
+                    order: idx,
+                  },
+                })
+              )
+            );
+          }
+        })
       );
     }
 

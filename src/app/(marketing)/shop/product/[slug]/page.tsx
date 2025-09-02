@@ -1,13 +1,13 @@
 import React from "react";
-import { prisma } from "../../../lib/db";
-import { AddToCart } from "../../../components/product/AddToCart";
+import Image from "next/image";
+import { db } from "@/app/(marketing)/lib/db";
 
 interface Props {
   params: { slug: string };
 }
 
 export default async function ProductPage({ params }: Props) {
-  const product = await prisma.product.findUnique({
+  const product = await db.product.findUnique({
     where: { slug: params.slug },
     include: { images: true, brand: true, variants: true },
   });
@@ -19,7 +19,7 @@ export default async function ProductPage({ params }: Props) {
       {/* Ürün görselleri */}
       <div className="space-y-4">
         {product.images.map((img) => (
-          <img
+          <Image
             key={img.id}
             src={img.url}
             alt={img.alt || product.name}
