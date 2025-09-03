@@ -39,8 +39,7 @@ export const ProductList: React.FC<ProductListProps> = ({ categorySlug }) => {
   }, [sort, inStock, categorySlug]);
 
   return (
-    <div>
-      {/* Filtre & Sıralama */}
+    <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex flex-col sm:flex-row justify-between mb-6 gap-4">
         <div>
           <label className="mr-2 font-medium">Sırala:</label>
@@ -70,12 +69,20 @@ export const ProductList: React.FC<ProductListProps> = ({ categorySlug }) => {
         </div>
       </div>
 
+      {/* İçerik */}
       {loading ? (
-        <p className="text-gray-500 dark:text-gray-300">Yükleniyor...</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-72 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-xl"
+            />
+          ))}
+        </div>
       ) : products.length === 0 ? (
         <p className="text-gray-500 dark:text-gray-300">Ürün bulunamadı.</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
           {products.map((p) => (
             <ProductCard
               key={p.id}
@@ -83,8 +90,8 @@ export const ProductList: React.FC<ProductListProps> = ({ categorySlug }) => {
                 id: p.id,
                 name: p.name,
                 slug: p.slug,
-                price: p.price.toString(),
-                images: p.images.map((img) => ({ url: img.url })),
+                price: p.price,
+                images: p.images,
               }}
             />
           ))}

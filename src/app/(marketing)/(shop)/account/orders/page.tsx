@@ -1,9 +1,9 @@
 import React from "react";
-import { prisma } from "../../lib/db";
 import Link from "next/link";
+import { db } from "@/app/(marketing)/lib/db";
 
 export default async function OrdersPage() {
-  const orders = await prisma.order.findMany({
+  const orders = await db.order.findMany({
     where: { userId: "CURRENT_USER_ID" }, // Auth ile değiştirilecek
     orderBy: { createdAt: "desc" },
     include: { items: { include: { product: true } } },

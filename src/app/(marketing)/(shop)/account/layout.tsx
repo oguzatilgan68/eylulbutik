@@ -17,6 +17,12 @@ export default function AccountLayout({
         <div className="flex flex-col md:flex-row gap-6">
           <nav className="md:w-1/4 flex flex-col space-y-2">
             <Link
+              href="/account"
+              className="px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-800"
+            >
+              Kullanıcı Bilgilerim
+            </Link>
+            <Link
               href="/account/orders"
               className="px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-800"
             >

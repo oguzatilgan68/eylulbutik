@@ -1,9 +1,9 @@
+import { ProductCard } from "@/app/(marketing)/components/ui/product/ProductCard";
+import { db } from "@/app/(marketing)/lib/db";
 import React from "react";
-import { prisma } from "../../lib/db";
-import { ProductCard } from "../../components/product/ProductCard";
 
 export default async function WishlistPage() {
-  const wishlist = await prisma.wishlist.findFirst({
+  const wishlist = await db.wishlist.findFirst({
     where: { userId: "CURRENT_USER_ID" }, // Auth ile değiştirilecek
     include: { products: { include: { images: true, brand: true } } },
   });
