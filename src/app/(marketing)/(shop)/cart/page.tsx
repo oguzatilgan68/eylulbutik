@@ -3,12 +3,14 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface CartItem {
   id: string;
   product: {
     name: string;
     images: { url: string }[];
+    slug: string;
   };
   variant?: { attributes: any };
   qty: number;
@@ -102,14 +104,16 @@ export default function CartPage() {
   };
 
   const total = subtotal - discount;
-
+  const buttonClass =
+    "w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition cursor-pointer";
+  const bclass =
+    "px-2 py-1 border rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition cursor-pointer";
   if (loading)
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <div className="w-12 h-12 border-4 border-t-pink-500 border-gray-300 rounded-full animate-spin"></div>
       </div>
     );
-
   if (cartItems.length === 0)
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
@@ -130,12 +134,9 @@ export default function CartPage() {
         <p className="text-gray-500 dark:text-gray-400">
           Henüz sepetinize ürün eklemediniz.
         </p>
-        <a
-          href="/"
-          className="mt-2 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
+        <Link href="/" className={`mt-2 px-6 py-2 ${buttonClass}`}>
           Alışverişe Devam Et
-        </a>
+        </Link>
       </div>
     );
 
@@ -146,45 +147,55 @@ export default function CartPage() {
         {cartItems.map((item) => (
           <div
             key={item.id}
-            className="flex items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow"
+            className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow"
           >
-            <Image
-              src={item.product.images[0]?.url || ""}
-              alt={item.product.name}
-              width={80}
-              height={80}
-              className="rounded"
-            />
-            <div className="flex-1">
-              <p className="font-semibold">{item.product.name}</p>
+            {/* Ürün Resmi */}
+            <Link href={`/product/${item.product.slug}`}>
+              <Image
+                src={item.product.images[0]?.url || ""}
+                alt={item.product.name}
+                width={100}
+                height={100}
+                className="rounded-md object-cover"
+              />
+            </Link>
+            {/* Ürün Bilgileri */}
+            <div className="flex-1 w-full sm:w-auto">
+              <p className="font-semibold text-lg">{item.product.name}</p>
               {item.variant && (
-                <p className="text-gray-500">
-                  {JSON.stringify(item.variant.attributes)}
+                <p className="text-gray-500 text-sm">
+                  {Object.values(item.variant.attributes).join(" / ")}
                 </p>
               )}
-              <div className="flex items-center gap-2 mt-2">
+              {/* Fiyat */}
+              <p className="text-red-500 font-bold text-lg mt-1">
+                {(item.unitPrice * item.qty).toFixed(2)} TL
+              </p>
+            </div>
+
+            {/* Miktar & Kaldır */}
+            <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto mt-2 sm:mt-0">
+              {/* Miktar */}
+              <div className="flex items-center gap-2">
                 <button
-                  className="px-2 py-1 border rounded cursor-pointer"
+                  className={bclass}
                   onClick={() => updateQty(item.id, Math.max(item.qty - 1, 1))}
                 >
                   -
                 </button>
-                <span>{item.qty}</span>
+                <span className="font-medium">{item.qty}</span>
                 <button
-                  className="px-2 py-1 border rounded cursor-pointer"
+                  className={bclass}
                   onClick={() => updateQty(item.id, item.qty + 1)}
                 >
                   +
                 </button>
               </div>
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              <p className="font-semibold">
-                {(item.unitPrice * item.qty).toFixed(2)} TL
-              </p>
+
+              {/* Kaldır */}
               <button
                 onClick={() => removeItem(item.id)}
-                className="text-red-500 cursor-pointer hover:underline"
+                className="text-red-500 text-sm font-medium hover:underline cursor-pointer"
               >
                 Kaldır
               </button>
@@ -210,7 +221,7 @@ export default function CartPage() {
           />
           <button
             onClick={applyCoupon}
-            className="bg-pink-500 cursor-pointer text-white px-4 py-1 rounded hover:bg-pink-600"
+            className="bg-pink-500 text-white px-4 py-1 rounded hover:bg-pink-600 transition cursor-pointer"
           >
             Uygula
           </button>
@@ -219,10 +230,7 @@ export default function CartPage() {
           <p className="text-sm text-red-500">{couponMessage}</p>
         )}
 
-        <button
-          onClick={redirect}
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 cursor-pointer"
-        >
+        <button onClick={redirect} className={buttonClass}>
           Ödeme Yap
         </button>
       </div>

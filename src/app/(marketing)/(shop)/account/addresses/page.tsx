@@ -1,10 +1,16 @@
 import React from "react";
 import Link from "next/link";
 import { db } from "@/app/(marketing)/lib/db";
+import { get } from "http";
+import { getAuthUserId } from "@/app/(marketing)/lib/auth";
 
 export default async function AddressesPage() {
+  const userId=await getAuthUserId();
+  if(!userId){
+    return <div>Lütfen giriş yapın.</div>;
+  }
   const addresses = await db.address.findMany({
-    where: { userId: "CURRENT_USER_ID" }, // Auth ile değiştirilecek
+    where: { userId: userId },
   });
 
   return (
@@ -28,10 +34,7 @@ export default async function AddressesPage() {
             <p>
               {address.fullName} - {address.phone}
             </p>
-            <p>
-              {address.address1}{" "}
-              {address.address2 ? `, ${address.address2}` : ""}
-            </p>
+            <p>{address.address1} </p>
             <p>
               {address.district}, {address.city}, {address.zip}
             </p>

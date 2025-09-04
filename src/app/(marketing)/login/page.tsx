@@ -1,43 +1,63 @@
 "use client";
 
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "../context/userContext";
 import Link from "next/link";
-import { tr } from "zod/v4/locales";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loading } from "../components/ui/loading";
+
+const schema = z.object({
+  email: z.string().email("Geçerli bir email giriniz"),
+  password: z.string().min(6, "Şifre en az 6 karakter olmalı"),
+});
+
+type FormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const router = useRouter();
   const { setUser } = useUser();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
+  });
+
+  const onSubmit = async (data: FormData) => {
     setError("");
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(data),
       });
-      const data = await res.json();
-      // Kullanıcıyı context’e yükle
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message || "Giriş başarısız");
+
       const meRes = await fetch("/api/auth/me");
       const meData = await meRes.json();
       setUser(meData.user);
-      router.push("/"); // anasayfaya yönlendir
+      router.push("/");
     } catch (err) {
       setError("Giriş başarısız, lütfen bilgilerinizi kontrol edin.");
       console.error(err);
     }
   };
 
+  const inputClass =
+    "mt-1 block p-2 w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-pink-500 focus:border-pink-500";
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
       <form
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit(onSubmit)}
         className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-8 w-full max-w-md"
       >
         <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">
@@ -48,31 +68,41 @@ export default function LoginPage() {
 
         <label className="block mb-3">
           <span className="text-gray-700 dark:text-gray-200">Email</span>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-pink-500 focus:border-pink-500"
-          />
+          <input type="email" {...register("email")} className={inputClass} />
+          {errors.email && (
+            <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+          )}
         </label>
 
         <label className="block mb-4">
           <span className="text-gray-700 dark:text-gray-200">Şifre</span>
           <input
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-pink-500 focus:border-pink-500"
+            {...register("password")}
+            className={inputClass}
           />
+          {errors.password && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.password.message}
+            </p>
+          )}
         </label>
-
         <button
           type="submit"
-          className="w-full bg-pink-500 text-white py-2 rounded-md hover:bg-pink-600 transition-colors"
+          disabled={isSubmitting}
+          className={`w-full py-2 rounded-md transition-colors cursor-pointer ${
+            isSubmitting
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-pink-500 hover:bg-pink-600 text-white"
+          }`}
         >
-          Giriş Yap
+          {isSubmitting ? (
+            <div className="flex items-center justify-center">
+              <Loading />
+            </div>
+          ) : (
+            "Giriş Yap"
+          )}
         </button>
 
         <p className="mt-4 text-gray-600 dark:text-gray-300 text-sm">

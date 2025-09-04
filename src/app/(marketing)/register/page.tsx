@@ -3,37 +3,55 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loading } from "../components/ui/loading";
+
+// ✅ Zod şema
+const registerSchema = z.object({
+  fullName: z.string().min(3, "Ad soyad en az 3 karakter olmalı"),
+  email: z.string().email("Geçerli bir email giriniz"),
+  password: z.string().min(6, "Şifre en az 6 karakter olmalı"),
+  phone: z.string().optional(),
+});
+
+type RegisterForm = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("");
-  const [error, setError] = useState("");
   const router = useRouter();
+  const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterForm>({
+    resolver: zodResolver(registerSchema),
+  });
+
+  const onSubmit = async (data: RegisterForm) => {
     setError("");
 
     const res = await fetch("/api/auth/register", {
       method: "POST",
-      body: JSON.stringify({ fullName, email, password, phone }),
+      body: JSON.stringify(data),
       headers: { "Content-Type": "application/json" },
     });
 
-    const data = await res.json();
+    const result = await res.json();
+
     if (res.ok) {
       router.push("/login");
     } else {
-      setError(data.error || "Kayıt sırasında hata oluştu");
+      setError(result.error || "Kayıt sırasında hata oluştu");
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
       <form
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit(onSubmit)}
         className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md w-full max-w-md"
       >
         <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">
@@ -42,41 +60,60 @@ export default function RegisterPage() {
 
         {error && <p className="text-red-500 mb-4">{error}</p>}
 
+        {/* Full Name */}
         <input
           type="text"
           placeholder="Ad Soyad"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          className="w-full p-3 mb-4 rounded border dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100 focus:outline-none"
-          required
+          {...register("fullName")}
+          className="w-full p-3 mb-2 rounded border dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100 focus:outline-none"
         />
+        {errors.fullName && (
+          <p className="text-red-500 text-sm mb-2">{errors.fullName.message}</p>
+        )}
+
+        {/* Email */}
         <input
           type="email"
           placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full p-3 mb-4 rounded border dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100 focus:outline-none"
-          required
+          {...register("email")}
+          className="w-full p-3 mb-2 rounded border dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100 focus:outline-none"
         />
+        {errors.email && (
+          <p className="text-red-500 text-sm mb-2">{errors.email.message}</p>
+        )}
+
+        {/* Password */}
         <input
           type="password"
           placeholder="Şifre"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-3 mb-4 rounded border dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100 focus:outline-none"
-          required
+          {...register("password")}
+          className="w-full p-3 mb-2 rounded border dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100 focus:outline-none"
         />
+        {errors.password && (
+          <p className="text-red-500 text-sm mb-2">{errors.password.message}</p>
+        )}
+
+        {/* Phone */}
         <input
           type="text"
           placeholder="Telefon (opsiyonel)"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          className="w-full p-3 mb-6 rounded border dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100 focus:outline-none"
+          {...register("phone")}
+          className="w-full p-3 mb-4 rounded border dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100 focus:outline-none"
         />
 
-        <button className="w-full bg-pink-500 text-white py-3 rounded hover:bg-pink-600 transition">
-          Kayıt Ol
+        {/* Submit */}
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className={`w-full py-3 rounded text-white flex items-center justify-center transition ${
+            isSubmitting
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-pink-500 hover:bg-pink-600"
+          }`}
+        >
+          {isSubmitting ? <Loading /> : "Kayıt Ol"}
         </button>
+
         <p className="mt-4 text-gray-600 dark:text-gray-300 text-sm">
           Hesabınız var mı?{" "}
           <Link href="/login" className="text-pink-500 hover:underline">
