@@ -1,56 +1,81 @@
-import React from "react";
-import { prisma } from "../../../lib/db";
-import { useState } from "react";
+"use client";
 
-export default async function CheckoutPage() {
-  const cart = await prisma.cart.findFirst({
-    where: { userId: "CURRENT_USER_ID" }, // Auth ile değiştirilecek
-    include: {
-      items: { include: { product: true, variant: true } },
-    },
-  });
+import React, { useEffect, useState } from "react";
+import AddressStep from "../../components/checkout/AddressStep";
+import PaymentStep from "../../components/checkout/PaymentStep";
+import OrderSummary from "../../components/checkout/OrderSummary";
+import SummaryStep from "../../components/checkout/SummaryStep";
 
-  if (!cart || cart.items.length === 0) return <p>Sepetiniz boş.</p>;
-
-  const [loading, setLoading] = useState(false);
-
-  const handleCheckout = async () => {
-    setLoading(true);
-    // Stripe/Ödeme API entegrasyonu
-    setLoading(false);
+export default function CheckoutPage() {
+  const [step, setStep] = useState(1); // 1: Adres, 2: Ödeme, 3: Özet
+  const [cartItems, setCartItems] = useState<any[]>([]); // Sepet verisi fetch ile gelmeli
+  const [orderData, setOrderData] = useState<any>({}); // Adres & ödeme verisi
+  const nextStep = () => setStep((prev) => Math.min(prev + 1, 3));
+  const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
+  const getCartItems = async () => {
+    try {
+      const res = await fetch("/api/cart");
+      const data = await res.json();
+      setCartItems(data.items);
+    } catch (err) {
+      console.error(err);
+    }
   };
-
-  const subtotal = cart.items.reduce(
-    (acc, item) => acc + item.unitPrice.toNumber() * item.qty,
-    0
-  );
-
+  useEffect(() => {
+    getCartItems();
+  }, []);
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold">Ödeme</h1>
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6 dark:text-white">Ödeme</h1>
 
-      <div className="space-y-4 border p-4 rounded">
-        {cart.items.map((item) => (
-          <div key={item.id} className="flex justify-between">
-            <span>
-              {item.product.name} x {item.qty}
-            </span>
-            <span>{(item.unitPrice.toNumber() * item.qty).toFixed(2)} TL</span>
+      {/* Adım göstergesi */}
+      <div className="flex items-center mb-8">
+        {[1, 2, 3].map((s) => (
+          <div key={s} className="flex-1">
+            <div
+              className={`w-10 h-10 mx-auto rounded-full flex items-center justify-center text-white ${
+                step === s ? "bg-blue-600" : "bg-gray-400 dark:bg-gray-700"
+              }`}
+            >
+              {s}
+            </div>
+            {s < 3 && (
+              <div
+                className={`h-1 bg-gray-400 dark:bg-gray-700 mt-1 ${
+                  step > s ? "bg-blue-600" : ""
+                }`}
+              />
+            )}
           </div>
         ))}
-        <div className="flex justify-between font-bold text-lg mt-2">
-          <span>Toplam:</span>
-          <span>{subtotal.toFixed(2)} TL</span>
-        </div>
       </div>
 
-      <button
-        disabled={loading}
-        onClick={handleCheckout}
-        className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-      >
-        {loading ? "Yükleniyor..." : "Ödeme Yap"}
-      </button>
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Sol: Adım Formu */}
+        <div className="flex-1 bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+          {step === 1 && (
+            <AddressStep
+              orderData={orderData}
+              setOrderData={setOrderData}
+              nextStep={nextStep}
+            />
+          )}
+          {step === 2 && (
+            <PaymentStep
+              orderData={orderData}
+              setOrderData={setOrderData}
+              nextStep={nextStep}
+              prevStep={prevStep}
+            />
+          )}
+          {step === 3 && <SummaryStep orderData={orderData} />}
+        </div>
+
+        {/* Sağ: Sipariş Özeti */}
+        <div className="w-full lg:w-1/3">
+          <OrderSummary cartItems={cartItems} discount={0} />
+        </div>
+      </div>
     </div>
   );
 }

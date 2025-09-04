@@ -1,21 +1,22 @@
-import { ProductCard } from "@/app/(marketing)/components/ui/product/ProductCard";
 import { db } from "@/app/(marketing)/lib/db";
-import React from "react";
+import { getAuthUserId } from "@/app/(marketing)/lib/auth";
+import { serializeProduct } from "@/app/(marketing)/lib/serializers";
+import WishlistGrid from "./WishlistGrid";
 
 export default async function WishlistPage() {
+  const userId = await getAuthUserId();
+
+  if (!userId) return <p>Giriş yapmalısınız.</p>;
+
   const wishlist = await db.wishlist.findFirst({
-    where: { userId: "CURRENT_USER_ID" }, // Auth ile değiştirilecek
+    where: { userId },
     include: { products: { include: { images: true, brand: true } } },
   });
 
   if (!wishlist || wishlist.products.length === 0)
     return <p>Favori ürününüz yok.</p>;
 
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {wishlist.products.map((product) => (
-        <ProductCard key={product.id} product={product} />
-      ))}
-    </div>
-  );
+  const products = wishlist.products.map(serializeProduct);
+
+  return <WishlistGrid products={products} userId={userId} />;
 }

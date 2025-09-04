@@ -88,8 +88,7 @@ model Product {
   CartItem    CartItem[]
   OrderItem   OrderItem[]
   Review      Review[]
-  Wishlist    Wishlist?        @relation(fields: [wishlistId], references: [id])
-  wishlistId  String?
+  wishlists   Wishlist[]       @relation("WishlistProducts") // 👈 burası değişti
 }
 
 
@@ -274,10 +273,9 @@ model Review {
   isApproved Boolean  @default(false)
   createdAt  DateTime @default(now())
 }
-
 model Wishlist {
   id       String    @id @default(uuid())
   userId   String
   user     User      @relation(fields: [userId], references: [id])
-  products Product[]
+  products Product[] @relation("WishlistProducts") // 👈 eşleşen relation adı
 }
