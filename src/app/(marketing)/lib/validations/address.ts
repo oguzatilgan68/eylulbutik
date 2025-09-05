@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const addressSchema = z.object({
+  id: z.string().optional(),
   title: z.string().min(2, "Başlık en az 2 karakter olmalı"),
   fullName: z.string().min(3, "Ad Soyad en az 3 karakter olmalı"),
   phone: z

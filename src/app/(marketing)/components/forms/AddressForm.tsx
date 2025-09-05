@@ -3,11 +3,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  getCities,
-  getDistrictsByCityCode,
-  getNeighbourhoodsByCityCodeAndDistrict,
-} from "turkey-neighbourhoods";
 import { z } from "zod";
 import { addressSchema } from "@/app/(marketing)/lib/validations/address";
 import { useUser } from "../../context/userContext";
@@ -17,6 +12,12 @@ type AddressFormValues = z.infer<typeof addressSchema>;
 type AddressFormProps = {
   defaultValues?: AddressFormValues;
   onSuccess?: () => void;
+};
+
+type City = {
+  value: number;
+  text: string;
+  districts: { value: number; text: string }[];
 };
 
 export default function AddressForm({
@@ -35,45 +36,78 @@ export default function AddressForm({
     defaultValues,
   });
 
-  const [cities, setCities] = useState<{ code: string; name: string }[]>([]);
-  const [districts, setDistricts] = useState<string[]>([]);
-  const [neighbourhoods, setNeighbourhoods] = useState<string[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [districts, setDistricts] = useState<{ value: number; text: string }[]>(
+    []
+  );
 
   const selectedCity = watch("city");
-  const selectedDistrict = watch("district");
 
+  // JSON'dan illeri yükle
   useEffect(() => {
-    setCities(getCities());
+    fetch("/data/cities.json")
+      .then((res) => res.json())
+      .then((data: City[]) => setCities(data))
+      .catch(console.error);
   }, []);
 
+  // Şehir seçildiğinde ilçeleri ayarla
   useEffect(() => {
     if (selectedCity) {
-      setDistricts(getDistrictsByCityCode(selectedCity));
+      const cityObj = cities.find((c) => c.value.toString() === selectedCity);
+      if (cityObj) {
+        setDistricts(cityObj.districts);
+        if (defaultValues?.district) {
+          const dist = cityObj.districts.find(
+            (d) => d.text === defaultValues.district
+          );
+          setValue("district", dist ? dist.value.toString() : "");
+        } else {
+          setValue("district", "");
+        }
+      } else {
+        setDistricts([]);
+        setValue("district", "");
+      }
+    } else {
+      setDistricts([]);
       setValue("district", "");
-      setValue("neighbourhood", "");
-      setNeighbourhoods([]);
     }
-  }, [selectedCity, setValue]);
+  }, [selectedCity, cities, setValue, defaultValues]);
 
+  // Default city varsa set et
   useEffect(() => {
-    if (selectedCity && selectedDistrict) {
-      setNeighbourhoods(
-        getNeighbourhoodsByCityCodeAndDistrict(selectedCity, selectedDistrict)
-      );
-      setValue("neighbourhood", "");
+    if (defaultValues?.city && cities.length > 0) {
+      const cityObj = cities.find((c) => c.text === defaultValues.city);
+      if (cityObj) {
+        setValue("city", cityObj.value.toString());
+      }
     }
-  }, [selectedDistrict, selectedCity, setValue]);
+    if (defaultValues?.neighbourhood) {
+      setValue("neighbourhood", defaultValues.neighbourhood);
+    }
+  }, [defaultValues, cities, setValue]);
 
   const onSubmit = async (data: AddressFormValues) => {
     if (!user) return alert("Giriş yapmalısınız");
 
+    const cityObj = cities.find((c) => c.value.toString() === data.city);
+    const districtObj = districts.find(
+      (d) => d.value.toString() === data.district
+    );
+
     try {
       const res = await fetch(
-        defaultValues ? `/api/address?id=${defaultValues.id}` : "/api/address",
+        defaultValues ? `/api/address/${defaultValues.id}` : "/api/address",
         {
           method: defaultValues ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...data, userId: user.id }),
+          body: JSON.stringify({
+            ...data,
+            userId: user.id,
+            city: cityObj?.text || "",
+            district: districtObj?.text || "",
+          }),
         }
       );
 
@@ -87,7 +121,6 @@ export default function AddressForm({
     }
   };
 
-  // Ortak class isimleri
   const baseInput =
     "w-full p-2 rounded border focus:outline-none focus:ring-2 focus:ring-pink-500";
   const inputClass = `${baseInput} border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100`;
@@ -127,14 +160,13 @@ export default function AddressForm({
         className={inputClass}
       />
       {errors.phone && <p className="text-red-500">{errors.phone.message}</p>}
-      {errors.phone && <p className="text-red-500">{errors.phone.message}</p>}
 
       {/* İl Seçimi */}
       <select {...register("city")} className={selectClass}>
         <option value="">İl Seçiniz</option>
         {cities.map((c) => (
-          <option key={c.code} value={c.code}>
-            {c.name}
+          <option key={c.value} value={c.value}>
+            {c.text}
           </option>
         ))}
       </select>
@@ -145,8 +177,8 @@ export default function AddressForm({
         <select {...register("district")} className={selectClass}>
           <option value="">İlçe Seçiniz</option>
           {districts.map((d) => (
-            <option key={d} value={d}>
-              {d}
+            <option key={d.value} value={d.value}>
+              {d.text}
             </option>
           ))}
         </select>
@@ -155,17 +187,12 @@ export default function AddressForm({
         <p className="text-red-500">{errors.district.message}</p>
       )}
 
-      {/* Mahalle Seçimi */}
-      {neighbourhoods.length > 0 && (
-        <select {...register("neighbourhood")} className={selectClass}>
-          <option value="">Mahalle Seçiniz</option>
-          {neighbourhoods.map((n) => (
-            <option key={n} value={n}>
-              {n}
-            </option>
-          ))}
-        </select>
-      )}
+      {/* Mahalle Input */}
+      <input
+        {...register("neighbourhood")}
+        placeholder="Mahalle"
+        className={inputClass}
+      />
       {errors.neighbourhood && (
         <p className="text-red-500">{errors.neighbourhood.message}</p>
       )}

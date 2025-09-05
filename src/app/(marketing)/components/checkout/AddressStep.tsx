@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useUser } from "../../context/userContext";
 
 interface Props {
   orderData: any;
@@ -15,17 +16,35 @@ export default function AddressStep({
 }: Props) {
   const [addresses, setAddresses] = useState<any[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
+  const { user } = useUser();
 
   useEffect(() => {
-    // TODO: fetch user's saved addresses
-    setAddresses([
-      { id: "1", label: "Ev Adresi", details: "İstanbul, Türkiye" },
-      { id: "2", label: "İş Adresi", details: "Ankara, Türkiye" },
-    ]);
-  }, []);
+    // Kullanıcı yoksa istek atma
+    if (!user?.id) return;
+
+    const getUserAddresses = async () => {
+      try {
+        const res = await fetch("/api/address");
+        if (!res.ok) throw new Error("Adresler alınamadı");
+        const data = await res.json();
+        setAddresses(data.addresses || []);
+      } catch (err) {
+        console.error("Adresler alınamadı:", err);
+      }
+    };
+
+    getUserAddresses();
+  }, [user?.id]);
+
+  if (!user) {
+    return <div>Lütfen giriş yapın.</div>;
+  }
 
   const handleNext = () => {
-    if (!selectedAddress) return alert("Bir adres seçin");
+    if (!selectedAddress) {
+      alert("Bir adres seçin");
+      return;
+    }
     setOrderData({ ...orderData, addressId: selectedAddress });
     nextStep();
   };
@@ -39,7 +58,11 @@ export default function AddressStep({
         {addresses.map((a) => (
           <div
             key={a.id}
-            className="flex items-center gap-3 p-3 border rounded cursor-pointer hover:border-blue-600"
+            className={`flex items-center gap-3 p-3 border rounded cursor-pointer ${
+              selectedAddress === a.id
+                ? "border-blue-600"
+                : "hover:border-blue-600"
+            }`}
             onClick={() => setSelectedAddress(a.id)}
           >
             <input
@@ -49,8 +72,10 @@ export default function AddressStep({
               className="cursor-pointer"
             />
             <div>
-              <p className="font-semibold dark:text-white">{a.label}</p>
-              <p className="text-gray-500 dark:text-gray-300">{a.details}</p>
+              <p className="font-semibold dark:text-white">{a.title}</p>
+              <p className="text-gray-500 dark:text-gray-300">
+                {a.city} {a.district} {a.neighbourhood} {a.address1}
+              </p>
             </div>
           </div>
         ))}

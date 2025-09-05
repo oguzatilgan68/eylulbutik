@@ -6,5 +6,5 @@ import { useRouter } from "next/navigation";
 export default function AddAddressPage() {
   const router = useRouter();
 
-  return <AddressForm onSuccess={() => router.push("/adresler")} />;
+  return <AddressForm onSuccess={() => router.push("/account/addresses")} />;
 }

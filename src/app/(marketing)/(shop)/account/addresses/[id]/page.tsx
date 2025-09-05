@@ -2,28 +2,29 @@
 
 import AddressForm from "@/app/(marketing)/components/forms/AddressForm";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 
 export default function EditAddressPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = use(params); // ✅ params.id yerine unwrap
   const router = useRouter();
   const [address, setAddress] = useState<any>(null);
 
   useEffect(() => {
-    fetch(`/api/address/${params.id}`)
+    fetch(`/api/address/${id}`)
       .then((res) => res.json())
       .then((data) => setAddress(data.address));
-  }, [params.id]);
+  }, [id]);
 
   if (!address) return <p>Yükleniyor...</p>;
 
   return (
     <AddressForm
       defaultValues={address}
-      onSuccess={() => router.push("/adresler")}
+      onSuccess={() => router.push("/account/addresses")}
     />
   );
 }
