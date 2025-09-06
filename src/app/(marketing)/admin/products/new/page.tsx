@@ -45,7 +45,7 @@ export default async function NewProductPage() {
       data: {
         name: data.name,
         slug: slug,
-        price: new Prisma.Decimal((data.price ?? "0").replace(",", ".")),
+        price: data.price ?? 0,
         description: data.description || undefined,
         category: { connect: { id: data.categoryId } },
         brand: data.brandId ? { connect: { id: data.brandId } } : undefined,

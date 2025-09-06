@@ -22,7 +22,7 @@ import { supabase } from "../../lib/supabase/supabaseClient";
 const productSchema = z.object({
   name: z.string().min(2),
   sku: z.string().optional(),
-  price: z.number().min(0).optional(),
+  price: z.number(),
   description: z.string().optional(),
   categoryId: z.string(),
   brandId: z.string().optional(),
@@ -39,7 +39,15 @@ const productSchema = z.object({
         sku: z.string().optional(),
         price: z.number().min(0).optional(),
         stockQty: z.number().optional(),
-        attributes: z.record(z.string(), z.string()).optional(),
+        attributes: z
+          .array(
+            z.object({
+              key: z.string().min(1, "Özellik anahtarı boş olamaz"),
+              value: z.string().min(1, "Özellik değeri boş olamaz"),
+            })
+          )
+          .optional(),
+
         images: z
           .array(
             z.object({ url: z.string().url(), alt: z.string().optional() })
@@ -133,7 +141,7 @@ export function ProductForm({
         </CardHeader>
         <CardContent className="grid gap-4">
           <Input placeholder="Ürün Adı" {...register("name")} />
-          <Input placeholder="SKU" {...register("sku")} />
+          <Input placeholder="Stok Kodu" {...register("sku")} />
           <Input
             placeholder="Fiyat"
             type="number"
@@ -385,7 +393,7 @@ export function ProductForm({
                 sku: "",
                 price: undefined,
                 stockQty: undefined,
-                attributes: {},
+                attributes: [],
                 images: [], // 👈 boş array olarak başlat
               })
             }
@@ -412,7 +420,7 @@ export function ProductForm({
         </CardContent>
       </Card>
 
-      <Button type="submit" className="w-full">
+      <Button type="submit" className="w-full cursor-pointer">
         Kaydet
       </Button>
     </form>
