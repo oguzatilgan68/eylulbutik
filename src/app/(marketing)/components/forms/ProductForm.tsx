@@ -22,6 +22,7 @@ import { supabase } from "../../lib/supabase/supabaseClient";
 const productSchema = z.object({
   name: z.string().min(2),
   sku: z.string().optional(),
+  slug: z.string().optional(),
   price: z.number(),
   description: z.string().optional(),
   categoryId: z.string(),
@@ -78,6 +79,7 @@ export function ProductForm({
     resolver: zodResolver(productSchema) as any,
     defaultValues: {
       name: initialData.name || "",
+      slug: initialData.slug || "",
       sku: initialData.sku || "",
       price: initialData.price || 0,
       description: initialData.description || "",
@@ -355,6 +357,7 @@ export function ProductForm({
                           className="w-full h-24 object-cover rounded border"
                           width={200}
                           height={200}
+                          priority
                         />
                         <button
                           type="button"

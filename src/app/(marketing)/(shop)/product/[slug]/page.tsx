@@ -12,7 +12,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
     where: { slug },
     include: { images: true, category: true, brand: true, variants: true },
   });
-
   if (!product)
     return (
       <p className="text-gray-700 dark:text-gray-300 p-8">Ürün bulunamadı.</p>

@@ -90,24 +90,58 @@ model Product {
   CartItem    CartItem[]
   OrderItem   OrderItem[]
   Review      Review[]
-  wishlists   Wishlist[]       @relation("WishlistProducts") // 👈 burası değişti
+  wishlists   Wishlist[]       @relation("WishlistProducts")
 }
 
-
 model ProductVariant {
-  id         String           @id @default(uuid())
+  id         String                 @id @default(uuid())
   productId  String
-  product    Product          @relation(fields: [productId], references: [id])
-  sku        String?          @unique
-  attributes Json             // Örn: { "COLOR": "Kahverengi", "SIZE": "M" }
-  price      Decimal?         @db.Decimal(10, 2) // Varyasyon özel fiyatı
-  stockQty   Int              @default(0)
+  product    Product                @relation(fields: [productId], references: [id])
+  sku        String?                @unique
+  price      Decimal?               @db.Decimal(10, 2) // Varyasyon özel fiyatı
+  stockQty   Int                    @default(0)
   barcode    String?
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+  images     VariantImage[]         // Her varyasyona özel görsel
+  attributes ProductVariantAttribute[]
   CartItem   CartItem[]
   OrderItem  OrderItem[]
-  images     VariantImage[]   // Her varyasyona özel görsel
+}
+
+model VariantImage {
+  id         String          @id @default(uuid())
+  variantId  String
+  variant    ProductVariant  @relation(fields: [variantId], references: [id])
+  url        String
+  alt        String?
+  order      Int             @default(0)
+}
+
+// 🔹 Yeni Attribute sistemi
+model AttributeType {
+  id      String           @id @default(uuid())
+  name    String           // Örn: Renk, Beden
+  slug    String           @unique
+  values  AttributeValue[]
+}
+
+model AttributeValue {
+  id              String                  @id @default(uuid())
+  attributeTypeId String
+  value           String                  // Örn: "Kırmızı", "M"
+  slug            String                  @unique
+  type            AttributeType           @relation(fields: [attributeTypeId], references: [id])
+  variantAttributes ProductVariantAttribute[]
+}
+
+model ProductVariantAttribute {
+  id               String           @id @default(uuid())
+  variantId        String
+  attributeValueId String
+
+  variant ProductVariant @relation(fields: [variantId], references: [id])
+  value   AttributeValue @relation(fields: [attributeValueId], references: [id])
 }
 
 
@@ -120,15 +154,6 @@ model ProductImage {
   order     Int      @default(0)
 }
 
-model VariantImage {
-  id         String          @id @default(uuid())
-  variantId  String
-  variant    ProductVariant  @relation(fields: [variantId], references: [id])
-  url        String
-  alt        String?
-  order      Int             @default(0)
-}
-
 
 enum ProductStatus {
   DRAFT
@@ -136,11 +161,6 @@ enum ProductStatus {
   ARCHIVED
 }
 
-enum VariantAttribute {
-  SIZE
-  COLOR
-  MATERIAL
-}
 
 model Cart {
   id        String     @id @default(uuid())
@@ -216,7 +236,7 @@ model OrderItem {
   orderId   String
   order     Order           @relation(fields: [orderId], references: [id])
   productId String
-  product   Product         @relation(fields: [productId], references: [id])
+  product   Product         @relationr(fields: [productId], references: [id])
   variantId String?
   variant   ProductVariant? @relation(fields: [variantId], references: [id])
   name      String
@@ -267,17 +287,17 @@ model Review {
   id         String   @id @default(uuid())
   productId  String
   product    Product  @relation(fields: [productId], references: [id])
-  userId     String?
+  userId     Strirng?
   user       User?    @relation(fields: [userId], references: [id])
   rating     Int
   title      String?
   content    String?
-  isApproved Boolean  @default(false)
+  isApproved Booleran  @default(false)
   createdAt  DateTime @default(now())
 }
 model Wishlist {
   id       String    @id @default(uuid())
   userId   String
-  user     User      @relation(fields: [userId], references: [id])
+  user     User      @relatiron(fields: [userId], references: [id])
   products Product[] @relation("WishlistProducts") // 👈 eşleşen relation adı
 }

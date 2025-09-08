@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import Reviews from "@/app/(marketing)/components/product/Reviews";
 import WishlistButton from "@/app/(marketing)/components/product/WishlistButton";
@@ -8,7 +8,24 @@ import { toPriceString } from "@/app/(marketing)/lib/money";
 import AddToCartButton from "@/app/(marketing)/components/product/AddToCartButton";
 
 export default function ProductClient({ product }: { product: any }) {
-  const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
+    null
+  );
+
+  // Seçili varyant objesini al
+  const selectedVariant = useMemo(
+    () =>
+      product.variants?.find((v: any) => v.id === selectedVariantId) || null,
+    [selectedVariantId, product.variants]
+  );
+
+  // Gösterilecek fiyat
+  const displayPrice = selectedVariant ? selectedVariant.price : product.price;
+
+  // Stok durumu
+  const inStock = selectedVariant
+    ? selectedVariant.stockQty > 0
+    : product.inStock;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -51,7 +68,7 @@ export default function ProductClient({ product }: { product: any }) {
             </p>
           )}
 
-          {/* Eğer ürünün varyantları varsa seçim alanı */}
+          {/* Varyant Seçimi */}
           {product.variants?.length > 0 && (
             <div className="mt-4">
               <h3 className="text-sm font-semibold dark:text-white mb-2">
@@ -61,23 +78,29 @@ export default function ProductClient({ product }: { product: any }) {
                 {product.variants.map((v: any) => (
                   <button
                     key={v.id}
-                    onClick={() => setSelectedVariant(v.id)}
+                    onClick={() => setSelectedVariantId(v.id)}
                     className={`px-4 py-2 rounded-xl border ${
-                      selectedVariant === v.id
+                      selectedVariantId === v.id
                         ? "bg-pink-500 text-white border-pink-500"
                         : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200"
                     }`}
                   >
-                    {v.name}
+                    {v.attributes
+                      .map((a: any) => `${a.key}: ${a.value}`)
+                      .join(", ")}
                   </button>
                 ))}
               </div>
             </div>
           )}
 
+          {/* Fiyat */}
           <p className="text-gray-800 dark:text-gray-100 text-xl">
-            ₺{toPriceString(product.price)}
+            ₺{toPriceString(displayPrice)}
           </p>
+
+          {/* Stok bilgisi */}
+          {!inStock && <p className="text-red-500 text-sm">Stokta Yok</p>}
 
           {product.description && (
             <p className="text-gray-700 dark:text-gray-300">
@@ -87,8 +110,10 @@ export default function ProductClient({ product }: { product: any }) {
 
           <AddToCartButton
             productId={product.id}
-            variantId={product.variants?.length > 0 ? selectedVariant : null}
-            disabled={product.variants?.length > 0 && !selectedVariant}
+            variantId={selectedVariant?.id || null}
+            disabled={
+              !inStock || (product.variants?.length > 0 && !selectedVariant)
+            }
           />
         </div>
       </div>

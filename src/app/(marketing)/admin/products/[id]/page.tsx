@@ -6,7 +6,11 @@ import { db } from "@/app/(marketing)/lib/db";
 import { redirect } from "next/navigation";
 import { Decimal } from "@prisma/client/runtime/library";
 
-const EditProductPage = async ({ params }: { params: Promise<{ id: string }> }) => {
+const EditProductPage = async ({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) => {
   const product = await db.product.findUnique({
     where: { id: (await params).id },
     include: {
@@ -20,6 +24,7 @@ const EditProductPage = async ({ params }: { params: Promise<{ id: string }> }) 
   const initialData: ProductFormData = {
     name: product.name,
     price: product.price?.toString() || "",
+    sku: product.slug,
     description: product.description || "",
     categoryId: product.categoryId,
     brandId: product.brandId || "",
@@ -30,11 +35,14 @@ const EditProductPage = async ({ params }: { params: Promise<{ id: string }> }) 
       sku: v.sku || "",
       price: v.price?.toString() || "",
       stockQty: v.stockQty?.toString() || "",
-      attributes: Object.fromEntries(
-        Object.entries(v.attributes || {}).map(([k, val]) => [k, String(val)])
-      ),
+      attributes:
+        v.attributes?.map((a: any) => ({
+          key: a.key,
+          value: a.value,
+        })) || [], // 👈 array olarak bırak
       images: v.images.map((img) => ({ url: img.url, alt: img.alt || "" })),
     })),
+
     seoTitle: product.seoTitle || "",
     seoDesc: product.seoDesc || "",
   };
@@ -42,15 +50,13 @@ const EditProductPage = async ({ params }: { params: Promise<{ id: string }> }) 
     select: { id: true, name: true },
   });
   const brands = await db.brand.findMany({ select: { id: true, name: true } });
-
   const handleUpdate = async (data: ProductFormData) => {
     "use server";
-    // 1. Ürünü güncelle
     await db.product.update({
       where: { id: product.id },
       data: {
         name: data.name,
-        slug: data.sku, // eğer slug alanı SKU ile aynı olacaksa
+        slug: data.sku,
         price: new Decimal(data.price || 0),
         description: data.description,
         category: { connect: { id: data.categoryId } },
@@ -79,9 +85,15 @@ const EditProductPage = async ({ params }: { params: Promise<{ id: string }> }) 
       );
     }
 
-    // 4. Varyantlar: önce eski varyantları ve görselleri sil
+    // 4. Varyantlar: önce eski varyant görsellerini sil
+    await db.variantImage.deleteMany({
+      where: { variant: { productId: product.id } },
+    });
+
+    // 5. Sonra varyantları sil
     await db.productVariant.deleteMany({ where: { productId: product.id } });
 
+    // 6. Yeni varyantları ekle
     if (data.variants && data.variants.length > 0) {
       await Promise.all(
         data.variants.map(async (v) => {
@@ -91,7 +103,7 @@ const EditProductPage = async ({ params }: { params: Promise<{ id: string }> }) 
               sku: v.sku || undefined,
               price: v.price ? new Decimal(v.price) : undefined,
               stockQty: v.stockQty ? parseInt(v.stockQty) : 0,
-              attributes: v.attributes || {},
+              attributes: v.attributes || [],
             },
           });
 
