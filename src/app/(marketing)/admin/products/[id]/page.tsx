@@ -9,14 +9,23 @@ export default async function EditProductPage(props: {
   params: Promise<{ id: string }>;
 }) {
   const params = await props.params;
+
   const product = await db.product.findUnique({
     where: { id: params.id },
     include: {
-      images: { orderBy: { order: "asc" } },
+      images: true,
+      category: true,
+      brand: true,
       variants: {
         include: {
-          images: { orderBy: { order: "asc" } },
-          attributes: true,
+          images: true,
+          attributes: {
+            include: {
+              value: {
+                include: { type: true }, // attributeType.name => key
+              },
+            },
+          },
         },
       },
     },
@@ -33,15 +42,21 @@ export default async function EditProductPage(props: {
     brandId: product.brandId || "",
     status: product.status === "ARCHIVED" ? "DRAFT" : product.status,
     inStock: product.inStock,
-    images: product.images.map((img) => ({ url: img.url, alt: img.alt || "" })),
+    images: product.images.map((img) => ({
+      url: img.url,
+      alt: img.alt || "",
+    })),
     variants: product.variants.map((v) => ({
       sku: v.sku || "",
       price: v.price?.toString() || "",
       stockQty: v.stockQty?.toString() || "",
-      attributeValueIds: v.attributes?.map((a: any) => a.valueId) || [], // burada valueId kullandım, sen DB'deki id alanını ver
-      images: v.images.map((img) => ({ url: img.url, alt: img.alt || "" })),
+      // ✅ Burada doğru alanı kullandık
+      attributeValueIds: v.attributes?.map((a) => a.attributeValueId) || [],
+      images: v.images.map((img) => ({
+        url: img.url,
+        alt: img.alt || "",
+      })),
     })),
-
     seoTitle: product.seoTitle || "",
     seoDesc: product.seoDesc || "",
   };

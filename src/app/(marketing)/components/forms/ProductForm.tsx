@@ -298,17 +298,16 @@ export default function ProductForm({
             >
               <div className="flex justify-between items-center">
                 <div className="font-medium">Varyant {vi + 1}</div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => removeVariant(vi)}
-                    className="px-2 py-1 rounded bg-red-600 text-white hover:bg-red-900 cursor-pointer"
-                  >
-                    Sil
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => removeVariant(vi)}
+                  className="px-2 py-1 rounded bg-red-600 text-white hover:bg-red-900 cursor-pointer"
+                >
+                  Sil
+                </button>
               </div>
 
+              {/* SKU / Fiyat / Stok */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mt-3">
                 <input
                   placeholder="SKU"
@@ -331,8 +330,9 @@ export default function ProductForm({
                   className="p-2 rounded border dark:bg-gray-800"
                 />
 
+                {/* Attribute Seçimleri */}
                 <div>
-                  <label className="block text-xs">Attribute Değerleri</label>
+                  <label className="block text-xs">Özellik</label>
                   <div className="flex gap-2 flex-wrap mt-1">
                     {attributeTypes.map((at, ai) => (
                       <select
@@ -357,62 +357,51 @@ export default function ProductForm({
                 </div>
               </div>
 
+              {/* ✅ Doğru yerde sadece o varyantın görselleri */}
               <div className="mt-3">
-                {form.variants.map((v, vi) => (
-                  <div
-                    key={vi}
-                    className="p-3 border rounded bg-white dark:bg-gray-800 mt-2"
-                  >
-                    <div className="text-sm font-medium mb-1">
-                      Varyant {vi + 1} Görselleri
+                <div className="text-sm font-medium mb-1">Görsel </div>
+                <div className="flex flex-wrap gap-2">
+                  {v.images.map((img, idx) => (
+                    <div key={idx} className="relative w-20 h-20">
+                      <img
+                        src={img.url}
+                        alt={img.alt || `Variant ${vi + 1} Image ${idx + 1}`}
+                        className="w-full h-full object-cover rounded border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const arr = v.images.filter((_, i) => i !== idx);
+                          updateVariant(vi, { images: arr });
+                        }}
+                        className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                      >
+                        ×
+                      </button>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {v.images.map((img, idx) => (
-                        <div key={idx} className="relative w-20 h-20">
-                          <img
-                            src={img.url}
-                            alt={
-                              img.alt || `Variant ${vi + 1} Image ${idx + 1}`
-                            }
-                            className="w-full h-full object-cover rounded border"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const arr = v.images.filter((_, i) => i !== idx);
-                              updateVariant(vi, { images: arr });
-                            }}
-                            className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
+                  ))}
 
-                      <label className="w-20 h-20 flex items-center justify-center border rounded cursor-pointer bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700">
-                        +
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          className="hidden"
-                          onChange={async (e) => {
-                            if (!e.target.files) return;
-                            const uploaded: { url: string; alt?: string }[] =
-                              [];
-                            for (const file of Array.from(e.target.files)) {
-                              const url = await uploadImage(file);
-                              if (url) uploaded.push({ url, alt: file.name });
-                            }
-                            updateVariant(vi, {
-                              images: [...v.images, ...uploaded],
-                            });
-                          }}
-                        />
-                      </label>
-                    </div>
-                  </div>
-                ))}
+                  <label className="w-20 h-20 flex items-center justify-center border rounded cursor-pointer bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700">
+                    +
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={async (e) => {
+                        if (!e.target.files) return;
+                        const uploaded: { url: string; alt?: string }[] = [];
+                        for (const file of Array.from(e.target.files)) {
+                          const url = await uploadImage(file);
+                          if (url) uploaded.push({ url, alt: file.name });
+                        }
+                        updateVariant(vi, {
+                          images: [...v.images, ...uploaded],
+                        });
+                      }}
+                    />
+                  </label>
+                </div>
               </div>
             </div>
           ))}

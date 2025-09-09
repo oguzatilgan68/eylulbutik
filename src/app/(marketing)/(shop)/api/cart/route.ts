@@ -9,13 +9,41 @@ export async function GET(req: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: "Giriş yapılmamış" }, { status: 401 });
     }
+
     const cart = await db.cart.findFirst({
       where: { userId },
       include: {
         items: {
           include: {
-            product: { include: { images: true, brand: true, category: true } },
-            variant: true,
+            product: {
+              include: {
+                images: true,
+                brand: true,
+                category: true,
+                variants: {
+                  include: {
+                    attributes: {
+                      include: {
+                        value: {
+                          include: { type: true },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            variant: {
+              include: {
+                attributes: {
+                  include: {
+                    value: {
+                      include: { type: true },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -44,7 +72,19 @@ export async function GET(req: NextRequest) {
           : null,
       },
       variant: item.variant
-        ? { id: item.variant.id, attributes: item.variant.attributes }
+        ? {
+            id: item.variant.id,
+            attributes: item.variant.attributes.map((attr) => ({
+              id: attr.id,
+              value: attr.value?.value ?? "",
+              attributeType: attr.value?.type
+                ? {
+                    id: attr.value.type.id,
+                    name: attr.value.type.name,
+                  }
+                : null,
+            })),
+          }
         : null,
     }));
 

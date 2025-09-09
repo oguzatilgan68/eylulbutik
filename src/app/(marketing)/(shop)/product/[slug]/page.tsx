@@ -56,7 +56,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
           attributes: {
             include: {
               value: {
-                // ⚠ Burada "value" kullanıyoruz
                 include: { type: true }, // attributeType.name => key
               },
             },
