@@ -53,7 +53,7 @@ export default function WishlistButton({ productId }: Props) {
       variant="outline"
       onClick={toggle}
       disabled={loading}
-      className={`flex items-center gap-2 rounded-xl border dark:border-gray-700 ${
+      className={`flex items-center gap-2 rounded-xl border dark:border-gray-700 cursor-pointer ${
         inWishlist
           ? "bg-pink-500 text-white hover:bg-pink-600"
           : "bg-white dark:bg-gray-900 dark:text-gray-200"

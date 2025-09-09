@@ -52,7 +52,6 @@ model Address {
 model Brand {
   id       String    @id @default(uuid())
   name     String    @unique
-  slug     String    @unique
   logoUrl  String?
   products Product[]
 }
@@ -122,7 +121,6 @@ model VariantImage {
 model AttributeType {
   id      String           @id @default(uuid())
   name    String           // Örn: Renk, Beden
-  slug    String           @unique
   values  AttributeValue[]
 }
 
@@ -130,7 +128,6 @@ model AttributeValue {
   id              String                  @id @default(uuid())
   attributeTypeId String
   value           String                  // Örn: "Kırmızı", "M"
-  slug            String                  @unique
   type            AttributeType           @relation(fields: [attributeTypeId], references: [id])
   variantAttributes ProductVariantAttribute[]
 }
@@ -139,7 +136,6 @@ model ProductVariantAttribute {
   id               String           @id @default(uuid())
   variantId        String
   attributeValueId String
-
   variant ProductVariant @relation(fields: [variantId], references: [id])
   value   AttributeValue @relation(fields: [attributeValueId], references: [id])
 }
@@ -236,7 +232,7 @@ model OrderItem {
   orderId   String
   order     Order           @relation(fields: [orderId], references: [id])
   productId String
-  product   Product         @relationr(fields: [productId], references: [id])
+  product   Product         @relation(fields: [productId], references: [id])
   variantId String?
   variant   ProductVariant? @relation(fields: [variantId], references: [id])
   name      String
@@ -287,17 +283,17 @@ model Review {
   id         String   @id @default(uuid())
   productId  String
   product    Product  @relation(fields: [productId], references: [id])
-  userId     Strirng?
+  userId     String?
   user       User?    @relation(fields: [userId], references: [id])
   rating     Int
   title      String?
   content    String?
-  isApproved Booleran  @default(false)
+  isApproved Boolean  @default(false)
   createdAt  DateTime @default(now())
 }
 model Wishlist {
   id       String    @id @default(uuid())
   userId   String
-  user     User      @relatiron(fields: [userId], references: [id])
+  user     User      @relation(fields: [userId], references: [id])
   products Product[] @relation("WishlistProducts") // 👈 eşleşen relation adı
 }

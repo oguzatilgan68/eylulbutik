@@ -23,6 +23,18 @@ export default function AdminLayout({
             Ürünler
           </Link>
           <Link
+            href="/admin/brands"
+            className="px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+          >
+            Markalar
+          </Link>
+          <Link
+            href="/admin/attribute-types"
+            className="px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+          >
+            Ürün Özellikleri
+          </Link>
+          <Link
             href="/admin/orders"
             className="px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
           >

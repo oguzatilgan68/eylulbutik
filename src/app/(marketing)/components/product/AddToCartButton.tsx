@@ -3,9 +3,17 @@
 import { useState } from "react";
 import { Button } from "@/app/(marketing)/components/ui/button";
 
-type Props = { productId: string; variantId?: string };
+type Props = {
+  productId: string;
+  variantId?: string;
+  disabled?: boolean; // burayı ekle
+};
 
-export default function AddToCartButton({ productId, variantId }: Props) {
+export default function AddToCartButton({
+  productId,
+  variantId,
+  disabled = false,
+}: Props) {
   const [loading, setLoading] = useState(false);
 
   async function add() {
@@ -33,8 +41,8 @@ export default function AddToCartButton({ productId, variantId }: Props) {
   return (
     <Button
       onClick={add}
-      disabled={loading}
-      className="mt-4 w-full lg:w-1/2 bg-pink-500 hover:bg-pink-600 text-white rounded-xl"
+      disabled={loading || disabled}
+      className="mt-4 w-full lg:w-1/2 bg-pink-500 hover:bg-pink-600 text-white rounded-xl cursor-pointer"
     >
       {loading ? "Ekleniyor..." : "Sepete Ekle"}
     </Button>

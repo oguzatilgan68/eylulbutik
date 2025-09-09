@@ -2,11 +2,12 @@ import { db } from "@/app/(marketing)/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 interface Params {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 // Tek bir adresi GET, PUT, DELETE ile yönetiyoruz
-export async function GET(req: NextRequest, { params }: Params) {
+export async function GET(req: NextRequest, props: Params) {
+  const params = await props.params;
   const { id } = params;
 
   try {
@@ -22,7 +23,8 @@ export async function GET(req: NextRequest, { params }: Params) {
   }
 }
 
-export async function PUT(req: NextRequest, { params }: Params) {
+export async function PUT(req: NextRequest, props: Params) {
+  const params = await props.params;
   const { id } = params;
 
   try {
@@ -41,7 +43,8 @@ export async function PUT(req: NextRequest, { params }: Params) {
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: Params) {
+export async function DELETE(req: NextRequest, props: Params) {
+  const params = await props.params;
   const { id } = params;
 
   try {

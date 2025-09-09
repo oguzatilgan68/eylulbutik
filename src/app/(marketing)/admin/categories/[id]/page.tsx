@@ -3,10 +3,11 @@ import { CategoryForm } from "@/app/(marketing)/components/forms/CategoryForm";
 import { db } from "@/app/(marketing)/lib/db";
 
 interface CategoryPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-const EditCategoryPage = async ({ params }: CategoryPageProps) => {
+const EditCategoryPage = async (props: CategoryPageProps) => {
+  const params = await props.params;
   const category = await db.category.findUnique({
     where: { id: params.id },
   });

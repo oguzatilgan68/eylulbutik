@@ -2,10 +2,11 @@ import { db } from "@/app/(marketing)/lib/db";
 import React from "react";
 
 interface OrderPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-const AdminOrderDetailPage = async ({ params }: OrderPageProps) => {
+const AdminOrderDetailPage = async (props: OrderPageProps) => {
+  const params = await props.params;
   const order = await db.order.findUnique({
     where: { id: params.id },
     include: {

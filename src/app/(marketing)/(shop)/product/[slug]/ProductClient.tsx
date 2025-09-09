@@ -8,44 +8,86 @@ import { toPriceString } from "@/app/(marketing)/lib/money";
 import AddToCartButton from "@/app/(marketing)/components/product/AddToCartButton";
 
 export default function ProductClient({ product }: { product: any }) {
-  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
-    null
-  );
+  const [selectedAttributes, setSelectedAttributes] = useState<{
+    [key: string]: string;
+  }>({});
+  const [selectedImageIdx, setSelectedImageIdx] = useState<number>(0);
 
-  // Seçili varyant objesini al
-  const selectedVariant = useMemo(
-    () =>
-      product.variants?.find((v: any) => v.id === selectedVariantId) || null,
-    [selectedVariantId, product.variants]
-  );
+  // Attribute tiplerini ayıkla
+  const attributeTypes = useMemo(() => {
+    const types: { [key: string]: string[] } = {};
+    product.variants.forEach((v: any) => {
+      v.attributes.forEach((a: any) => {
+        if (!types[a.key]) types[a.key] = [];
+        if (!types[a.key].includes(a.value)) types[a.key].push(a.value);
+      });
+    });
+    return types;
+  }, [product.variants]);
 
-  // Gösterilecek fiyat
+  // Seçilen attribute combination ile varyant bul
+  const selectedVariant = useMemo(() => {
+    return product.variants.find((v: any) =>
+      v.attributes.every((a: any) => selectedAttributes[a.key] === a.value)
+    );
+  }, [selectedAttributes, product.variants]);
+
+  // Gösterilecek fiyat ve stok
   const displayPrice = selectedVariant ? selectedVariant.price : product.price;
-
-  // Stok durumu
   const inStock = selectedVariant
     ? selectedVariant.stockQty > 0
     : product.inStock;
 
+  // Gösterilecek görseller
+  const images =
+    selectedVariant?.images?.length > 0
+      ? selectedVariant.images
+      : product.images;
+
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Ürün Görselleri */}
       <div className="flex flex-col lg:flex-row gap-8">
+        {/* Görseller */}
         <div className="lg:w-1/2 flex flex-col gap-4">
-          {product.images?.[0]?.url ? (
-            <Image
-              src={product.images[0].url}
-              alt={product.name}
-              width={600}
-              height={600}
-              priority
-              className="rounded-2xl object-cover w-full h-[400px] lg:h-[500px]"
-            />
-          ) : (
-            <div className="bg-gray-200 dark:bg-gray-800 w-full h-[400px] flex items-center justify-center rounded-2xl text-gray-600 dark:text-gray-300">
-              Görsel Yok
-            </div>
-          )}
+          <div className="rounded-2xl overflow-hidden">
+            {images?.[selectedImageIdx] ? (
+              <Image
+                src={images[selectedImageIdx].url}
+                alt={product.name}
+                width={600}
+                height={600}
+                priority
+                className="w-full h-[400px] lg:h-[500px] object-cover rounded-2xl"
+              />
+            ) : (
+              <div className="bg-gray-200 dark:bg-gray-800 w-full h-[400px] flex items-center justify-center rounded-2xl text-gray-600 dark:text-gray-300">
+                Görsel Yok
+              </div>
+            )}
+          </div>
+
+          {/* Thumbnail */}
+          <div className="flex gap-2 mt-2 overflow-x-auto">
+            {images.map((img: any, idx: number) => (
+              <button
+                key={idx}
+                onClick={() => setSelectedImageIdx(idx)}
+                className={`border rounded-lg overflow-hidden ${
+                  selectedImageIdx === idx
+                    ? "border-pink-500"
+                    : "border-gray-300 dark:border-gray-600"
+                }`}
+              >
+                <Image
+                  src={img.url}
+                  alt={product.name}
+                  width={60}
+                  height={60}
+                  className="object-cover w-16 h-16"
+                />
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Ürün Bilgileri */}
@@ -68,38 +110,35 @@ export default function ProductClient({ product }: { product: any }) {
             </p>
           )}
 
-          {/* Varyant Seçimi */}
-          {product.variants?.length > 0 && (
-            <div className="mt-4">
-              <h3 className="text-sm font-semibold dark:text-white mb-2">
-                Varyasyon Seç
-              </h3>
+          {/* Attribute seçimi */}
+          {Object.entries(attributeTypes).map(([key, values]) => (
+            <div key={key} className="mt-4">
+              <h4 className="text-sm font-semibold dark:text-white mb-2">
+                {key}
+              </h4>
               <div className="flex gap-2 flex-wrap">
-                {product.variants.map((v: any) => (
+                {values.map((val) => (
                   <button
-                    key={v.id}
-                    onClick={() => setSelectedVariantId(v.id)}
+                    key={val}
+                    onClick={() =>
+                      setSelectedAttributes((prev) => ({ ...prev, [key]: val }))
+                    }
                     className={`px-4 py-2 rounded-xl border ${
-                      selectedVariantId === v.id
+                      selectedAttributes[key] === val
                         ? "bg-pink-500 text-white border-pink-500"
                         : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200"
                     }`}
                   >
-                    {v.attributes
-                      .map((a: any) => `${a.key}: ${a.value}`)
-                      .join(", ")}
+                    {val}
                   </button>
                 ))}
               </div>
             </div>
-          )}
+          ))}
 
-          {/* Fiyat */}
-          <p className="text-gray-800 dark:text-gray-100 text-xl">
+          <p className="text-gray-800 dark:text-gray-100 text-xl mt-4">
             ₺{toPriceString(displayPrice)}
           </p>
-
-          {/* Stok bilgisi */}
           {!inStock && <p className="text-red-500 text-sm">Stokta Yok</p>}
 
           {product.description && (
@@ -112,13 +151,14 @@ export default function ProductClient({ product }: { product: any }) {
             productId={product.id}
             variantId={selectedVariant?.id || null}
             disabled={
-              !inStock || (product.variants?.length > 0 && !selectedVariant)
+              !inStock ||
+              (Object.keys(attributeTypes).length > 0 && !selectedVariant)
             }
           />
         </div>
       </div>
 
-      {/* Ürün Detayları + Yorumlar */}
+      {/* Detaylar ve Yorumlar */}
       <div className="mt-12 grid gap-10">
         <section>
           <h2 className="text-2xl font-semibold dark:text-white mb-4">

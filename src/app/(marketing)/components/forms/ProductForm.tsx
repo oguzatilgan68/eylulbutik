@@ -1,124 +1,83 @@
 "use client";
 
-import { useForm, useFieldArray } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import Image from "next/image";
-import { VariantAttributes } from "./VariantAttributes";
+import React, { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { supabase } from "../../lib/supabase/supabaseClient";
 
-const productSchema = z.object({
-  name: z.string().min(2),
-  sku: z.string().optional(),
-  slug: z.string().optional(),
-  price: z.number(),
-  description: z.string().optional(),
-  categoryId: z.string(),
-  brandId: z.string().optional(),
-  seoTitle: z.string().optional(),
-  seoDesc: z.string().optional(),
-  status: z.enum(["DRAFT", "PUBLISHED"]).default("DRAFT"),
-  inStock: z.boolean().default(true),
-  images: z
-    .array(z.object({ url: z.string().url(), alt: z.string().optional() }))
-    .optional(),
-  variants: z
-    .array(
-      z.object({
-        sku: z.string().optional(),
-        price: z.number().min(0).optional(),
-        stockQty: z.number().optional(),
-        attributes: z
-          .array(
-            z.object({
-              key: z.string().min(1, "Özellik anahtarı boş olamaz"),
-              value: z.string().min(1, "Özellik değeri boş olamaz"),
-            })
-          )
-          .optional(),
+export type AttributeType = {
+  id: string;
+  name: string;
+  values: { id: string; value: string }[];
+};
 
-        images: z
-          .array(
-            z.object({ url: z.string().url(), alt: z.string().optional() })
-          )
-          .optional(),
-      })
-    )
-    .optional(),
-});
+export type VariantInput = {
+  id?: string;
+  sku: string;
+  price: string;
+  stockQty: string;
+  attributeValueIds: string[]; // ordered list of selected attribute value ids
+  images: { url: string; alt?: string }[];
+};
 
-export type ProductFormData = z.infer<typeof productSchema>;
+export type ProductFormData = {
+  name: string;
+  price: string;
+  description: string;
+  categoryId: string;
+  brandId?: string;
+  images: { url: string; alt?: string }[];
+  status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  inStock: boolean;
+  variants: VariantInput[];
+  seoTitle?: string;
+  seoDesc?: string;
+};
 
-interface ProductFormProps {
+type Props = {
   categories: { id: string; name: string }[];
   brands: { id: string; name: string }[];
+  attributeTypes: AttributeType[];
   initialData: ProductFormData;
-  onSubmit: (data: ProductFormData) => void;
-}
+  onSubmit: (data: ProductFormData) => Promise<void> | void; // server action
+};
 
-export function ProductForm({
+export default function ProductForm({
   categories,
   brands,
+  attributeTypes,
   initialData,
   onSubmit,
-}: ProductFormProps) {
-  const form = useForm<ProductFormData>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(productSchema) as any,
-    defaultValues: {
-      name: initialData.name || "",
-      slug: initialData.slug || "",
-      sku: initialData.sku || "",
-      price: initialData.price || 0,
-      description: initialData.description || "",
-      categoryId: initialData.categoryId || (categories[0]?.id ?? ""),
-      brandId: initialData.brandId || "",
-      images: initialData.images || [],
-      variants: initialData.variants || [],
-      status: initialData.status ?? "DRAFT",
-      inStock: initialData.inStock ?? true,
-      seoTitle: initialData.seoTitle || "",
-      seoDesc: initialData.seoDesc || "",
-    },
-  });
+}: Props) {
+  const [form, setForm] = useState<ProductFormData>(initialData);
 
-  const {
-    control,
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = form;
+  const update = (patch: Partial<ProductFormData>) =>
+    setForm((prev) => ({ ...prev, ...patch }));
 
-  const {
-    fields: imageFields,
-    append: addImage,
-    remove: removeImage,
-  } = useFieldArray({
-    control,
-    name: "images",
-  });
+  // Images handling (simple: user pastes a URL)
+  const addImage = () =>
+    update({ images: [...form.images, { url: "", alt: "" }] });
+  const updateImage = (idx: number, img: { url: string; alt?: string }) => {
+    const arr = [...form.images];
+    arr[idx] = img;
+    update({ images: arr });
+  };
+  const removeImage = (idx: number) =>
+    update({ images: form.images.filter((_, i) => i !== idx) });
 
-  const {
-    fields: variantFields,
-    append: addVariant,
-    remove: removeVariant,
-  } = useFieldArray({
-    control,
-    name: "variants",
-  });
-
+  // Variants
+  const addVariant = () =>
+    update({
+      variants: [
+        ...form.variants,
+        {
+          sku: "",
+          price: "",
+          stockQty: "0",
+          attributeValueIds: [],
+          images: [],
+        },
+      ],
+    });
   const uploadImage = async (file: File) => {
     const fileExt = file.name.split(".").pop();
     const fileName = `${uuidv4()}.${fileExt}`;
@@ -134,298 +93,340 @@ export function ProductForm({
     const { data } = supabase.storage.from("products").getPublicUrl(filePath);
     return data.publicUrl;
   };
+  const updateVariant = (idx: number, patch: Partial<VariantInput>) => {
+    const arr = [...form.variants];
+    arr[idx] = { ...arr[idx], ...patch };
+    update({ variants: arr });
+  };
+  const removeVariant = (idx: number) =>
+    update({ variants: form.variants.filter((_, i) => i !== idx) });
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await onSubmit(form);
+  };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Ürün Bilgileri</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <Input placeholder="Ürün Adı" {...register("name")} />
-          <Input placeholder="Stok Kodu" {...register("sku")} />
-          <Input
-            placeholder="Fiyat"
-            type="number"
-            step="0.01"
-            {...register("price", { valueAsNumber: true })}
-          />
-          {errors.name && <p className="text-red-500">{errors.name.message}</p>}
-
-          <Textarea placeholder="Açıklama" {...register("description")} />
-          {errors.description && (
-            <p className="text-red-500">{errors.description.message}</p>
-          )}
-
-          {/* Kategori */}
-          <Select
-            onValueChange={(val) => form.setValue("categoryId", val)}
-            defaultValue={initialData.categoryId}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Kategori seç" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id}>
-                  {cat.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-            {errors.categoryId && (
-              <p className="text-red-500">{errors.categoryId.message}</p>
-            )}
-          </Select>
-
-          {/* Marka */}
-          <Select
-            onValueChange={(val: string) => form.setValue("brandId", val)}
-            defaultValue={initialData.brandId}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Marka seç" />
-              {errors.brandId && (
-                <p className="text-red-500">{errors.brandId.message}</p>
-              )}
-            </SelectTrigger>
-            <SelectContent>
-              {brands.map((b) => (
-                <SelectItem key={b.id} value={b.id}>
-                  {b.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
-
-      {/* Görseller */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Ürün Görselleri</CardTitle>
-          {errors.images && (
-            <p className="text-red-500">{errors.images.message}</p>
-          )}
-        </CardHeader>
-        <CardContent>
+    <form onSubmit={submit} className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2 space-y-2">
+          <label className="block text-sm font-medium">Ürün Adı</label>
           <input
-            type="file"
-            id="images"
-            multiple
-            accept="image/*"
-            onChange={async (e) => {
-              if (!e.target.files) return;
-              const files = Array.from(e.target.files);
-              for (const file of files) {
-                const url = await uploadImage(file);
-                if (url) addImage({ url, alt: file.name });
-              }
-            }}
+            value={form.name}
+            onChange={(e) => update({ name: e.target.value })}
+            className="w-full p-2 rounded border dark:bg-gray-800"
           />
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
-            {imageFields.map((field, idx) => (
-              <div key={field.id} className="relative group">
-                <Image
-                  src={field.url}
-                  alt={`Görsel ${idx + 1}`}
-                  className="w-full h-32 object-cover rounded-lg border"
-                  width={1280}
-                  height={720}
-                />
-                <button
-                  type="button"
-                  onClick={() => removeImage(idx)}
-                  className="absolute top-1 right-1 bg-red-600 text-white text-xs px-2 py-1 rounded opacity-80 group-hover:opacity-100"
-                >
-                  Sil
-                </button>
-              </div>
-            ))}
+          <label className="block text-sm font-medium mt-4">Açıklama</label>
+          <textarea
+            value={form.description}
+            onChange={(e) => update({ description: e.target.value })}
+            rows={6}
+            className="w-full p-2 rounded border dark:bg-gray-800"
+          />
+
+          <div className="grid grid-cols-2 gap-2 mt-4">
+            <div>
+              <label className="block text-sm">Kategori</label>
+              <select
+                value={form.categoryId}
+                onChange={(e) => update({ categoryId: e.target.value })}
+                className="w-full p-2 rounded border dark:bg-gray-800"
+              >
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm">Marka (opsiyonel)</label>
+              <select
+                value={form.brandId}
+                onChange={(e) => update({ brandId: e.target.value })}
+                className="w-full p-2 rounded border dark:bg-gray-800"
+              >
+                <option value="">-</option>
+                {brands.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-      {/* Status */}
-      <Select
-        onValueChange={(val) =>
-          form.setValue("status", val as "DRAFT" | "PUBLISHED")
-        }
-        defaultValue={initialData.status || "DRAFT"}
-      >
-        <SelectTrigger>
-          <SelectValue placeholder="Durum seç" />
-          {errors.status && (
-            <p className="text-red-500">{errors.status.message}</p>
-          )}
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="DRAFT">Taslak</SelectItem>
-          <SelectItem value="PUBLISHED">Yayında</SelectItem>
-        </SelectContent>
-      </Select>
 
-      {/* In Stock */}
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="inStock"
-          {...register("inStock")}
-          defaultChecked={initialData.inStock}
-        />
-        <label htmlFor="inStock">Stokta Var</label>
-      </div>
-
-      {/* Varyantlar */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Ürün Varyantları</CardTitle>
-          {errors.variants && (
-            <p className="text-red-500">{errors.variants.message}</p>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {variantFields.map((field, idx) => (
-            <div key={field.id} className="border p-3 rounded-lg space-y-3">
-              <Input
-                placeholder="Varyant SKU"
-                {...register(`variants.${idx}.sku` as const)}
+          <div className="flex gap-2 mt-4">
+            <div>
+              <label className="block text-sm">Fiyat</label>
+              <input
+                value={form.price}
+                onChange={(e) => update({ price: e.target.value })}
+                className="p-2 rounded border dark:bg-gray-800"
               />
-              <Input
-                placeholder="Varyant Fiyat"
-                type="number"
-                step="0.01"
-                className="dark:bg-neutral-900 dark:text-white"
-                {...register(`variants.${idx}.price`, {
-                  valueAsNumber: true,
-                })}
-              />
-              {errors.variants?.[idx]?.price && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.variants[idx]?.price?.message}
-                </p>
-              )}
-              <Input
-                placeholder="Stok Adedi"
-                type="number"
-                {...register(`variants.${idx}.stockQty` as const, {
-                  valueAsNumber: true,
-                })}
-              />
+            </div>
+            <div>
+              <label className="block text-sm">Stokta mı?</label>
+              <select
+                value={form.inStock ? "yes" : "no"}
+                onChange={(e) => update({ inStock: e.target.value === "yes" })}
+                className="p-2 rounded border dark:bg-gray-800"
+              >
+                <option value="yes">Evet</option>
+                <option value="no">Hayır</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm">Durum</label>
+              <select
+                value={form.status}
+                onChange={(e) => update({ status: e.target.value as any })}
+                className="p-2 rounded border dark:bg-gray-800"
+              >
+                <option value="DRAFT">Taslak</option>
+                <option value="PUBLISHED">Yayınlandı</option>
+                <option value="ARCHIVED">Arşiv</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
-              {/* Özellikler */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Özellikler</label>
-                <VariantAttributes control={control} variantIndex={idx} />
-              </div>
+        <aside className="space-y-4">
+          <div className="p-4 border rounded dark:bg-gray-900">
+            <label className="block text-sm font-medium">SEO Başlık</label>
+            <input
+              value={form.seoTitle}
+              onChange={(e) => update({ seoTitle: e.target.value })}
+              className="w-full p-2 rounded border dark:bg-gray-800"
+            />
+            <label className="block text-sm font-medium mt-2">
+              SEO Açıklama
+            </label>
+            <input
+              value={form.seoDesc}
+              onChange={(e) => update({ seoDesc: e.target.value })}
+              className="w-full p-2 rounded border dark:bg-gray-800"
+            />
+          </div>
+          {/* Ürün Görselleri */}
+          <div className="p-4 border rounded dark:bg-gray-900">
+            <label className="block text-sm font-medium">Ürün Görselleri</label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {form.images.map((img, idx) => (
+                <div key={idx} className="relative w-24 h-24">
+                  <img
+                    src={img.url}
+                    alt={img.alt || `Image ${idx + 1}`}
+                    className="w-full h-full object-cover rounded border"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(idx)}
+                    className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
 
-              {/* Varyant Görselleri */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Varyant Görselleri
-                </label>
+              <label className="w-24 h-24 flex items-center justify-center border rounded cursor-pointer bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700">
+                +
                 <input
                   type="file"
-                  multiple
                   accept="image/*"
+                  multiple
+                  className="hidden"
                   onChange={async (e) => {
                     if (!e.target.files) return;
-                    const files = Array.from(e.target.files);
-
-                    const current =
-                      form.getValues(`variants.${idx}.images`) || [];
-                    const uploadedImages: { url: string; alt?: string }[] = [];
-
-                    for (const file of files) {
-                      const url = await uploadImage(file);
-                      if (url) uploadedImages.push({ url, alt: file.name });
+                    const uploaded: { url: string; alt?: string }[] = [];
+                    for (const file of Array.from(e.target.files)) {
+                      const url = await uploadImage(file); // uploadImage fonksiyonunu kendi upload mantığına göre tanımla
+                      if (url) uploaded.push({ url, alt: file.name });
                     }
-
-                    form.setValue(`variants.${idx}.images`, [
-                      ...current,
-                      ...uploadedImages,
-                    ]);
+                    update({ images: [...form.images, ...uploaded] });
                   }}
                 />
+              </label>
+            </div>
+          </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2">
-                  {(form.watch(`variants.${idx}.images`) || []).map(
-                    (img, i) => (
-                      <div key={i} className="relative group">
-                        <Image
-                          src={img.url}
-                          alt={`Varyant Görsel ${i + 1}`}
-                          className="w-full h-24 object-cover rounded border"
-                          width={200}
-                          height={200}
-                          priority
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const imgs = [
-                              ...(form.getValues(`variants.${idx}.images`) ||
-                                []),
-                            ];
-                            imgs.splice(i, 1);
-                            form.setValue(`variants.${idx}.images`, imgs);
-                          }}
-                          className="absolute top-1 right-1 bg-red-600 text-white text-xs px-1 py-0.5 rounded"
-                        >
-                          Sil
-                        </button>
+          <div className="mt-3 space-y-2">
+            {!attributeTypes || attributeTypes.length === 0 ? (
+              <div className="text-sm text-red-500">
+                Ürün varyantları için önce <b>attribute tipi</b> eklemelisiniz.
+              </div>
+            ) : (
+              attributeTypes.map((at) => (
+                <div key={at.id} className="text-sm">
+                  <div className="font-medium">{at.name}</div>
+                  <div className="flex gap-2 flex-wrap mt-1">
+                    {at.values.map((v) => (
+                      <div
+                        key={v.id}
+                        className="px-2 py-1 border rounded text-xs"
+                      >
+                        {v.value}
                       </div>
-                    )
-                  )}
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </aside>
+      </div>
+
+      {/* Variants */}
+      <div className="border rounded p-4 dark:bg-gray-900">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold">Varyantlar</h3>
+          <button
+            type="button"
+            onClick={addVariant}
+            className="px-3 py-1 rounded bg-green-600 text-white cursor-pointer hover:bg-green-800"
+          >
+            Varyant Ekle
+          </button>
+        </div>
+
+        <div className="mt-4 space-y-4">
+          {form.variants.map((v, vi) => (
+            <div
+              key={vi}
+              className="p-3 border rounded bg-white dark:bg-gray-800"
+            >
+              <div className="flex justify-between items-center">
+                <div className="font-medium">Varyant {vi + 1}</div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => removeVariant(vi)}
+                    className="px-2 py-1 rounded bg-red-600 text-white hover:bg-red-900 cursor-pointer"
+                  >
+                    Sil
+                  </button>
                 </div>
               </div>
 
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => removeVariant(idx)}
-              >
-                Varyantı Sil
-              </Button>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mt-3">
+                <input
+                  placeholder="SKU"
+                  value={v.sku}
+                  onChange={(e) => updateVariant(vi, { sku: e.target.value })}
+                  className="p-2 rounded border dark:bg-gray-800"
+                />
+                <input
+                  placeholder="Fiyat"
+                  value={v.price}
+                  onChange={(e) => updateVariant(vi, { price: e.target.value })}
+                  className="p-2 rounded border dark:bg-gray-800"
+                />
+                <input
+                  placeholder="Stok"
+                  value={v.stockQty}
+                  onChange={(e) =>
+                    updateVariant(vi, { stockQty: e.target.value })
+                  }
+                  className="p-2 rounded border dark:bg-gray-800"
+                />
+
+                <div>
+                  <label className="block text-xs">Attribute Değerleri</label>
+                  <div className="flex gap-2 flex-wrap mt-1">
+                    {attributeTypes.map((at, ai) => (
+                      <select
+                        key={at.id}
+                        value={v.attributeValueIds[ai] || ""}
+                        onChange={(e) => {
+                          const arr = [...v.attributeValueIds];
+                          arr[ai] = e.target.value;
+                          updateVariant(vi, { attributeValueIds: arr });
+                        }}
+                        className="p-2 rounded border dark:bg-gray-800"
+                      >
+                        <option value="">-{at.name}-</option>
+                        {at.values.map((val) => (
+                          <option key={val.id} value={val.id}>
+                            {val.value}
+                          </option>
+                        ))}
+                      </select>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3">
+                {form.variants.map((v, vi) => (
+                  <div
+                    key={vi}
+                    className="p-3 border rounded bg-white dark:bg-gray-800 mt-2"
+                  >
+                    <div className="text-sm font-medium mb-1">
+                      Varyant {vi + 1} Görselleri
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {v.images.map((img, idx) => (
+                        <div key={idx} className="relative w-20 h-20">
+                          <img
+                            src={img.url}
+                            alt={
+                              img.alt || `Variant ${vi + 1} Image ${idx + 1}`
+                            }
+                            className="w-full h-full object-cover rounded border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const arr = v.images.filter((_, i) => i !== idx);
+                              updateVariant(vi, { images: arr });
+                            }}
+                            className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+
+                      <label className="w-20 h-20 flex items-center justify-center border rounded cursor-pointer bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700">
+                        +
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={async (e) => {
+                            if (!e.target.files) return;
+                            const uploaded: { url: string; alt?: string }[] =
+                              [];
+                            for (const file of Array.from(e.target.files)) {
+                              const url = await uploadImage(file);
+                              if (url) uploaded.push({ url, alt: file.name });
+                            }
+                            updateVariant(vi, {
+                              images: [...v.images, ...uploaded],
+                            });
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
+        </div>
+      </div>
 
-          <Button
-            type="button"
-            onClick={() =>
-              addVariant({
-                sku: "",
-                price: undefined,
-                stockQty: undefined,
-                attributes: [],
-                images: [], // 👈 boş array olarak başlat
-              })
-            }
-          >
-            + Varyant Ekle
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* SEO */}
-      <Card>
-        <CardHeader>
-          <CardTitle>SEO Bilgileri</CardTitle>
-          {errors.seoDesc && (
-            <p className="text-red-500">{errors.seoDesc.message}</p>
-          )}
-          {errors.seoTitle && (
-            <p className="text-red-500">{errors.seoTitle.message}</p>
-          )}
-        </CardHeader>
-        <CardContent className="grid gap-3">
-          <Input placeholder="SEO Başlığı" {...register("seoTitle")} />
-          <Textarea placeholder="SEO Açıklaması" {...register("seoDesc")} />
-        </CardContent>
-      </Card>
-
-      <Button type="submit" className="w-full cursor-pointer">
-        Kaydet
-      </Button>
+      <div className="flex justify-end">
+        <button
+          type="submit"
+          className="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-900 cursor-pointer"
+        >
+          Kaydet
+        </button>
+      </div>
     </form>
   );
 }
