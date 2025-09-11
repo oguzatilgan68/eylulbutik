@@ -1,35 +1,37 @@
-import { db } from "@/app/(marketing)/lib/db";
 import { NextResponse } from "next/server";
+import { db } from "@/app/(marketing)/lib/db";
 
-// ✅ Güncelle
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
-  const { id } = params;
-  const body = await req.json();
-  const { name } = body;
-
-  if (!name) {
-    return NextResponse.json({ error: "Ad gerekli" }, { status: 400 });
-  }
-
-  const updated = await db.propertyType.update({
-    where: { id },
-    data: { name },
+export async function GET(_: Request, { params }: { params: { id: string } }) {
+  const type = await db.propertyType.findUnique({
+    where: { id: params.id },
+    include: { values: true },
   });
-
-  return NextResponse.json(updated);
+  return NextResponse.json(type);
 }
 
-// ✅ Sil
-export async function DELETE(
+export async function PUT(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const { id } = params;
+  const body = await req.json();
+  const type = await db.propertyType.update({
+    where: { id: params.id },
+    data: {
+      name: body.name,
+      values: {
+        deleteMany: {}, // önce eski value’ları temizle
+        create: body.values?.map((v: string) => ({ value: v })) || [],
+      },
+    },
+    include: { values: true },
+  });
+  return NextResponse.json(type);
+}
 
-  await db.propertyType.delete({ where: { id } });
-
-  return NextResponse.json({ message: "Silindi" });
+export async function DELETE(
+  _: Request,
+  { params }: { params: { id: string } }
+) {
+  await db.propertyType.delete({ where: { id: params.id } });
+  return NextResponse.json({ success: true });
 }

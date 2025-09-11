@@ -1,26 +1,67 @@
 import { db } from "@/app/(marketing)/lib/db";
 import { NextResponse } from "next/server";
 
+// Tüm PropertyType ve değerlerini getir
 export async function GET() {
-  const properties = await db.productProperty.findMany({
-    include: { product: true, propertyType: true },
-    orderBy: { propertyType: { name: "asc" } },
-  });
-  return NextResponse.json(properties);
+  try {
+    const types = await db.propertyType.findMany({
+      include: { values: true },
+      orderBy: { name: "asc" },
+    });
+    return NextResponse.json(types);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }
 
+// Yeni PropertyType ve değerlerini ekle
 export async function POST(req: Request) {
   const body = await req.json();
-  const { productId, propertyTypeId, value } = body;
+  const { name, values } = body; // values: string[]
 
-  if (!productId || !propertyTypeId || !value) {
+  if (!name || !values || !Array.isArray(values)) {
     return NextResponse.json({ error: "Eksik alanlar" }, { status: 400 });
   }
 
-  const property = await db.productProperty.create({
-    data: { productId, propertyTypeId, value },
-    include: { product: true, propertyType: true },
-  });
+  try {
+    const type = await db.propertyType.create({
+      data: {
+        name,
+        values: {
+          create: values.map((v: string) => ({ value: v })),
+        },
+      },
+      include: { values: true },
+    });
+    return NextResponse.json(type);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+export async function PATCH(req: Request) {
+  try {
+    const { id, values } = await req.json();
+    if (!id || !values?.length) {
+      return NextResponse.json({ error: "Eksik alanlar" }, { status: 400 });
+    }
 
-  return NextResponse.json(property);
+    // Eski değerleri sil
+    await db.propertyValue.deleteMany({ where: { propertyTypeId: id } });
+
+    // Yeni değerleri ekle
+    const updated = await db.propertyType.update({
+      where: { id },
+      data: {
+        values: {
+          create: values.map((v: string) => ({ value: v })),
+        },
+      },
+      include: { values: true },
+    });
+
+    return NextResponse.json(updated);
+  } catch (err: any) {
+    console.error("PATCH Hata:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }

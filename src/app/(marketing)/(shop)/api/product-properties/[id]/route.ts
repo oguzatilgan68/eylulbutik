@@ -7,28 +7,47 @@ export async function PATCH(
 ) {
   const { id } = params;
   const body = await req.json();
-  const { propertyTypeId, value } = body;
+  const { values } = body;
 
-  if (!propertyTypeId || !value) {
+  if (!values || !Array.isArray(values)) {
     return NextResponse.json({ error: "Eksik alanlar" }, { status: 400 });
   }
 
-  const updated = await db.productProperty.update({
-    where: { id },
-    data: { propertyTypeId, value },
-    include: { product: true, propertyType: true },
-  });
+  try {
+    // Önce mevcut değerleri sil
+    await db.propertyValue.deleteMany({ where: { propertyTypeId: id } });
 
-  return NextResponse.json(updated);
+    // Yeni değerleri ekle
+    const updated = await db.propertyType.update({
+      where: { id },
+      data: {
+        values: {
+          create: values.map((v: string) => ({ value: v })),
+        },
+      },
+      include: { values: true },
+    });
+
+    return NextResponse.json(updated);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }
 
+// PropertyType ve bağlı değerleri sil
 export async function DELETE(
   req: Request,
   { params }: { params: { id: string } }
 ) {
   const { id } = params;
 
-  await db.productProperty.delete({ where: { id } });
+  try {
+    // Cascade silme ayarınız varsa aşağıdaki silmeye gerek kalmaz
+    // await db.propertyValue.deleteMany({ where: { propertyTypeId: id } });
 
-  return NextResponse.json({ message: "Silindi" });
+    await db.propertyType.delete({ where: { id } });
+    return NextResponse.json({ message: "Silindi" });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }

@@ -14,36 +14,43 @@ export default function GlobalPropertiesPage() {
   const [form, setForm] = useState({ name: "" });
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // 🟢 Listele
+  // Listeyi yükle
   useEffect(() => {
     fetch("/api/global-properties")
       .then((res) => res.json())
-      .then(setProps);
+      .then(setProps)
+      .catch((err) => console.error("Liste yüklenirken hata:", err));
   }, []);
 
   const handleSubmit = async () => {
-    if (!form.name) return;
+    if (!form.name.trim()) return;
 
-    if (editingId) {
-      const res = await fetch(`/api/global-properties/${editingId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const updated = await res.json();
-      setProps((all) => all.map((p) => (p.id === updated.id ? updated : p)));
-      setEditingId(null);
-    } else {
-      const res = await fetch("/api/global-properties", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const newProp = await res.json();
-      setProps([...props, newProp]);
+    try {
+      if (editingId) {
+        const res = await fetch(`/api/global-properties/${editingId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        });
+        const updated = await res.json();
+        if (!res.ok) throw new Error(updated.error || "Güncelleme başarısız");
+        setProps((all) => all.map((p) => (p.id === updated.id ? updated : p)));
+        setEditingId(null);
+      } else {
+        const res = await fetch("/api/global-properties", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        });
+        const newProp = await res.json();
+        if (!res.ok) throw new Error(newProp.error || "Ekleme başarısız");
+        setProps((all) => [...all, newProp]);
+      }
+      setForm({ name: "" });
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message);
     }
-
-    setForm({ name: "" });
   };
 
   const handleEdit = (prop: GlobalProperty) => {
@@ -53,39 +60,57 @@ export default function GlobalPropertiesPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Silmek istediğine emin misin?")) return;
-    await fetch(`/api/global-properties/${id}`, { method: "DELETE" });
-    setProps((all) => all.filter((p) => p.id !== id));
+    try {
+      const res = await fetch(`/api/global-properties/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Silme işlemi başarısız");
+      setProps((all) => all.filter((p) => p.id !== id));
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message);
+    }
   };
 
   return (
-    <div className="p-6 dark:bg-gray-900 dark:text-white min-h-screen">
-      <h1 className="text-2xl font-bold mb-4">Global Özellikler</h1>
+    <div className="p-6 min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+      <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">
+        Global Özellikler
+      </h1>
 
       {/* Form */}
-      <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-xl mb-6 flex gap-4">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl mb-6 shadow-md flex flex-col md:flex-row gap-4 items-start md:items-center">
         <Input
+          className="flex-1"
           placeholder="Özellik Adı (örn: Renk)"
           value={form.name}
-          onChange={(e) => setForm({ name: e.target.value.trim() })}
+          onChange={(e) => setForm({ name: e.target.value })}
         />
         <Button
           onClick={handleSubmit}
-          className="bg-blue-500 text-white hover:bg-blue-700"
+          className="bg-blue-600 text-white hover:bg-blue-700 w-full md:w-auto"
         >
           {editingId ? "Güncelle" : "Ekle"}
         </Button>
       </div>
 
-      {/* List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Liste */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {props.map((p) => (
           <div
             key={p.id}
-            className="p-4 rounded-xl bg-gray-100 dark:bg-gray-800 shadow flex justify-between items-center"
+            className="p-4 rounded-xl bg-gray-100 dark:bg-gray-800 shadow flex justify-between items-center transition-colors"
           >
-            <span>{p.name}</span>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => handleEdit(p)}>
+            <span className="text-gray-800 dark:text-gray-200 font-medium">
+              {p.name}
+            </span>
+            <div className="flex gap-2 ml-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="dark:border-gray-600 dark:text-gray-200"
+                onClick={() => handleEdit(p)}
+              >
                 Düzenle
               </Button>
               <Button

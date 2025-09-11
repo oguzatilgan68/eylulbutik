@@ -3,9 +3,12 @@ import { redirect } from "next/navigation";
 
 import slugify from "slugify";
 import { Decimal } from "@prisma/client/runtime/library";
-import ProductForm, {
+import {
   ProductFormData,
-} from "@/app/(marketing)/components/forms/ProductForm";
+  PropertyType,
+} from "@/app/(marketing)/components/product/types/types";
+import ProductForm from "@/app/(marketing)/components/forms/ProductForm";
+import { supabase } from "@/app/(marketing)/lib/supabase/supabaseClient";
 
 async function generateUniqueSlug(name: string) {
   const baseSlug = slugify(name, { lower: true, strict: true });
@@ -124,14 +127,61 @@ export default async function NewProductPage() {
 
     redirect("/admin/products");
   };
+  // DB'den gelen raw data
+  const rawPropertyValues = await db.propertyValue.findMany({
+    select: {
+      id: true,
+      value: true,
+      propertyType: { select: { id: true, name: true } },
+    },
+  });
 
+  // Tipi PropertyType[] haline getir
+  const propertyTypes: PropertyType[] = Object.values(
+    rawPropertyValues.reduce((acc, pv) => {
+      if (!acc[pv.propertyType.id]) {
+        acc[pv.propertyType.id] = {
+          id: pv.propertyType.id,
+          name: pv.propertyType.name,
+          values: [],
+        };
+      }
+      acc[pv.propertyType.id].values.push({
+        id: pv.id,
+        value: pv.value,
+      });
+      return acc;
+    }, {} as Record<string, PropertyType>)
+  );
+
+  const uploadImage = async (file: File) => {
+    "use server";
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${uuidv4()}.${fileExt}`;
+    const filePath = `products/${fileName}`; // bucket 'products'
+    const { error } = await supabase.storage
+      .from("products")
+      .upload(filePath, file);
+    if (error) {
+      console.error("Supabase upload error:", error);
+      alert("Görsel yüklenemedi");
+      return null;
+    }
+    const { data } = supabase.storage.from("products").getPublicUrl(filePath);
+    return data.publicUrl;
+  };
   return (
     <ProductForm
       categories={categories}
       attributeTypes={attributeTypes}
       brands={brands}
+      uploadImage={uploadImage}
+      propertyTypes={propertyTypes}
       initialData={initialData}
       onSubmit={handleSubmit}
     />
   );
+}
+function uuidv4() {
+  throw new Error("Function not implemented.");
 }

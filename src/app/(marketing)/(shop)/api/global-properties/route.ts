@@ -1,32 +1,27 @@
+import { NextResponse } from "next/server";
 import { db } from "@/app/(marketing)/lib/db";
 import Error from "next/error";
-import { NextResponse } from "next/server";
 
+// GET all property types with values
 export async function GET() {
   try {
-    const props = await db.propertyType.findMany({
+    const types = await db.propertyType.findMany({
+      include: { values: true },
       orderBy: { name: "asc" },
     });
-    return NextResponse.json(props);
+    return NextResponse.json(types);
   } catch (error: Error | any) {
-    return NextResponse.json(error.message);
+    return NextResponse.json(error);
   }
 }
 
+// CREATE property type
 export async function POST(req: Request) {
   const body = await req.json();
-  const { name } = body;
-
-  if (!name) {
-    return NextResponse.json({ error: "Ad gerekli" }, { status: 400 });
-  }
-  try {
-    const prop = await db.propertyType.create({
-      data: { name },
-    });
-    return NextResponse.json(prop);
-  } catch (error: any) {
-    console.error("Create error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  const type = await db.propertyType.create({
+    data: {
+      name: body.name,
+    },
+  });
+  return NextResponse.json(type);
 }

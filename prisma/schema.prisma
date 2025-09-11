@@ -241,18 +241,31 @@ model OrderItem {
   unitPrice Decimal         @db.Decimal(10, 2)
 }
 model PropertyType {
-  id       String             @id @default(uuid())
-  name     String             // "Renk", "Yaka Tipi", "Kalıp Seç" ...
+  id       String           @id @default(uuid())
+  name     String           @unique
+  values   PropertyValue[]  // Cascade ile silinecek
   products ProductProperty[]
 }
-model ProductProperty {
-  id            String       @id @default(uuid())
-  productId     String
-  product       Product      @relation(fields: [productId], references: [id])
+
+model PropertyValue {
+  id             String       @id @default(uuid())
+  value          String
   propertyTypeId String
-  propertyType  PropertyType @relation(fields: [propertyTypeId], references: [id])
-  value         String       // "Krem", "Bisiklet Yaka", "Regular Fit" ...
+  propertyType   PropertyType @relation(fields: [propertyTypeId], references: [id], onDelete: Cascade)
+  products       ProductProperty[]
 }
+
+model ProductProperty {
+  id              String        @id @default(uuid())
+  productId       String
+  product         Product       @relation(fields: [productId], references: [id])
+  propertyTypeId  String
+  propertyType    PropertyType  @relation(fields: [propertyTypeId], references: [id])
+  propertyValueId String
+  propertyValue   PropertyValue @relation(fields: [propertyValueId], references: [id])
+  @@unique([productId, propertyValueId]) // her ürün aynı değeri sadece 1 kez alabilir
+}
+
 model Payment {
   id       String        @id @default(uuid())
   orderId  String        @unique
