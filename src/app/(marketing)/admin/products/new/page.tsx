@@ -9,6 +9,7 @@ import {
 } from "@/app/(marketing)/components/product/types/types";
 import ProductForm from "@/app/(marketing)/components/forms/ProductForm";
 import { supabase } from "@/app/(marketing)/lib/supabase/supabaseClient";
+import { v4 as uuidv4 } from "uuid";
 
 async function generateUniqueSlug(name: string) {
   const baseSlug = slugify(name, { lower: true, strict: true });
@@ -181,7 +182,4 @@ export default async function NewProductPage() {
       onSubmit={handleSubmit}
     />
   );
-}
-function uuidv4() {
-  throw new Error("Function not implemented.");
 }
