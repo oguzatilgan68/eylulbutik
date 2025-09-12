@@ -47,6 +47,11 @@ export type ProductFormData = {
   inStock: boolean;
   variants: VariantInput[];
   properties?: PropertyValueInput[];
-  seoTitle?: string;
-  seoDesc?: string;
+  modelInfo?: {
+    height?: number;
+    weight?: number;
+    chest?: number;
+    waist?: number;
+    hip?: number;
+  };
 };

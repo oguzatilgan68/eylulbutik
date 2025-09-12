@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/app/(marketing)/components/ui/button";
 import { Heart } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 type Props = { productId: string };
 
 export default function WishlistButton({ productId }: Props) {
   const [inWishlist, setInWishlist] = useState(false);
   const [loading, setLoading] = useState(true);
-
+  const router = useRouter();
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -37,9 +38,7 @@ export default function WishlistButton({ productId }: Props) {
         body: JSON.stringify({ productId }),
       });
       if (r.status === 401) {
-        // Burayı login yönlendirmesi için uyarlayın
-        alert("Lütfen giriş yapın.");
-        return;
+        router.push("/login");
       }
       const j = await r.json();
       setInWishlist(Boolean(j?.inWishlist));

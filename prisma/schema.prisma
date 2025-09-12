@@ -76,16 +76,14 @@ model Product {
   brand       Brand?           @relation(fields: [brandId], references: [id])
   categoryId  String
   category    Category         @relation(fields: [categoryId], references: [id])
-  images      ProductImage[]   // Genel ürün görselleri
-  variants    ProductVariant[] // Varyasyonlar (renk/beden vb.)
+  images      ProductImage[]   
+  variants    ProductVariant[] 
   price       Decimal?         @db.Decimal(10, 2)  // Opsiyonel: temel fiyat
   currency    String           @default("TRY")
   status      ProductStatus    @default(DRAFT)
   inStock     Boolean          @default(true)
   ratingAvg   Float            @default(0)
   ratingCount Int              @default(0)
-  seoTitle    String?
-  seoDesc     String?
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   CartItem    CartItem[]
@@ -93,6 +91,17 @@ model Product {
   Review      Review[]
   wishlists   Wishlist[]       @relation("WishlistProducts")
   properties  ProductProperty[]
+  modelInfo   ModelInfo?
+}
+model ModelInfo {
+  id        String   @id @default(cuid())
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String   @unique 
+  height    Int?
+  weight    Int?
+  chest     Int?
+  waist     Int?
+  hip       Int?
 }
 
 model ProductVariant {

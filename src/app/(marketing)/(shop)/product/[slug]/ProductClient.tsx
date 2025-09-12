@@ -10,6 +10,7 @@ import Reviews from "@/app/(marketing)/components/ui/product/tabs/Reviews";
 import InstallmentTab from "@/app/(marketing)/components/ui/product/tabs/InstallmentTab";
 import ReturnTab from "@/app/(marketing)/components/ui/product/tabs/ReturnTab";
 import DetailsTab from "@/app/(marketing)/components/ui/product/tabs/DetailsTab";
+import ModelTab from "@/app/(marketing)/components/ui/product/tabs/ModelTab";
 
 // Sekmeler
 const TABS = [
@@ -215,12 +216,7 @@ export default function ProductClient({ product }: any) {
           {activeTab === "details" && (
             <DetailsTab properties={product.properties} />
           )}
-          {activeTab === "model" && (
-            <div>
-              <h3 className="font-semibold mb-2">Model Bilgileri</h3>
-              <p>{product.modelInfo || "Model bilgisi mevcut değil."}</p>
-            </div>
-          )}
+          {activeTab === "model" && <ModelTab modelInfo={product.modelInfo} />}
           {activeTab === "reviews" && <Reviews productId={product.id} />}
           {activeTab === "installment" && <InstallmentTab />}
           {activeTab === "return" && <ReturnTab />}

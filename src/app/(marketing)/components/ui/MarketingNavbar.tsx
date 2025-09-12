@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { ShoppingCart, User, Search } from "lucide-react";
+import { ShoppingCart, User, Search, Heart } from "lucide-react";
 import { useUser } from "@/app/(marketing)/context/userContext";
 interface Category {
   id: string;
@@ -138,6 +138,13 @@ export const MarketingNavbar: React.FC<{ categories: Category[] }> = ({
               <span className="hidden sm:inline">Giriş Yap</span>
             </Link>
           )}
+          <Link
+            href="/account/wishlist"
+            className="flex items-center gap-1 hover:text-pink-500"
+          >
+            <Heart size={20} />
+            <span className="hidden sm:inline">Favorilerim</span>
+          </Link>
 
           <Link
             href="/cart"

@@ -57,13 +57,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
       images: true,
       category: true,
       brand: true,
+      modelInfo: true,
       variants: {
         include: {
           images: true,
           attributes: {
             include: {
               value: {
-                include: { type: true }, // attributeType.name => key
+                include: { type: true },
               },
             },
           },

@@ -43,8 +43,6 @@ export default async function NewProductPage() {
     status: "DRAFT",
     inStock: true,
     variants: [],
-    seoTitle: "",
-    seoDesc: "",
   };
 
   const handleSubmit = async (data: ProductFormData) => {
@@ -62,8 +60,6 @@ export default async function NewProductPage() {
         brand: data.brandId ? { connect: { id: data.brandId } } : undefined,
         status: data.status,
         inStock: data.inStock,
-        seoTitle: data.seoTitle || undefined,
-        seoDesc: data.seoDesc || undefined,
       },
     });
 
@@ -124,6 +120,19 @@ export default async function NewProductPage() {
           }
         })
       );
+    }
+    // 4. Model Info
+    if (data.modelInfo) {
+      await db.modelInfo.create({
+        data: {
+          productId: product.id,
+          height: data.modelInfo.height || null,
+          weight: data.modelInfo.weight || null,
+          chest: data.modelInfo.chest || null,
+          waist: data.modelInfo.waist || null,
+          hip: data.modelInfo.hip || null,
+        },
+      });
     }
 
     redirect("/admin/products");

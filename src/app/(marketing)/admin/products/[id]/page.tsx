@@ -21,6 +21,7 @@ export default async function EditProductPage(props: {
       category: true,
       brand: true,
       properties: { include: { propertyType: true, propertyValue: true } },
+      modelInfo: true,
       variants: {
         include: {
           images: true,
@@ -61,8 +62,15 @@ export default async function EditProductPage(props: {
         alt: img.alt || "",
       })),
     })),
-    seoTitle: product.seoTitle || "",
-    seoDesc: product.seoDesc || "",
+    modelInfo: product.modelInfo
+      ? {
+          height: product.modelInfo.height ?? undefined,
+          weight: product.modelInfo.weight ?? undefined,
+          chest: product.modelInfo.chest ?? undefined,
+          waist: product.modelInfo.waist ?? undefined,
+          hip: product.modelInfo.hip ?? undefined,
+        }
+      : {},
   };
 
   // 🔹 Dropdown verileri
@@ -108,8 +116,6 @@ export default async function EditProductPage(props: {
             brand: data.brandId ? { connect: { id: data.brandId } } : undefined,
             status: data.status,
             inStock: data.inStock,
-            seoTitle: data.seoTitle || undefined,
-            seoDesc: data.seoDesc || undefined,
           },
         });
 
@@ -184,6 +190,24 @@ export default async function EditProductPage(props: {
             }
           }
         }
+        await tx.modelInfo.upsert({
+          where: { productId: product.id },
+          update: {
+            height: data.modelInfo?.height || null,
+            weight: data.modelInfo?.weight || null,
+            chest: data.modelInfo?.chest || null,
+            waist: data.modelInfo?.waist || null,
+            hip: data.modelInfo?.hip || null,
+          },
+          create: {
+            productId: product.id,
+            height: data.modelInfo?.height || null,
+            weight: data.modelInfo?.weight || null,
+            chest: data.modelInfo?.chest || null,
+            waist: data.modelInfo?.waist || null,
+            hip: data.modelInfo?.hip || null,
+          },
+        });
       });
     } catch (error) {
       console.error("Ürün güncelleme hatası:", error);

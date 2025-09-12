@@ -11,6 +11,7 @@ import StepImages from "../product/StepImages";
 import StepProperties from "../product/StepProperties";
 import StepVariants from "../product/StepVariants";
 import StepBasicInfo from "../product/StepBasicInfo";
+import StepModelInfo from "../product/StepModelInfo";
 
 interface Props {
   categories: { id: string; name: string }[];
@@ -34,8 +35,13 @@ export default function StepProductForm({
   const methods = useForm<ProductFormData>({ defaultValues: initialData });
   const [step, setStep] = useState(0);
 
-  const steps = ["Temel Bilgiler", "Görseller", "Özellikler", "Varyantlar"];
-
+  const steps = [
+    "Temel Bilgiler",
+    "Görseller",
+    "Özellikler",
+    "Varyantlar",
+    "Model Bilgileri",
+  ];
   const nextStep = () => setStep((s) => Math.min(s + 1, steps.length - 1));
   const prevStep = () => setStep((s) => Math.max(s - 1, 0));
   const goToStep = (index: number) => setStep(index);
@@ -82,6 +88,7 @@ export default function StepProductForm({
               uploadImage={uploadImage}
             />
           )}
+          {step === 4 && <StepModelInfo />}
         </div>
 
         {/* Step Buttons */}

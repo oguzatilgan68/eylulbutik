@@ -30,15 +30,22 @@ export default function CartPage() {
   const [coupon, setCoupon] = useState("");
   const [couponMessage, setCouponMessage] = useState("");
   const [loading, setLoading] = useState(true);
-  const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
 
   const router = useRouter();
 
-  // 🛒 Sepeti çek
   useEffect(() => {
     const fetchCart = async () => {
       try {
         const res = await fetch("/api/cart");
+        if (res.status === 401) {
+          router.push("/login");
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error("Beklenmeyen hata oluştu");
+        }
+
         const data = await res.json();
         setCartItems(data.items);
       } catch (err) {
@@ -47,16 +54,10 @@ export default function CartPage() {
         setLoading(false);
       }
     };
-    fetchCart();
-  }, []);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const { left, top, width, height } =
-      e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - left) / width) * 100;
-    const y = ((e.clientY - top) / height) * 100;
-    setZoomPos({ x, y });
-  };
+    fetchCart();
+  }, [router]);
+
   // 💰 Ara toplam hesapla
   useEffect(() => {
     setSubtotal(
