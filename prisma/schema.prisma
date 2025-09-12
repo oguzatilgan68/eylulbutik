@@ -23,6 +23,8 @@ model User {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   Review       Review[]
+    returnRequests ReturnRequest[] 
+
 }
 
 enum Role {
@@ -218,6 +220,8 @@ model Order {
   shipment      Shipment?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @default(now()) @updatedAt
+  returnRequests ReturnRequest[]   // 👈 eklendi
+
 }
 
 enum OrderStatus {
@@ -239,7 +243,9 @@ model OrderItem {
   name      String
   qty       Int
   unitPrice Decimal         @db.Decimal(10, 2)
+  returnItems ReturnItem[]  // 👈 eklendi
 }
+
 model PropertyType {
   id       String           @id @default(uuid())
   name     String           @unique
@@ -274,6 +280,7 @@ model Payment {
   status   PaymentStatus @default(PENDING)
   txId     String?
   raw      Json?
+ refunds  Refund[]      // 👈 eklendi
 }
 
 enum PaymentStatus {
@@ -283,6 +290,61 @@ enum PaymentStatus {
   FAILED
   REFUNDED
   CANCELED
+}
+model ReturnRequest {
+  id          String        @id @default(uuid())
+  orderId     String
+  order       Order         @relation(fields: [orderId], references: [id])
+  userId      String?
+  user        User?         @relation(fields: [userId], references: [id])
+  status      ReturnStatus  @default(PENDING)
+  reason      String?       // Genel iade sebebi
+  comment     String?       // Müşteri ek açıklaması
+  items       ReturnItem[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  refunds     Refund[]      // 👈 eklendi
+
+}
+
+model ReturnItem {
+  id              String        @id @default(uuid())
+  returnRequestId String
+  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id])
+  orderItemId     String
+  orderItem       OrderItem     @relation(fields: [orderItemId], references: [id])
+  qty             Int           @default(1)  // Kaç adet iade ediliyor
+  status          ReturnStatus  @default(PENDING)
+  reason          String?       // Ürün bazlı sebep
+}
+model Refund {
+  id             String        @id @default(uuid())
+  paymentId      String
+  payment        Payment       @relation(fields: [paymentId], references: [id])
+  returnRequestId String?
+  returnRequest  ReturnRequest? @relation(fields: [returnRequestId], references: [id])
+  amount         Decimal       @db.Decimal(10, 2)  // İade edilen tutar
+  status         RefundStatus  @default(PENDING)
+  txId           String?       // Ödeme sağlayıcıdan dönen işlem numarası
+  reason         String?
+  raw            Json?         // Ödeme sağlayıcıdan gelen ham veri
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+enum RefundStatus {
+  PENDING     // İade başlatıldı ama henüz sonuçlanmadı
+  SUCCEEDED   // Başarılı
+  FAILED      // Başarısız
+  CANCELED    // İade iptal edildi
+}
+
+enum ReturnStatus {
+  PENDING      // Talep alındı
+  APPROVED     // Onaylandı
+  REJECTED     // Reddedildi
+  RECEIVED     // Ürün teslim alındı
+  REFUNDED     // Ücret iadesi yapıldı
 }
 
 model Shipment {

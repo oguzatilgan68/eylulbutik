@@ -15,6 +15,12 @@ interface Variant {
   attributes: Attribute[];
 }
 
+interface Property {
+  id: string;
+  key: string; // propertyType.name
+  value: string; // propertyValue.value
+}
+
 interface SafeProduct {
   id: string;
   name: string;
@@ -35,6 +41,7 @@ interface SafeProduct {
   } | null;
   brand: { id: string; name: string } | null;
   variants: Variant[];
+  properties: Property[];
 }
 
 interface ProductPageProps {
@@ -62,6 +69,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
           },
         },
       },
+      properties: {
+        include: {
+          propertyType: true,
+          propertyValue: true,
+        },
+      },
     },
   });
 
@@ -70,7 +83,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <p className="text-gray-700 dark:text-gray-300 p-8">Ürün bulunamadı.</p>
     );
 
-  // Decimal → number dönüşümü ve attributes key/value mapping
+  // Decimal → number dönüşümü ve attributes & properties mapping
   const safeProduct: SafeProduct = {
     ...product,
     price: product.price ? Number(product.price) : 0,
@@ -82,6 +95,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
         key: a.value.type.name,
         value: a.value.value,
       })),
+    })),
+    properties: product.properties.map((p: any) => ({
+      id: p.id,
+      key: p.propertyType.name,
+      value: p.propertyValue.value,
     })),
   };
 

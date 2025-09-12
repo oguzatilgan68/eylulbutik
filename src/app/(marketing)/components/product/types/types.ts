@@ -22,6 +22,7 @@ export type PropertyType = {
 
 export type PropertyValueInput = {
   propertyTypeId: string;
+  propertyValueId: string;
   value: string;
 };
 

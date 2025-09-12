@@ -1,18 +1,26 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
-import Reviews from "@/app/(marketing)/components/product/Reviews";
-import WishlistButton from "@/app/(marketing)/components/product/WishlistButton";
+
 import { toPriceString } from "@/app/(marketing)/lib/money";
+import WishlistButton from "@/app/(marketing)/components/product/WishlistButton";
 import AddToCartButton from "@/app/(marketing)/components/product/AddToCartButton";
+import Reviews from "@/app/(marketing)/components/ui/product/tabs/Reviews";
+import InstallmentTab from "@/app/(marketing)/components/ui/product/tabs/InstallmentTab";
+import ReturnTab from "@/app/(marketing)/components/ui/product/tabs/ReturnTab";
+import DetailsTab from "@/app/(marketing)/components/ui/product/tabs/DetailsTab";
 
-interface ProductClientProps {
-  product: any;
-}
+// Sekmeler
+const TABS = [
+  { key: "details", label: "Ürün Özellikleri" },
+  { key: "model", label: "Model Bilgileri" },
+  { key: "reviews", label: "Yorumlar" },
+  { key: "installment", label: "Taksit Seçenekleri" },
+  { key: "return", label: "İade Koşulları" },
+];
 
-export default function ProductClient({ product }: ProductClientProps) {
-  // Seçilen attribute ve görsel index
+export default function ProductClient({ product }: any) {
   const [selectedAttributes, setSelectedAttributes] = useState<
     Record<string, string>
   >({});
@@ -20,15 +28,7 @@ export default function ProductClient({ product }: ProductClientProps) {
   const [zoomPos, setZoomPos] = useState<
     Record<string, { x: number; y: number }>
   >({});
-
-  // Mouse hover için zoom pozisyonu
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>, id: string) => {
-    const { left, top, width, height } =
-      e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - left) / width) * 100;
-    const y = ((e.clientY - top) / height) * 100;
-    setZoomPos((prev) => ({ ...prev, [id]: { x, y } }));
-  };
+  const [activeTab, setActiveTab] = useState<string>("details");
 
   // Attribute tiplerini ayıkla
   const attributeTypes = useMemo(() => {
@@ -43,34 +43,50 @@ export default function ProductClient({ product }: ProductClientProps) {
     return types;
   }, [product.variants]);
 
-  // Seçilen attribute kombinasyonuna göre varyant
+  // İlk varyasyonu otomatik seç
+  useEffect(() => {
+    if (product.variants.length > 0) {
+      const firstVariantAttributes: Record<string, string> = {};
+      product.variants[0].attributes.forEach((attr: any) => {
+        firstVariantAttributes[attr.key] = attr.value;
+      });
+      setSelectedAttributes(firstVariantAttributes);
+      setSelectedImageIdx(0); // ilk varyasyon görseli
+    }
+  }, [product.variants]);
+
+  // Seçilen varyant
   const selectedVariant = useMemo(() => {
     return product.variants.find((v: any) =>
       v.attributes.every((a: any) => selectedAttributes[a.key] === a.value)
     );
   }, [selectedAttributes, product.variants]);
 
-  // Fiyat ve stok durumu
   const displayPrice = selectedVariant ? selectedVariant.price : product.price;
   const inStock = selectedVariant
     ? selectedVariant.stockQty > 0
     : product.inStock;
-
-  // Görseller
   const images =
     selectedVariant?.images?.length > 0
       ? selectedVariant.images
       : product.images;
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>, id: string) => {
+    const { left, top, width, height } =
+      e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - left) / width) * 100;
+    const y = ((e.clientY - top) / height) * 100;
+    setZoomPos((prev) => ({ ...prev, [id]: { x, y } }));
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Ürün Ana Bölüm */}
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Sol: Görseller */}
-        <div className="lg:w-1/2 flex flex-col gap-4">
-          {/* Ana Görsel */}
+        {/* Sol Görseller */}
+        <div className="lg:w-5/12 flex flex-col gap-4">
           <div
-            className="relative w-full aspect-[1/1.2] overflow-hidden rounded-2xl border dark:border-gray-700 group cursor-zoom-in"
+            className="relative w-full max-h-[500px] aspect-[3/4] overflow-hidden rounded-xl border dark:border-gray-700 group cursor-zoom-in"
             onMouseMove={(e) => handleMouseMove(e, product.id)}
             onMouseLeave={() =>
               setZoomPos((prev) => ({
@@ -79,12 +95,12 @@ export default function ProductClient({ product }: ProductClientProps) {
               }))
             }
           >
-            {images?.[selectedImageIdx] ? (
+            {images[selectedImageIdx] ? (
               <Image
                 src={images[selectedImageIdx].url}
                 alt={product.name}
                 fill
-                className="object-cover w-full h-full transition-transform duration-200 ease-out group-hover:scale-150"
+                className="object-cover w-full h-full transition-transform duration-300 ease-out group-hover:scale-105"
                 style={{
                   transformOrigin: `${zoomPos[product.id]?.x ?? 50}% ${
                     zoomPos[product.id]?.y ?? 50
@@ -98,13 +114,13 @@ export default function ProductClient({ product }: ProductClientProps) {
             )}
           </div>
 
-          {/* Thumbnail Slider */}
+          {/* Thumbnail */}
           <div className="flex gap-3 mt-3 overflow-x-auto pb-2">
             {images.map((img: any, idx: number) => (
               <button
                 key={idx}
                 onClick={() => setSelectedImageIdx(idx)}
-                className={`relative flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
+                className={`relative flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
                   selectedImageIdx === idx
                     ? "border-pink-500 shadow-md"
                     : "border-gray-300 dark:border-gray-600"
@@ -113,17 +129,17 @@ export default function ProductClient({ product }: ProductClientProps) {
                 <Image
                   src={img.url}
                   alt={product.name}
-                  width={60}
-                  height={60}
-                  className="object-cover w-14 h-14"
+                  width={100}
+                  height={80}
+                  className="object-cover w-12 lg:w-20 lg:h-20"
                 />
               </button>
             ))}
           </div>
         </div>
 
-        {/* Sağ: Ürün Bilgileri */}
-        <div className="lg:w-1/2 flex flex-col gap-6">
+        {/* Sağ Bilgiler */}
+        <div className="lg:w-7/12 flex flex-col gap-6">
           <div className="flex items-start justify-between gap-3">
             <h1 className="text-2xl md:text-3xl font-bold dark:text-white leading-tight">
               {product.name}
@@ -131,13 +147,11 @@ export default function ProductClient({ product }: ProductClientProps) {
             <WishlistButton productId={product.id} />
           </div>
 
-          {/* Marka & Kategori */}
           <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-300">
             {product.brand && <span>Marka: {product.brand.name}</span>}
             {product.category && <span>Kategori: {product.category.name}</span>}
           </div>
 
-          {/* Attribute Seçimi */}
           {Object.entries(attributeTypes).map(([key, values]) => (
             <div key={key} className="mt-2">
               <h4 className="text-sm font-semibold dark:text-white mb-2">
@@ -163,20 +177,11 @@ export default function ProductClient({ product }: ProductClientProps) {
             </div>
           ))}
 
-          {/* Fiyat ve Stok */}
           <p className="text-2xl font-semibold text-pink-600 dark:text-pink-400">
             ₺{toPriceString(displayPrice)}
           </p>
           {!inStock && <p className="text-red-500 text-sm">Stokta Yok</p>}
 
-          {/* Ürün Açıklaması */}
-          {product.description && (
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-              {product.description}
-            </p>
-          )}
-
-          {/* Sepete Ekle */}
           <AddToCartButton
             productId={product.id}
             variantId={selectedVariant?.id || null}
@@ -188,24 +193,38 @@ export default function ProductClient({ product }: ProductClientProps) {
         </div>
       </div>
 
-      {/* Ürün Detayları & Yorumlar */}
-      <div className="mt-12 grid gap-10">
-        <section>
-          <h2 className="text-2xl font-semibold dark:text-white mb-4">
-            Ürün Detayları
-          </h2>
-          <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-            {product.description ||
-              "Bu ürün için detaylı bilgi bulunmamaktadır."}
-          </p>
-        </section>
+      {/* Sabit Sekmeler */}
+      <div className="mt-12">
+        <div className="flex gap-4 border-b dark:border-gray-700">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`py-2 px-4 -mb-px border-b-2 font-semibold transition-all ${
+                activeTab === tab.key
+                  ? "border-pink-500 text-pink-500"
+                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-pink-500"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-        <section>
-          <h2 className="text-2xl font-semibold dark:text-white mb-4">
-            Yorumlar
-          </h2>
-          <Reviews productId={product.id} />
-        </section>
+        <div className="mt-6 text-gray-700 dark:text-gray-300">
+          {activeTab === "details" && (
+            <DetailsTab properties={product.properties} />
+          )}
+          {activeTab === "model" && (
+            <div>
+              <h3 className="font-semibold mb-2">Model Bilgileri</h3>
+              <p>{product.modelInfo || "Model bilgisi mevcut değil."}</p>
+            </div>
+          )}
+          {activeTab === "reviews" && <Reviews productId={product.id} />}
+          {activeTab === "installment" && <InstallmentTab />}
+          {activeTab === "return" && <ReturnTab />}
+        </div>
       </div>
     </div>
   );

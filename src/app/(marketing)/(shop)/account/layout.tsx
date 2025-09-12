@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import LogoutButton from "../../components/ui/LogoutButton";
 
 export const metadata = {
   title: "Hesabım",
@@ -23,6 +24,12 @@ export default function AccountLayout({
               Kullanıcı Bilgilerim
             </Link>
             <Link
+              href="/account/returns"
+              className="px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-800"
+            >
+              İadelerim
+            </Link>
+            <Link
               href="/account/orders"
               className="px-4 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-800"
             >
@@ -40,6 +47,7 @@ export default function AccountLayout({
             >
               Adreslerim
             </Link>
+            <LogoutButton />
           </nav>
           <div className="md:flex-1 bg-white dark:bg-gray-800 p-6 rounded shadow">
             {children}

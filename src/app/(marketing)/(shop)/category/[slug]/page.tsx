@@ -1,4 +1,5 @@
 import { ProductList } from "@/app/(marketing)/components/ui/product/ProductList";
+import { db } from "@/app/(marketing)/lib/db";
 
 export default async function CategoryPage({
   params,
@@ -6,12 +7,43 @@ export default async function CategoryPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+
+  // Kategoriye ait ürünler ve productPropertylerini include ile çek
+  const products = await db.product.findMany({
+    where: { category: { slug } },
+    include: {
+      properties: {
+        include: {
+          propertyType: true, // key
+          propertyValue: true, // value
+        },
+      },
+    },
+  });
+
+  // attributeTypes objesini oluştur
+  const attributeTypes: { [key: string]: string[] } = {};
+
+  products.forEach((product) => {
+    product.properties.forEach((prop) => {
+      const key = prop.propertyType.name;
+      const value = prop.propertyValue.value;
+
+      if (!attributeTypes[key]) {
+        attributeTypes[key] = [];
+      }
+      if (!attributeTypes[key].includes(value)) {
+        attributeTypes[key].push(value);
+      }
+    });
+  });
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6 dark:text-white">
         {slug.replace("-", " ")}
       </h1>
-      <ProductList categorySlug={slug} />
+      <ProductList categorySlug={slug} attributeTypes={attributeTypes} />
     </div>
   );
 }

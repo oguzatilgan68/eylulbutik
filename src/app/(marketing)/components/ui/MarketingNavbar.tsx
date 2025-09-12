@@ -110,8 +110,8 @@ export const MarketingNavbar: React.FC<{ categories: Category[] }> = ({
       <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
         {/* Logo + Mağaza adı */}
         <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-          <span className="bg-pink-500 text-white px-2 py-1 rounded">M</span>
-          ModaMizBir
+          <span className="bg-pink-500 text-white px-2 py-1 rounded">E</span>
+          Eylül Butik
         </Link>
 
         {/* Arama */}

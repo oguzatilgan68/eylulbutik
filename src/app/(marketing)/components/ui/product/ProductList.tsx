@@ -5,6 +5,7 @@ import { ProductCard } from "./ProductCard";
 
 interface ProductListProps {
   categorySlug?: string;
+  attributeTypes?: { [key: string]: string[] }; // Örn: { Renk: ['Kırmızı', 'Mavi'] }
 }
 
 interface Product {
@@ -15,10 +16,15 @@ interface Product {
   images: { url: string }[];
 }
 
-export const ProductList: React.FC<ProductListProps> = ({ categorySlug }) => {
+export const ProductList: React.FC<ProductListProps> = ({
+  categorySlug,
+  attributeTypes = {},
+}) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [sort, setSort] = useState("latest");
-  const [inStock, setInStock] = useState("all");
+  const [selectedAttributes, setSelectedAttributes] = useState<{
+    [key: string]: string;
+  }>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,9 +32,10 @@ export const ProductList: React.FC<ProductListProps> = ({ categorySlug }) => {
       setLoading(true);
       const params = new URLSearchParams();
       if (sort) params.set("sort", sort);
-      if (inStock) params.set("inStock", inStock);
       if (categorySlug) params.set("category", categorySlug);
-
+      if (Object.keys(selectedAttributes).length > 0) {
+        params.set("attributes", JSON.stringify(selectedAttributes));
+      }
       const res = await fetch(`/api/products?${params.toString()}`);
       const data = await res.json();
       setProducts(data);
@@ -36,11 +43,13 @@ export const ProductList: React.FC<ProductListProps> = ({ categorySlug }) => {
     };
 
     fetchProducts();
-  }, [sort, inStock, categorySlug]);
+  }, [sort, categorySlug, selectedAttributes]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* Filtre ve Sıralama */}
       <div className="flex flex-col sm:flex-row justify-between mb-6 gap-4">
+        {/* Sıralama */}
         <div>
           <label className="mr-2 font-medium">Sırala:</label>
           <select
@@ -52,21 +61,47 @@ export const ProductList: React.FC<ProductListProps> = ({ categorySlug }) => {
             <option value="price-asc">Fiyat: Artan</option>
             <option value="price-desc">Fiyat: Azalan</option>
             <option value="popular">Popüler</option>
+            <option value="most-favorited">En Çok Favorilenen</option>
+            <option value="best-selling">En Çok Satan</option>
+            <option value="highest-rated">En Çok Değerlendirilen</option>
           </select>
         </div>
+      </div>
 
-        <div>
-          <label className="mr-2 font-medium">Stokta:</label>
-          <select
-            className="border rounded px-2 py-1 dark:bg-gray-800 dark:text-gray-100"
-            value={inStock}
-            onChange={(e) => setInStock(e.target.value)}
-          >
-            <option value="all">Tümü</option>
-            <option value="true">Var</option>
-            <option value="false">Yok</option>
-          </select>
-        </div>
+      {/* Attribute Filtreleri (Yatay, modern) */}
+      {/* Attribute Filtreleri (Yatay Dropdown) */}
+      <div className="flex gap-4 mb-6 overflow-x-auto py-2 scrollbar-none">
+        {Object.entries(attributeTypes).map(([key, values]) => (
+          <div key={key} className="flex-shrink-0 min-w-[160px]">
+            <label className="block font-medium text-sm mb-1 dark:text-gray-200">
+              {key}
+            </label>
+            <select
+              className="w-full border rounded px-3 py-2 dark:bg-gray-800 dark:text-gray-100 cursor-pointer"
+              value={selectedAttributes[key] || ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSelectedAttributes((prev) => {
+                  const newAttrs = { ...prev };
+                  if (!value) {
+                    // "Tümü" seçildiyse key'i kaldır
+                    delete newAttrs[key];
+                  } else {
+                    newAttrs[key] = value;
+                  }
+                  return newAttrs;
+                });
+              }}
+            >
+              <option value="">Tümü</option>
+              {values.map((val) => (
+                <option key={val} value={val}>
+                  {val}
+                </option>
+              ))}
+            </select>
+          </div>
+        ))}
       </div>
 
       {/* İçerik */}

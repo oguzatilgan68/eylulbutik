@@ -1,14 +1,14 @@
-// app/account/addresses/page.tsx
 import React from "react";
 import Link from "next/link";
 import { db } from "@/app/(marketing)/lib/db";
 import { getAuthUserId } from "@/app/(marketing)/lib/auth";
 import AddressesClient from "./AddressesClient";
+import { redirect } from "next/navigation";
 
 export default async function AddressesPage() {
   const userId = await getAuthUserId();
   if (!userId) {
-    return <div>Lütfen giriş yapın.</div>;
+    redirect("/login");
   }
 
   const addresses = await db.address.findMany({

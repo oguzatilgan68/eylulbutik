@@ -1,32 +1,65 @@
-// app/api/products/route.ts
 import { db } from "@/app/(marketing)/lib/db";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
 
-  const category = searchParams.get("category") || undefined;
-  const minPrice = parseFloat(searchParams.get("minPrice") || "0");
-  const maxPrice = parseFloat(searchParams.get("maxPrice") || "999999");
-  const sort = searchParams.get("sort") || "newest"; // newest, price-asc, price-desc
+  const sort = searchParams.get("sort") || "latest";
+  const inStock = searchParams.get("inStock");
+  const category = searchParams.get("category");
+  const attributesParam = searchParams.get("attributes");
+  let attributes: { [key: string]: string } = {};
 
-  // Prisma sorgusu
+  if (attributesParam) attributes = JSON.parse(attributesParam);
+
+  // Product filtreleme
+  let where: any = {};
+  if (inStock === "true") {
+    where.inStock = true;
+  }
+  if (inStock === "false") {
+    where.inStock = false;
+  }
+  if (category) where.category = { slug: category };
+
+  // Attribute filtreleme ProductProperty üzerinden
+  if (Object.keys(attributes).length > 0) {
+    where.AND = Object.entries(attributes).map(([key, value]) => ({
+      properties: {
+        some: {
+          propertyType: { name: key },
+          propertyValue: { value: value },
+        },
+      },
+    }));
+  }
+
+  // Sıralama
   let orderBy: any = { createdAt: "desc" };
   if (sort === "price-asc") orderBy = { price: "asc" };
   if (sort === "price-desc") orderBy = { price: "desc" };
+  if (sort === "popular") orderBy = { wishlists: { _count: "desc" } };
+  if (sort === "most-favorited") orderBy = { wishlists: { _count: "desc" } };
+  if (sort === "best-selling") orderBy = { OrderItem: { _count: "desc" } };
+  if (sort === "highest-rated") orderBy = { ratingAvg: "desc" };
 
   const products = await db.product.findMany({
-    where: {
-      status: "PUBLISHED",
-      price: { gte: minPrice, lte: maxPrice },
-      categoryId: category
-        ? (
-            await db.category.findUnique({ where: { slug: category } })
-          )?.id
-        : undefined,
+    where,
+    include: {
+      images: true,
+      brand: true,
+      category: true,
+      properties: {
+        include: {
+          propertyType: true,
+          propertyValue: true,
+        },
+      },
+      wishlists: true,
+      Review: true,
+      OrderItem: true,
     },
     orderBy,
-    include: { images: true },
   });
 
   return NextResponse.json(products);
