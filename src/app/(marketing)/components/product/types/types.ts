@@ -34,8 +34,8 @@ export type VariantInput = {
   attributeValueIds: string[]; // Ordered list of selected attribute value IDs
   images: { url: string; alt?: string }[];
 };
-
 export type ProductFormData = {
+  id?: string;
   name: string;
   price: string;
   sku: string;
@@ -47,11 +47,14 @@ export type ProductFormData = {
   inStock: boolean;
   variants: VariantInput[];
   properties?: PropertyValueInput[];
-  modelInfo?: {
+  modelSelection?: {
+    productModelId?: string;
+    modelInfoId?: string;
     height?: number;
     weight?: number;
     chest?: number;
     waist?: number;
     hip?: number;
+    size: string;
   };
 };

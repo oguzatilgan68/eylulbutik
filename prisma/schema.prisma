@@ -78,7 +78,7 @@ model Product {
   category    Category         @relation(fields: [categoryId], references: [id])
   images      ProductImage[]   
   variants    ProductVariant[] 
-  price       Decimal?         @db.Decimal(10, 2)  // Opsiyonel: temel fiyat
+  price       Decimal?         @db.Decimal(10, 2)
   currency    String           @default("TRY")
   status      ProductStatus    @default(DRAFT)
   inStock     Boolean          @default(true)
@@ -91,18 +91,29 @@ model Product {
   Review      Review[]
   wishlists   Wishlist[]       @relation("WishlistProducts")
   properties  ProductProperty[]
-  modelInfo   ModelInfo?
+  productModels ProductModel[]
 }
+
 model ModelInfo {
-  id        String   @id @default(cuid())
-  product   Product  @relation(fields: [productId], references: [id])
-  productId String   @unique 
-  height    Int?
-  weight    Int?
-  chest     Int?
-  waist     Int?
-  hip       Int?
+  id      String  @id @default(cuid())
+  name    String  // Mankenin adı
+  height  Int?
+  weight  Int?
+  chest   Int?
+  waist   Int?
+  hip     Int?
+  productModels ProductModel[]
 }
+model ProductModel {
+  id         String     @id @default(cuid())
+  product    Product    @relation(fields: [productId], references: [id])
+  productId  String
+  modelInfo  ModelInfo  @relation(fields: [modelInfoId], references: [id])
+  modelInfoId String
+  size       String     // Örn: S, M, L, 36, 38 vs.
+  createdAt  DateTime   @default(now())
+}
+
 
 model ProductVariant {
   id         String                 @id @default(uuid())
@@ -360,10 +371,12 @@ model Shipment {
   id         String         @id @default(uuid())
   orderId    String         @unique
   order      Order          @relation(fields: [orderId], references: [id])
-  provider   String
+  provider   ShippingProvider
   trackingNo String?
   status     ShipmentStatus @default(PENDING)
   raw        Json?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 enum ShipmentStatus {
@@ -374,6 +387,17 @@ enum ShipmentStatus {
   DELIVERED
   RETURNED
   CANCELED
+}
+
+enum ShippingProvider {
+  YURTICI
+  MNG
+  ARAS
+  UPS
+  PTT
+  SURAT
+  TRENDYOL_EXPRESS
+  HEPSIJET
 }
 
 model Review {

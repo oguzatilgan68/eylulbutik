@@ -88,7 +88,14 @@ export default function StepProductForm({
               uploadImage={uploadImage}
             />
           )}
-          {step === 4 && <StepModelInfo />}
+          {step === 4 && (
+            <StepModelInfo
+              key={step}
+              onSelectModel={(id) => {
+                methods.setValue("modelSelection.modelInfoId", id);
+              }}
+            />
+          )}
         </div>
 
         {/* Step Buttons */}

@@ -8,7 +8,7 @@ export default function LogoutButton() {
   const router = useRouter();
 
   const handleLogout = async () => {
-    await logout(); // context logout fonksiyonu
+    logout(); // context logout fonksiyonu
     router.push("/"); // logout sonrası yönlendirme
   };
 

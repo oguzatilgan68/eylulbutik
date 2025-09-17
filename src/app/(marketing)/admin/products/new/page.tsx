@@ -121,20 +121,6 @@ export default async function NewProductPage() {
         })
       );
     }
-    // 4. Model Info
-    if (data.modelInfo) {
-      await db.modelInfo.create({
-        data: {
-          productId: product.id,
-          height: data.modelInfo.height || null,
-          weight: data.modelInfo.weight || null,
-          chest: data.modelInfo.chest || null,
-          waist: data.modelInfo.waist || null,
-          hip: data.modelInfo.hip || null,
-        },
-      });
-    }
-
     redirect("/admin/products");
   };
   // DB'den gelen raw data

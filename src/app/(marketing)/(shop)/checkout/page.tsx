@@ -1,29 +1,55 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import AddressStep from "../../components/checkout/AddressStep";
 import PaymentStep from "../../components/checkout/PaymentStep";
-import OrderSummary from "../../components/checkout/OrderSummary";
 import SummaryStep from "../../components/checkout/SummaryStep";
+import OrderSummary from "../../components/ui/OrderSummary";
 
 export default function CheckoutPage() {
+  const router = useRouter();
   const [step, setStep] = useState(1); // 1: Adres, 2: Ödeme, 3: Özet
-  const [cartItems, setCartItems] = useState<any[]>([]); // Sepet verisi fetch ile gelmeli
-  const [orderData, setOrderData] = useState<any>({}); // Adres & ödeme verisi
+  const [cartItems, setCartItems] = useState<any[]>([]);
+  const [orderData, setOrderData] = useState<any>({});
+  const [subtotal, setSubtotal] = useState(0);
+  const [discount, setDiscount] = useState(0);
+  const [finalTotal, setFinalTotal] = useState(0);
+
   const nextStep = () => setStep((prev) => Math.min(prev + 1, 3));
   const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
+
   const getCartItems = async () => {
     try {
       const res = await fetch("/api/cart");
       const data = await res.json();
       setCartItems(data.items);
+
+      // Ara toplam hesapla
+      const total = data.items.reduce(
+        (acc: number, item: any) => acc + item.unitPrice * item.qty,
+        0
+      );
+      setSubtotal(total);
+      setFinalTotal(total - discount);
     } catch (err) {
       console.error(err);
     }
   };
+
   useEffect(() => {
     getCartItems();
   }, []);
+  // Ara toplam ve final toplam otomatik güncellensin
+  useEffect(() => {
+    const total = cartItems.reduce(
+      (acc: number, item: any) => acc + item.unitPrice * item.qty,
+      0
+    );
+    setSubtotal(total);
+    setFinalTotal(Math.max(0, total - discount)); // kupon ile otomatik hesap
+  }, [cartItems, discount]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6 dark:text-white">Ödeme</h1>
@@ -41,8 +67,8 @@ export default function CheckoutPage() {
             </div>
             {s < 3 && (
               <div
-                className={`h-1 bg-gray-400 dark:bg-gray-700 mt-1 ${
-                  step > s ? "bg-blue-600" : ""
+                className={`h-1 mt-1 ${
+                  step > s ? "bg-blue-600" : "bg-gray-400 dark:bg-gray-700"
                 }`}
               />
             )}
@@ -73,7 +99,15 @@ export default function CheckoutPage() {
 
         {/* Sağ: Sipariş Özeti */}
         <div className="w-full lg:w-1/3">
-          <OrderSummary cartItems={cartItems} discount={0} />
+          <OrderSummary
+            subtotal={subtotal}
+            initialDiscount={discount}
+            onApply={(d, f) => {
+              setDiscount(d);
+              setFinalTotal(f);
+            }}
+            onCheckout={() => router.push("/checkout")}
+          />
         </div>
       </div>
     </div>

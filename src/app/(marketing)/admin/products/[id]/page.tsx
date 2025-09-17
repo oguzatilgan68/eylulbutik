@@ -21,7 +21,7 @@ export default async function EditProductPage(props: {
       category: true,
       brand: true,
       properties: { include: { propertyType: true, propertyValue: true } },
-      modelInfo: true,
+      productModels: { include: { modelInfo: true } },
       variants: {
         include: {
           images: true,
@@ -62,15 +62,18 @@ export default async function EditProductPage(props: {
         alt: img.alt || "",
       })),
     })),
-    modelInfo: product.modelInfo
+    modelSelection: product.productModels[0]
       ? {
-          height: product.modelInfo.height ?? undefined,
-          weight: product.modelInfo.weight ?? undefined,
-          chest: product.modelInfo.chest ?? undefined,
-          waist: product.modelInfo.waist ?? undefined,
-          hip: product.modelInfo.hip ?? undefined,
+          productModelId: product.productModels[0].id,
+          modelInfoId: product.productModels[0].modelInfoId,
+          height: product.productModels[0].modelInfo.height ?? undefined,
+          weight: product.productModels[0].modelInfo?.weight ?? undefined,
+          chest: product.productModels[0].modelInfo?.chest ?? undefined,
+          waist: product.productModels[0].modelInfo?.waist ?? undefined,
+          hip: product.productModels[0].modelInfo?.hip ?? undefined,
+          size: product.productModels[0].size,
         }
-      : {},
+      : undefined,
   };
 
   // 🔹 Dropdown verileri
@@ -190,24 +193,33 @@ export default async function EditProductPage(props: {
             }
           }
         }
-        await tx.modelInfo.upsert({
-          where: { productId: product.id },
-          update: {
-            height: data.modelInfo?.height || null,
-            weight: data.modelInfo?.weight || null,
-            chest: data.modelInfo?.chest || null,
-            waist: data.modelInfo?.waist || null,
-            hip: data.modelInfo?.hip || null,
-          },
-          create: {
-            productId: product.id,
-            height: data.modelInfo?.height || null,
-            weight: data.modelInfo?.weight || null,
-            chest: data.modelInfo?.chest || null,
-            waist: data.modelInfo?.waist || null,
-            hip: data.modelInfo?.hip || null,
-          },
-        });
+
+        // 6. ModelInfo ilişkilendirme
+        if (data.modelSelection?.modelInfoId) {
+          const existingProductModel = await tx.productModel.findFirst({
+            where: { productId: product.id },
+          });
+
+          if (existingProductModel) {
+            // varsa güncelle
+            await tx.productModel.update({
+              where: { id: existingProductModel.id },
+              data: {
+                modelInfoId: data.modelSelection.modelInfoId,
+                size: data.modelSelection.size,
+              },
+            });
+          } else {
+            // yoksa oluştur
+            await tx.productModel.create({
+              data: {
+                productId: product.id,
+                modelInfoId: data.modelSelection.modelInfoId,
+                size: data.modelSelection.size,
+              },
+            });
+          }
+        }
       });
     } catch (error) {
       console.error("Ürün güncelleme hatası:", error);
