@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Button } from "@/app/(marketing)/components/ui/button";
 import { Heart, X } from "lucide-react";
 import { useState } from "react";
+import { redirect } from "next/navigation";
 
 interface ProductCardProps {
   product: {
@@ -86,7 +87,10 @@ export const ProductCard = ({
         </p>
 
         {/* Sepete Ekle butonu */}
-        <Button className="mt-2 w-full bg-pink-500 hover:bg-pink-600 text-white">
+        <Button
+          onClick={() => redirect("/product/" + product.slug)}
+          className="mt-2 w-full bg-pink-500 hover:bg-pink-600 text-white"
+        >
           Sepete Ekle
         </Button>
       </div>
