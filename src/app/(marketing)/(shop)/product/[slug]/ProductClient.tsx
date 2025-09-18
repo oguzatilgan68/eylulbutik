@@ -216,7 +216,14 @@ export default function ProductClient({ product }: any) {
           {activeTab === "details" && (
             <DetailsTab properties={product.properties} />
           )}
-          {activeTab === "model" && <ModelTab modelInfo={product.modelInfo} />}
+          {activeTab === "model" && (
+            <ModelTab
+              modelInfo={{
+                ...product.modelInfo,
+                size: product.modelSize,
+              }}
+            />
+          )}{" "}
           {activeTab === "reviews" && <Reviews productId={product.id} />}
           {activeTab === "installment" && <InstallmentTab />}
           {activeTab === "return" && <ReturnTab />}

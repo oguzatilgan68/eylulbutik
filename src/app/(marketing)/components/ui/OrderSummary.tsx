@@ -1,25 +1,28 @@
-// components/OrderSummary.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useCoupon } from "../../context/CouponContext";
 
 interface OrderSummaryProps {
   subtotal: number;
-  initialDiscount?: number;
   onApply?: (discount: number, final: number) => void;
   onCheckout?: () => void;
+  showCheckoutButton?: boolean;
 }
 
 export default function OrderSummary({
   subtotal,
-  initialDiscount = 0,
   onApply,
   onCheckout,
+  showCheckoutButton = true,
 }: OrderSummaryProps) {
-  const [coupon, setCoupon] = useState("");
-  const [discountAmount, setDiscountAmount] = useState(initialDiscount);
-  const [finalAmount, setFinalAmount] = useState(subtotal - initialDiscount);
+  const { coupon, setCoupon, clearCoupon } = useCoupon();
+  const [code, setCode] = useState(coupon?.code || ""); // input için
+  const [discountAmount, setDiscountAmount] = useState(coupon?.discount || 0);
+  const [finalAmount, setFinalAmount] = useState(
+    coupon?.final || subtotal - (coupon?.discount || 0)
+  );
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -30,7 +33,7 @@ export default function OrderSummary({
   }, [subtotal, discountAmount]);
 
   const applyCoupon = async () => {
-    if (!coupon.trim()) {
+    if (!code.trim()) {
       setMessage("Lütfen kupon kodunu girin");
       return;
     }
@@ -43,7 +46,7 @@ export default function OrderSummary({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          code: coupon.toUpperCase(),
+          code: code.toUpperCase(),
           orderTotal: subtotal,
         }),
       });
@@ -51,11 +54,17 @@ export default function OrderSummary({
       const data = await res.json();
 
       if (res.ok && data.data) {
+        setCoupon({
+          code: code.toUpperCase(),
+          discount: data.data.discount,
+          final: data.data.final,
+        });
         setDiscountAmount(data.data.discount);
         setFinalAmount(data.data.final);
         setMessage("Kupon başarıyla uygulandı!");
         onApply?.(data.data.discount, data.data.final);
       } else {
+        clearCoupon();
         setDiscountAmount(0);
         setFinalAmount(subtotal);
         setMessage(data.error || "Kupon uygulanamadı");
@@ -63,9 +72,10 @@ export default function OrderSummary({
       }
     } catch (err) {
       console.error(err);
-      setMessage("Sunucu hatası, lütfen tekrar deneyin");
+      clearCoupon();
       setDiscountAmount(0);
       setFinalAmount(subtotal);
+      setMessage("Sunucu hatası, lütfen tekrar deneyin");
       onApply?.(0, subtotal);
     } finally {
       setLoading(false);
@@ -73,7 +83,8 @@ export default function OrderSummary({
   };
 
   const removeCoupon = () => {
-    setCoupon("");
+    clearCoupon();
+    setCode("");
     setDiscountAmount(0);
     setFinalAmount(subtotal);
     setMessage("Kupon kaldırıldı");
@@ -97,16 +108,19 @@ export default function OrderSummary({
         <input
           type="text"
           placeholder="Kupon kodu"
-          value={coupon}
-          onChange={(e) => setCoupon(e.target.value)}
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
           className="flex-1 border px-2 py-1 rounded dark:bg-gray-700 dark:text-white"
         />
-        <button
-          onClick={applyCoupon}
-          className="bg-pink-500 text-white px-4 py-1 rounded hover:bg-pink-600 transition"
-        >
-          Uygula
-        </button>
+
+        {discountAmount === 0 ? (
+          <button
+            onClick={applyCoupon}
+            className="bg-pink-500 text-white px-4 py-1 rounded hover:bg-pink-600 transition disabled:opacity-50"
+          >
+            {loading ? "Kontrol..." : "Uygula"}
+          </button>
+        ) : null}
         {discountAmount > 0 && (
           <button
             onClick={removeCoupon}
@@ -118,12 +132,14 @@ export default function OrderSummary({
       </div>
       {message && <p className="text-sm text-red-500">{message}</p>}
 
-      <button
-        onClick={onCheckout ?? (() => router.push("/checkout"))}
-        className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition cursor-pointer"
-      >
-        Ödeme Yap
-      </button>
+      {showCheckoutButton && (
+        <button
+          onClick={onCheckout ?? (() => router.push("/checkout"))}
+          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition cursor-pointer"
+        >
+          Ödeme Yap
+        </button>
+      )}
     </div>
   );
 }

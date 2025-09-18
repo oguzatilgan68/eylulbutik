@@ -107,6 +107,7 @@ export default function CheckoutPage() {
               setFinalTotal(f);
             }}
             onCheckout={() => router.push("/checkout")}
+            showCheckoutButton={false} // Sadece özet adımında göster
           />
         </div>
       </div>

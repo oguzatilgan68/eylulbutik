@@ -4,6 +4,7 @@ interface ModelInfo {
   chest?: number | null;
   waist?: number | null;
   hip?: number | null;
+  size?: string | null;
 }
 
 export default function ModelTab({ modelInfo }: { modelInfo?: ModelInfo }) {
@@ -27,6 +28,10 @@ export default function ModelTab({ modelInfo }: { modelInfo?: ModelInfo }) {
     { label: "Göğüs", value: modelInfo.chest ? `${modelInfo.chest} cm` : null },
     { label: "Bel", value: modelInfo.waist ? `${modelInfo.waist} cm` : null },
     { label: "Kalça", value: modelInfo.hip ? `${modelInfo.hip} cm` : null },
+    {
+      label: "Üzerindeki Beden",
+      value: modelInfo.size ? `${modelInfo.size}` : null,
+    },
   ];
 
   return (

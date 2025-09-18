@@ -1,10 +1,8 @@
 import { db } from "@/app/(marketing)/lib/db";
 import { NextResponse } from "next/server";
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { id } = params;
   const body = await req.json();
   const { values } = body;
@@ -35,10 +33,8 @@ export async function PATCH(
 }
 
 // PropertyType ve bağlı değerleri sil
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { id } = params;
 
   try {

@@ -34,7 +34,6 @@ const SearchBar = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(search.trim());
     if (search.trim()) {
       setResults({ products: [], categories: [] });
       setSearch("");

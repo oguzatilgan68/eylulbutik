@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/app/(marketing)/lib/db";
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const type = await db.propertyType.findUnique({
     where: { id: params.id },
     include: { values: true },
@@ -9,10 +10,8 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   return NextResponse.json(type);
 }
 
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const body = await req.json();
   const type = await db.propertyType.update({
     where: { id: params.id },
@@ -28,10 +27,8 @@ export async function PUT(
   return NextResponse.json(type);
 }
 
-export async function DELETE(
-  _: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(_: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   await db.propertyType.delete({ where: { id: params.id } });
   return NextResponse.json({ success: true });
 }

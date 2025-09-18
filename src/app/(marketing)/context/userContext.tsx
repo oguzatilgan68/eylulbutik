@@ -7,6 +7,7 @@ import React, {
   useState,
   ReactNode,
 } from "react";
+import { CouponProvider } from "./CouponContext";
 
 interface User {
   id: string;
@@ -41,7 +42,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <UserContext.Provider value={{ user, setUser, logout }}>
-      {children}
+      <CouponProvider>{children}</CouponProvider>
     </UserContext.Provider>
   );
 };

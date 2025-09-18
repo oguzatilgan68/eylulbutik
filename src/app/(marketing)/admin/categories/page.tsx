@@ -1,6 +1,6 @@
-import React from "react";
 import Link from "next/link";
-import { db } from "../../lib/db";
+import { db } from "@/app/(marketing)/lib/db";
+import React from "react";
 
 export default async function AdminCategoriesPage() {
   const categories = await db.category.findMany({
@@ -10,7 +10,7 @@ export default async function AdminCategoriesPage() {
   });
 
   const renderCategory = (category: any, level = 0) => (
-    <>
+    <React.Fragment key={category.id}>
       <tr
         key={category.id}
         className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900"
@@ -31,7 +31,7 @@ export default async function AdminCategoriesPage() {
         </td>
       </tr>
       {category.children.map((child: any) => renderCategory(child, level + 1))}
-    </>
+    </React.Fragment>
   );
 
   return (

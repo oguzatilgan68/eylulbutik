@@ -1,34 +1,47 @@
-import { ProductCard } from "./components/ui/product/ProductCard";
+import Link from "next/link";
 import { db } from "./lib/db";
 
 export default async function HomePage() {
-  const products = await db.product.findMany({
-    where: { status: "PUBLISHED" },
-    take: 12,
-    include: { images: true },
-    orderBy: { createdAt: "desc" },
+  // Üst kategorileri çekiyoruz
+  const categories = await db.category.findMany({
+    where: { parentId: null },
+    orderBy: { name: "asc" },
   });
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-8 dark:text-white">
-        Popüler Ürünler
-      </h1>
-      {products.length === 0 ? (
-        <p className="text-gray-700 dark:text-gray-300">Henüz ürün yok.</p>
+    <div className="px-4 py-8 md:px-12 lg:px-24 xl:px-32">
+      {categories.length === 0 ? (
+        <p className="text-gray-700 dark:text-gray-300 text-center">
+          Henüz kategori yok.
+        </p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {products.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={{
-                id: product.id,
-                name: product.name,
-                slug: product.slug,
-                price: product.price.toString(),
-                images: product.images.map((img) => ({ url: img.url })),
-              }}
-            />
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-8">
+          {categories.map((category) => (
+            <Link
+              key={category.id}
+              href={`/category/${category.slug}`}
+              className="group relative block rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300"
+            >
+              {category.imageUrl ? (
+                <img
+                  src={category.imageUrl}
+                  alt={category.name}
+                  className="w-full h-64 md:h-80 lg:h-[400px] xl:h-[500px] object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              ) : (
+                <div className="w-full h-64 md:h-80 lg:h-[400px] xl:h-[500px] bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                  <span className="text-gray-500 dark:text-gray-300">
+                    Resim yok
+                  </span>
+                </div>
+              )}
+              {/* Kategori ismi overlay */}
+              <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/60 to-transparent p-3">
+                <span className="text-white text-lg md:text-xl lg:text-2xl font-semibold">
+                  {category.name}
+                </span>
+              </div>
+            </Link>
           ))}
         </div>
       )}

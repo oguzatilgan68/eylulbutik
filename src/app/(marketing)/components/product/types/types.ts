@@ -47,14 +47,6 @@ export type ProductFormData = {
   inStock: boolean;
   variants: VariantInput[];
   properties?: PropertyValueInput[];
-  modelSelection?: {
-    productModelId?: string;
-    modelInfoId?: string;
-    height?: number;
-    weight?: number;
-    chest?: number;
-    waist?: number;
-    hip?: number;
-    size: string;
-  };
+  modelInfoId?: string; // seçilen manken id
+  modelSize?: string;
 };

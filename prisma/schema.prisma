@@ -63,6 +63,7 @@ model Category {
   name     String
   slug     String     @unique
   parentId String?
+  imageUrl String?
   parent   Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
   children Category[] @relation("CategoryToCategory")
   products Product[]
@@ -91,29 +92,22 @@ model Product {
   Review      Review[]
   wishlists   Wishlist[]       @relation("WishlistProducts")
   properties  ProductProperty[]
-  productModels ProductModel[]
+  modelInfoId String?          // Ürünün mankeni
+  modelInfo   ModelInfo?       @relation(fields: [modelInfoId], references: [id])
+  modelSize   String?     
+
 }
 
 model ModelInfo {
-  id      String  @id @default(cuid())
-  name    String  // Mankenin adı
+  id      String   @id @default(cuid())
+  name    String
   height  Int?
   weight  Int?
   chest   Int?
   waist   Int?
   hip     Int?
-  productModels ProductModel[]
+  products Product[]
 }
-model ProductModel {
-  id         String     @id @default(cuid())
-  product    Product    @relation(fields: [productId], references: [id])
-  productId  String
-  modelInfo  ModelInfo  @relation(fields: [modelInfoId], references: [id])
-  modelInfoId String
-  size       String     // Örn: S, M, L, 36, 38 vs.
-  createdAt  DateTime   @default(now())
-}
-
 
 model ProductVariant {
   id         String                 @id @default(uuid())

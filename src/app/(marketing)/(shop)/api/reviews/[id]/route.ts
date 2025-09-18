@@ -5,7 +5,8 @@ interface Params {
   productId: string;
 }
 
-export async function GET(req: Request, { params }: { params: Params }) {
+export async function GET(req: Request, props: { params: Promise<Params> }) {
+  const params = await props.params;
   try {
     const { productId } = params;
     if (!productId) return NextResponse.json({ reviews: [], stats: null });

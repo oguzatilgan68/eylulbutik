@@ -1,5 +1,5 @@
 import React from "react";
-import { CategoryForm } from "@/app/(marketing)/components/forms/CategoryForm";
+import { CategoryForm } from "@/app/(marketing)/components/category/categoryForm";
 import { db } from "@/app/(marketing)/lib/db";
 
 interface CategoryPageProps {
@@ -8,10 +8,7 @@ interface CategoryPageProps {
 
 const EditCategoryPage = async (props: CategoryPageProps) => {
   const params = await props.params;
-  const category = await db.category.findUnique({
-    where: { id: params.id },
-  });
-
+  const category = await db.category.findUnique({ where: { id: params.id } });
   if (!category)
     return (
       <p className="text-red-500 dark:text-red-400">Kategori bulunamadı.</p>
@@ -19,14 +16,7 @@ const EditCategoryPage = async (props: CategoryPageProps) => {
 
   const handleUpdate = async (data: any) => {
     "use server";
-    await db.category.update({
-      where: { id: params.id },
-      data: {
-        name: data.name,
-        slug: data.slug,
-        parentId: data.parentId || null,
-      },
-    });
+    await db.category.update({ where: { id: params.id }, data });
   };
 
   return (

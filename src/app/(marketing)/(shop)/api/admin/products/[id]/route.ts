@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/app/(marketing)/lib/db";
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     await db.product.delete({
       where: { id: params.id },
