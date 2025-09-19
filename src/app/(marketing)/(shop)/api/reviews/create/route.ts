@@ -12,7 +12,23 @@ export async function POST(req: Request) {
     if (!productId || !rating || rating < 1 || rating > 5) {
       return NextResponse.json({ error: "INVALID_INPUT" }, { status: 400 });
     }
-
+    const order = await db.order.findFirst({
+      where: {
+        userId: userId,
+        items: { some: { productId } },
+        shipment: { status: "DELIVERED" },
+      },
+      include: { shipment: true },
+    });
+    if (!order) {
+      return NextResponse.json(
+        {
+          error:
+            "Bu ürün için yorum yapma yetkiniz yok. Siparişiniz teslim edilmemiş görünüyor.",
+        },
+        { status: 403 }
+      );
+    }
     const created = await db.review.create({
       data: {
         productId,
@@ -20,7 +36,7 @@ export async function POST(req: Request) {
         rating,
         title: title?.slice(0, 120) ?? null,
         content: content?.slice(0, 2000) ?? null,
-        // isApproved: false (default)
+        isApproved: false, // Moderasyona tabi
       },
     });
 

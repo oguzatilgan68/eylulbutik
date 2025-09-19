@@ -19,19 +19,31 @@ export default function CheckoutPage() {
   const nextStep = () => setStep((prev) => Math.min(prev + 1, 3));
   const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
 
+  // Sepeti çek
   const getCartItems = async () => {
     try {
       const res = await fetch("/api/cart");
       const data = await res.json();
       setCartItems(data.items);
-
-      // Ara toplam hesapla
       const total = data.items.reduce(
         (acc: number, item: any) => acc + item.unitPrice * item.qty,
         0
       );
       setSubtotal(total);
       setFinalTotal(total - discount);
+
+      setOrderData((prev: any) => ({
+        ...prev,
+        basketItems: data.items.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          unitPrice: item.unitPrice,
+          qty: item.qty,
+        })),
+        subtotal: total,
+        discount,
+        total: total - discount,
+      }));
     } catch (err) {
       console.error(err);
     }
@@ -40,15 +52,60 @@ export default function CheckoutPage() {
   useEffect(() => {
     getCartItems();
   }, []);
-  // Ara toplam ve final toplam otomatik güncellensin
+
   useEffect(() => {
     const total = cartItems.reduce(
       (acc: number, item: any) => acc + item.unitPrice * item.qty,
       0
     );
     setSubtotal(total);
-    setFinalTotal(Math.max(0, total - discount)); // kupon ile otomatik hesap
+    setFinalTotal(Math.max(0, total - discount));
+
+    setOrderData((prev: any) => ({
+      ...prev,
+      subtotal: total,
+      discount,
+      total: Math.max(0, total - discount),
+      basketItems: cartItems.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        unitPrice: item.unitPrice,
+        qty: item.qty,
+      })),
+    }));
   }, [cartItems, discount]);
+
+  // 💳 Ödeme işlemi, step 3'e geçildiğinde tetiklenecek
+  useEffect(() => {
+    const makePayment = async () => {
+      if (step === 3 && orderData.payment) {
+        try {
+          const res = await fetch("/api/payment/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderData,
+              payment: orderData.payment,
+            }),
+          });
+
+          const data = await res.json();
+
+          if (data.success) {
+            alert("Ödeme başarılı!");
+            setOrderData((prev: any) => ({ ...prev, id: data.orderId }));
+          } else {
+            alert("Ödeme başarısız! " + (data.error?.message || ""));
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Sunucu hatası, lütfen tekrar deneyin.");
+        }
+      }
+    };
+
+    makePayment();
+  }, [step, orderData.payment]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -77,12 +134,24 @@ export default function CheckoutPage() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Sol: Adım Formu */}
         <div className="flex-1 bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           {step === 1 && (
             <AddressStep
               orderData={orderData}
-              setOrderData={setOrderData}
+              setOrderData={(data) =>
+                setOrderData({
+                  ...data,
+                  basketItems: cartItems.map((item) => ({
+                    id: item.id,
+                    name: item.name,
+                    unitPrice: item.unitPrice,
+                    qty: item.qty,
+                  })),
+                  subtotal,
+                  discount,
+                  total: finalTotal,
+                })
+              }
               nextStep={nextStep}
             />
           )}
@@ -90,14 +159,13 @@ export default function CheckoutPage() {
             <PaymentStep
               orderData={orderData}
               setOrderData={setOrderData}
-              nextStep={nextStep}
               prevStep={prevStep}
+              nextStep={nextStep} // sadece step’i ilerletiyoruz
             />
           )}
           {step === 3 && <SummaryStep orderData={orderData} />}
         </div>
 
-        {/* Sağ: Sipariş Özeti */}
         <div className="w-full lg:w-1/3">
           <OrderSummary
             subtotal={subtotal}
@@ -105,9 +173,9 @@ export default function CheckoutPage() {
             onApply={(d, f) => {
               setDiscount(d);
               setFinalTotal(f);
+              setOrderData((prev: any) => ({ ...prev, discount: d, total: f }));
             }}
-            onCheckout={() => router.push("/checkout")}
-            showCheckoutButton={false} // Sadece özet adımında göster
+            showCheckoutButton={false}
           />
         </div>
       </div>

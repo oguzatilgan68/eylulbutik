@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: "/account", label: "Kullanıcı Bilgilerim" },
   { href: "/account/wishlist", label: "Favorilerim" },
   { href: "/account/orders", label: "Siparişlerim" },
+  { href: "/account/myreviews", label: "Yorumlarım" },
   { href: "/account/returns", label: "İadelerim" },
   { href: "/account/addresses", label: "Adreslerim" },
 ];

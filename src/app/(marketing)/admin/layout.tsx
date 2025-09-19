@@ -20,6 +20,7 @@ const navLinks: Array<{
       { href: "/admin/product-properties", label: "Ürün Özellik Değerler" },
       { href: "/admin/attribute-types", label: "Varyasyonlar" },
       { href: "/admin/coupons", label: "Kuponlar" },
+      { href: "/admin/reviews", label: "Yorum Yönetimi" },
     ],
   },
   {
