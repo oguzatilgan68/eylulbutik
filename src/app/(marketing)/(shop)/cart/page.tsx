@@ -28,9 +28,6 @@ export default function CartPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [subtotal, setSubtotal] = useState(0);
   const [discount, setDiscount] = useState(0);
-  const [finalTotal, setFinalTotal] = useState(0);
-  const [coupon, setCoupon] = useState("");
-  const [couponMessage, setCouponMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -62,8 +59,7 @@ export default function CartPage() {
       0
     );
     setSubtotal(total);
-    setFinalTotal(total - discount);
-  }, [cartItems, discount]);
+  }, [cartItems]);
 
   // Miktar güncelle
   const updateQty = async (itemId: string, qty: number) => {
@@ -93,45 +89,6 @@ export default function CartPage() {
         body: JSON.stringify({ cartItemId: itemId, action: "remove" }),
       });
       setCartItems((prev) => prev.filter((i) => i.id !== itemId));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Kupon uygula
-  const applyCoupon = async () => {
-    if (!coupon.trim()) {
-      setCouponMessage("Lütfen kupon kodunu girin");
-      return;
-    }
-    setLoading(true);
-    setCouponMessage("");
-
-    try {
-      const res = await fetch("/api/coupon/apply", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          code: coupon.toUpperCase(),
-          orderTotal: subtotal,
-        }),
-      });
-      const data = await res.json();
-
-      if (res.ok && data.data) {
-        setDiscount(data.data.discount);
-        setFinalTotal(data.data.final);
-        setCouponMessage("Kupon başarıyla uygulandı!");
-      } else {
-        setDiscount(0);
-        setFinalTotal(subtotal);
-        setCouponMessage(data.error || "Kupon uygulanamadı");
-      }
-    } catch (err) {
-      console.error(err);
-      setDiscount(0);
-      setFinalTotal(subtotal);
-      setCouponMessage("Sunucu hatası, lütfen tekrar deneyin");
     } finally {
       setLoading(false);
     }
@@ -184,17 +141,20 @@ export default function CartPage() {
         {cartItems.map((item) => (
           <div
             key={item.id}
-            className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow"
+            className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow min-h-[140px]"
           >
             <Link href={`/product/${item.product.slug}`}>
-              <Image
-                src={item.product.images[0]?.url || ""}
-                alt={item.product.name}
-                width={100}
-                height={100}
-                className="rounded-md object-cover"
-              />
+              <div className="relative w-24 h-24 flex-shrink-0 overflow-hidden rounded-md">
+                <Image
+                  src={item.product.images[0]?.url || ""}
+                  alt={item.product.name}
+                  fill
+                  priority
+                  className="object-contain"
+                />
+              </div>
             </Link>
+
             <div className="flex-1 w-full sm:w-auto">
               <p className="font-semibold text-lg dark:text-white">
                 {item.product.name}
@@ -246,10 +206,7 @@ export default function CartPage() {
         <OrderSummary
           subtotal={subtotal}
           initialDiscount={discount}
-          onApply={(d, f) => {
-            setDiscount(d);
-            setFinalTotal(f);
-          }}
+          onApply={(d) => setDiscount(d)}
           onCheckout={() => router.push("/checkout")}
         />
       </div>
