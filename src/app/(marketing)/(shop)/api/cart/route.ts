@@ -53,7 +53,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ items: [] });
     }
 
-    // Decimal değerleri number’a çeviriyoruz
     const serializedItems = cart.items.map((item) => ({
       id: item.id,
       qty: item.qty,

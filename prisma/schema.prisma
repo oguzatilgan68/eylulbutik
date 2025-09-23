@@ -218,7 +218,6 @@ model Order {
   orderNo       String      @unique
   userId        String?
   user          User?       @relation(fields: [userId], references: [id])
-  email         String
   phone         String?
   status        OrderStatus @default(PENDING)
   addressId     String?

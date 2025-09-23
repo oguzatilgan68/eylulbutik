@@ -1,18 +1,25 @@
 import React from "react";
 import Link from "next/link";
 import { db } from "@/app/(marketing)/lib/db";
+import { getAuthUserId } from "@/app/(marketing)/lib/auth";
+import Breadcrumb from "@/app/(marketing)/components/ui/breadcrumbs";
 
 export default async function OrdersPage() {
+  const userId = await getAuthUserId();
   const orders = await db.order.findMany({
-    where: { userId: "CURRENT_USER_ID" }, // Auth ile değiştirilecek
+    where: { userId: userId }, // Auth ile değiştirilecek
     orderBy: { createdAt: "desc" },
     include: { items: { include: { product: true } } },
   });
-
+  const breadcrumbItems = [
+    { label: "Hesabım", href: "/account" },
+    { label: "Siparişlerim", href: "/account/orders" },
+  ];
   if (orders.length === 0) return <p>Henüz siparişiniz yok.</p>;
 
   return (
     <div className="space-y-4">
+      <Breadcrumb items={breadcrumbItems} />
       {orders.map((order) => (
         <div
           key={order.id}

@@ -1,6 +1,7 @@
 import { db } from "@/app/(marketing)/lib/db";
-import React from "react";
+import { ShipmentSection } from "./ShipmentSection";
 
+// ✅ Server Component + Client Wrapper ayırıyoruz
 interface OrderPageProps {
   params: Promise<{ id: string }>;
 }
@@ -13,22 +14,25 @@ const AdminOrderDetailPage = async (props: OrderPageProps) => {
       user: true,
       items: { include: { product: true, variant: true } },
       payment: true,
-      shipment: true,
+      shipment: true, // mevcut shipment
     },
   });
-
+  const address = order?.addressId
+    ? await db.address.findUnique({ where: { id: order.addressId } })
+    : null;
   if (!order)
     return (
       <p className="text-red-500 dark:text-red-400">Sipariş bulunamadı.</p>
     );
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6 dark:text-white">
+    <div className="max-w-5xl mx-auto p-6 space-y-8">
+      <h1 className="text-2xl font-bold dark:text-white">
         Sipariş Detayı: {order.orderNo}
       </h1>
 
-      <section className="mb-6">
+      {/* ---------------- Müşteri ---------------- */}
+      <section>
         <h2 className="text-xl font-semibold dark:text-white">
           Müşteri Bilgileri
         </h2>
@@ -37,9 +41,21 @@ const AdminOrderDetailPage = async (props: OrderPageProps) => {
         </p>
         <p className="dark:text-gray-200">{order.email}</p>
         <p className="dark:text-gray-200">{order.phone}</p>
+        {address && (
+          <div className="mt-2 p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-900">
+            <h3 className="font-semibold dark:text-white">Adres</h3>
+            <p className="dark:text-gray-200">{address.fullName}</p>
+            <p className="dark:text-gray-200">{address.phone}</p>
+            <p className="dark:text-gray-200">
+              {address.city} {address.district} {address.neighbourhood + " "}
+              Mah.
+              {address.address1}
+            </p>
+          </div>
+        )}
       </section>
-
-      <section className="mb-6">
+      {/* ---------------- Ürünler ---------------- */}
+      <section>
         <h2 className="text-xl font-semibold dark:text-white">
           Sipariş Ürünleri
         </h2>
@@ -62,9 +78,6 @@ const AdminOrderDetailPage = async (props: OrderPageProps) => {
                 <td className="p-2 text-sm dark:text-white">
                   {item.product.name}
                 </td>
-                <td className="p-2 text-sm dark:text-white">
-                  {item.variant ? JSON.stringify(item.variant.attributes) : "-"}
-                </td>
                 <td className="p-2 text-sm dark:text-white">{item.qty}</td>
                 <td className="p-2 text-sm dark:text-white">
                   {item.unitPrice.toFixed(2)} ₺
@@ -78,20 +91,20 @@ const AdminOrderDetailPage = async (props: OrderPageProps) => {
         </table>
       </section>
 
-      <section className="mb-6">
+      {/* ---------------- Ödeme ---------------- */}
+      <section>
         <h2 className="text-xl font-semibold dark:text-white">
-          Ödeme ve Kargo
+          Ödeme Bilgileri
         </h2>
         <p className="dark:text-gray-200">
-          Ödeme Durumu: {order.payment?.status || "Bekleniyor"}
+          Ödeme Durumu:{" "}
+          {order.payment?.status === "SUCCEEDED" ? "Başarılı" : "Başarısız"}
         </p>
-        <p className="dark:text-gray-200">
-          Kargo Durumu: {order.shipment?.status || "Bekleniyor"}
-        </p>
-        <p className="dark:text-gray-200">
-          Toplam Tutar: {order.total.toFixed(2)} ₺
-        </p>
+        <p className="dark:text-gray-200">Toplam: {order.total.toFixed(2)} ₺</p>
       </section>
+
+      {/* ---------------- Kargo ---------------- */}
+      <ShipmentSection orderId={order.id} shipment={order.shipment} />
     </div>
   );
 };

@@ -31,12 +31,14 @@ export default function CheckoutPage() {
       );
       setSubtotal(total);
       setFinalTotal(total - discount);
+      data.items.map((item: any) => console.log(item.product));
 
       setOrderData((prev: any) => ({
         ...prev,
         basketItems: data.items.map((item: any) => ({
-          id: item.id,
+          id: item.product?.id,
           name: item.name,
+          variantId: item.product?.variant?.id,
           unitPrice: item.unitPrice,
           qty: item.qty,
         })),
@@ -67,8 +69,8 @@ export default function CheckoutPage() {
       discount,
       total: Math.max(0, total - discount),
       basketItems: cartItems.map((item: any) => ({
-        id: item.id,
-        name: item.name,
+        id: item.product?.id,
+        name: item.product?.name, // ✅ product name
         unitPrice: item.unitPrice,
         qty: item.qty,
       })),
@@ -80,7 +82,7 @@ export default function CheckoutPage() {
     const makePayment = async () => {
       if (step === 3 && orderData.payment) {
         try {
-          const res = await fetch("/api/payment/create", {
+          const res = await fetch("/api/payment", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -142,7 +144,7 @@ export default function CheckoutPage() {
                 setOrderData({
                   ...data,
                   basketItems: cartItems.map((item) => ({
-                    id: item.id,
+                    id: item.product?.id,
                     name: item.name,
                     unitPrice: item.unitPrice,
                     qty: item.qty,
