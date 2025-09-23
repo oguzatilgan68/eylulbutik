@@ -27,7 +27,13 @@ export default async function OrdersPage() {
         >
           <div className="flex justify-between mb-2">
             <span className="font-semibold">Sipariş No: {order.orderNo}</span>
-            <span>{order.status}</span>
+            <span>
+              {order.status === "CANCELLED"
+                ? "İptal Edildi"
+                : order.status === "PENDING"
+                ? "Beklemede"
+                : "Ödendi"}
+            </span>
           </div>
           <ul className="space-y-1">
             {order.items.map((item) => (

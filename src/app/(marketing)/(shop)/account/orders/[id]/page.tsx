@@ -1,7 +1,5 @@
 import { db } from "@/app/(marketing)/lib/db";
 import { notFound } from "next/navigation";
-import { Decimal } from "@prisma/client/runtime/library";
-import Link from "next/link";
 import Breadcrumb from "@/app/(marketing)/components/ui/breadcrumbs";
 
 export default async function OrderDetailPage({
@@ -159,34 +157,44 @@ export default async function OrderDetailPage({
         </div>
       </div>
 
-      {/* Ödeme Bilgisi */}
-      {order.payment && (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6">
-          <h2 className="text-lg font-semibold mb-4">Ödeme Bilgisi</h2>
-          <p className="text-sm">Sağlayıcı: {order.payment.provider}</p>
-          <p className="text-sm">Durum: {order.payment.status}</p>
-          <p className="text-sm">Tx ID: {order.payment.txId}</p>
-        </div>
-      )}
+      <div className="flex flex-col md:flex-row gap-6 justify-between">
+        {/* Ödeme Bilgisi */}
+        {order.payment && (
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6">
+            <h2 className="text-lg font-semibold mb-4">Ödeme Bilgisi</h2>
+            <p className="text-sm">
+              Durum:{" "}
+              {order.payment.status === "CANCELED"
+                ? "İptal Edildi"
+                : order.payment.status === "PENDING"
+                ? "Beklemede"
+                : order.payment.status === "SUCCEEDED"
+                ? "Başarılı"
+                : "Başarısız"}
+            </p>
+            <p className="text-sm">Tx ID: {order.payment.txId}</p>
+          </div>
+        )}
 
-      {/* Kargo Bilgisi */}
-      {order.shipment && (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4">Kargo Bilgisi</h2>
-          <p className="text-sm">Kargo Firması: {order.shipment.provider}</p>
-          <p className="text-sm">Takip No: {order.shipment.trackingNo}</p>
-          <p className="text-sm">
-            Durum:{" "}
-            {order.shipment.status === "PROCESSING"
-              ? "İşleniyor"
-              : order.shipment.status === "SHIPPED"
-              ? "Kargoya Verildi"
-              : order.shipment.status === "DELIVERED"
-              ? "Teslim Edildi"
-              : "Bilinmiyor"}
-          </p>
-        </div>
-      )}
+        {/* Kargo Bilgisi */}
+        {order.shipment && (
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+            <h2 className="text-lg font-semibold mb-4">Kargo Bilgisi</h2>
+            <p className="text-sm">Kargo Firması: {order.shipment.provider}</p>
+            <p className="text-sm">Takip No: {order.shipment.trackingNo}</p>
+            <p className="text-sm">
+              Durum:{" "}
+              {order.shipment.status === "PROCESSING"
+                ? "İşleniyor"
+                : order.shipment.status === "SHIPPED"
+                ? "Kargoya Verildi"
+                : order.shipment.status === "DELIVERED"
+                ? "Teslim Edildi"
+                : "Bilinmiyor"}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

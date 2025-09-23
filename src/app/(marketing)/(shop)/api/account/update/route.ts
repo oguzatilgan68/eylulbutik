@@ -1,23 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import { db } from "@/app/(marketing)/lib/db";
-
-// JWT doğrulama fonksiyonu
-async function verifyAuth(req: NextRequest) {
-  const token = req.cookies.get("token")?.value;
-  if (!token) return null;
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
-    return (decoded as { id: string }).id;
-  } catch (err) {
-    return null;
-  }
-}
+import { getAuthUserId } from "@/app/(marketing)/lib/auth";
 
 export async function POST(req: NextRequest) {
+  const userId = await getAuthUserId();
   try {
-    const userId = await verifyAuth(req);
+    const userId = await getAuthUserId();
     if (!userId)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
