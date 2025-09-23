@@ -48,7 +48,7 @@ export default function AddressesClient({
       {addresses.map((address) => (
         <div
           key={address.id}
-          className="border rounded p-4 bg-gray-50 dark:bg-gray-900"
+          className="border rounded p-4 mt-3 bg-gray-50 dark:bg-gray-900"
         >
           <p className="font-semibold">{address.title}</p>
           <p>

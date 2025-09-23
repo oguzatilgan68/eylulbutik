@@ -42,7 +42,7 @@ export default function AddToCartButton({
     <Button
       onClick={add}
       disabled={loading || disabled}
-      className="mt-4 w-full lg:w-1/2 bg-pink-500 hover:bg-pink-600 text-white rounded-xl cursor-pointer"
+      className="mt-4 w-full lg:w-1/2 bg-red-500 hover:bg-red-600 text-white rounded-xl cursor-pointer"
     >
       {loading ? "Ekleniyor..." : "Sepete Ekle"}
     </Button>

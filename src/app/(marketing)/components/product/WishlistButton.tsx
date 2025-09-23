@@ -49,13 +49,12 @@ export default function WishlistButton({ productId }: Props) {
 
   return (
     <Button
-      variant="outline"
       onClick={toggle}
       disabled={loading}
       className={`flex items-center gap-2 rounded-xl border dark:border-gray-700 cursor-pointer ${
         inWishlist
-          ? "bg-pink-500 text-white hover:bg-pink-600"
-          : "bg-white dark:bg-gray-900 dark:text-gray-200"
+          ? "bg-red-500 text-white hover:bg-red-600"
+          : "bg-red-600 dark:bg-gray-900 dark:text-gray-200"
       }`}
       aria-pressed={inWishlist}
       aria-label={inWishlist ? "Favorilerden çıkar" : "Favorilere ekle"}

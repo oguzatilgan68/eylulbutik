@@ -1,3 +1,4 @@
+"use server";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/app/(marketing)/lib/db";
 import { getAuthUserId } from "@/app/(marketing)/lib/auth";
@@ -21,7 +22,6 @@ export async function POST(req: NextRequest) {
   try {
     const { payment, orderData } = await req.json();
     // orderData: { userId, addressId, total, vs. }
-
     if (
       !orderData ||
       !orderData.userId ||
@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
       );
     }
   } catch (err) {
-    console.error(err);
+    console.error(err, "Hata Alındı");
     return NextResponse.json({ success: false, error: err }, { status: 500 });
   }
 }

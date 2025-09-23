@@ -89,7 +89,7 @@ export const ProductCard = ({
         {/* Sepete Ekle butonu */}
         <Button
           onClick={() => redirect("/product/" + product.slug)}
-          className="mt-2 w-full bg-pink-500 hover:bg-pink-600 text-white"
+          className="mt-2 w-full bg-red-500 hover:bg-red-600 text-white"
         >
           Sepete Ekle
         </Button>

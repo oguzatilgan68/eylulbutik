@@ -101,6 +101,7 @@ export default function ProductClient({ product }: any) {
                 src={images[selectedImageIdx].url}
                 alt={product.name}
                 fill
+                priority
                 className="object-cover transition-transform duration-300 ease-out group-hover:scale-105"
                 style={{
                   transformOrigin: `${zoomPos[product.id]?.x ?? 50}% ${
