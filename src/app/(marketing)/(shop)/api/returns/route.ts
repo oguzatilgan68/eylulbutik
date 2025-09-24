@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       data: {
         order: { connect: { id: orderId } },
         user: userId ? { connect: { id: userId } } : undefined,
-        reason,
+        reason: "OTHER",
         comment,
         items: {
           create: items.map((it: any) => ({
