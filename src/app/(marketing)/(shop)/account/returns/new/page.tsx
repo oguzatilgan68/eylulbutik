@@ -1,12 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-
-interface Order {
-  id: string;
-  code: string;
-}
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface OrderItem {
   id: string;
@@ -16,46 +11,36 @@ interface OrderItem {
 
 export default function NewReturnPage() {
   const router = useRouter();
-  const [orders, setOrders] = useState<Order[]>([]);
+  const searchParams = useSearchParams();
+  if (!searchParams) return null;
+  const orderId = searchParams.get("orderId");
   const [items, setItems] = useState<OrderItem[]>([]);
-  const [selectedOrder, setSelectedOrder] = useState("");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [reason, setReason] = useState("");
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Siparişleri getir
+  // Sipariş ürünlerini fetch et
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const res = await fetch("/api/orders");
-        if (res.ok) {
-          const data = await res.json();
-          setOrders(data);
-        }
-      } catch (err) {
-        console.error("Siparişler alınamadı", err);
-      }
-    };
-    fetchOrders();
-  }, []);
-
-  // Sipariş seçildiğinde ilgili ürünleri getir
-  useEffect(() => {
-    if (!selectedOrder) return;
+    if (!orderId) return;
     const fetchItems = async () => {
       try {
-        const res = await fetch(`/api/orders/${selectedOrder}/items`);
+        const res = await fetch(`/api/orders/${orderId}/items`);
         if (res.ok) {
-          const data = await res.json();
+          const data: OrderItem[] = await res.json();
           setItems(data);
+        } else {
+          console.error("Sipariş ürünleri alınamadı:", res.statusText);
+          setItems([]);
         }
       } catch (err) {
-        console.error("Sipariş ürünleri alınamadı", err);
+        console.error("Sipariş ürünleri alınamadı:", err);
+        setItems([]);
       }
     };
+
     fetchItems();
-  }, [selectedOrder]);
+  }, [orderId]);
 
   const toggleItem = (id: string) => {
     setSelectedItems((prev) =>
@@ -65,6 +50,11 @@ export default function NewReturnPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!orderId || selectedItems.length === 0) {
+      alert("Lütfen iade edilecek ürünleri seçin");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -72,7 +62,7 @@ export default function NewReturnPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          orderId: selectedOrder,
+          orderId,
           items: selectedItems.map((id) => ({ orderItemId: id, qty: 1 })),
           reason,
           comment,
@@ -82,7 +72,8 @@ export default function NewReturnPage() {
       if (res.ok) {
         router.push("/account/returns");
       } else {
-        alert("İade talebi oluşturulamadı");
+        const err = await res.json();
+        alert(err?.error || "İade talebi oluşturulamadı");
       }
     } catch (err) {
       console.error(err);
@@ -97,29 +88,10 @@ export default function NewReturnPage() {
       <h1 className="text-xl font-semibold mb-4 dark:text-gray-100">
         Yeni İade Talebi
       </h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Sipariş seçimi */}
-        <div>
-          <label className="block text-sm font-medium mb-1 dark:text-gray-300">
-            Sipariş
-          </label>
-          <select
-            value={selectedOrder}
-            onChange={(e) => setSelectedOrder(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700"
-            required
-          >
-            <option value="">Seçiniz</option>
-            {orders.map((order) => (
-              <option key={order.id} value={order.id}>
-                {order.code}
-              </option>
-            ))}
-          </select>
-        </div>
 
+      <form onSubmit={handleSubmit} className="space-y-4">
         {/* Ürün seçimi */}
-        {selectedOrder && (
+        {items.length > 0 ? (
           <div>
             <label className="block text-sm font-medium mb-1 dark:text-gray-300">
               Ürünler
@@ -142,9 +114,11 @@ export default function NewReturnPage() {
               ))}
             </div>
           </div>
+        ) : (
+          <p>Ürünler yükleniyor veya bulunamadı.</p>
         )}
 
-        {/* Genel sebep */}
+        {/* İade sebebi */}
         <div>
           <label className="block text-sm font-medium mb-1 dark:text-gray-300">
             İade Sebebi

@@ -304,6 +304,13 @@ enum PaymentStatus {
   REFUNDED
   CANCELED
 }
+enum ReturnReason {
+  PRODUCT_DEFECT      // Ürün arızalı / hasarlı
+  WRONG_ITEM_SENT     // Yanlış ürün gönderildi
+  SHIPPING_DELAY      // Kargo gecikmesi
+  DONTLIKE_ITEM       // Ürünü Beğenmedim
+  OTHER               // Diğer
+}
 model ReturnRequest {
   id          String        @id @default(uuid())
   orderId     String
@@ -311,13 +318,12 @@ model ReturnRequest {
   userId      String?
   user        User?         @relation(fields: [userId], references: [id])
   status      ReturnStatus  @default(PENDING)
-  reason      String?       // Genel iade sebebi
+  reason      ReturnReason
   comment     String?       // Müşteri ek açıklaması
   items       ReturnItem[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   refunds     Refund[]      // 👈 eklendi
-
 }
 
 model ReturnItem {
@@ -339,12 +345,18 @@ model Refund {
   amount         Decimal       @db.Decimal(10, 2)  // İade edilen tutar
   status         RefundStatus  @default(PENDING)
   txId           String?       // Ödeme sağlayıcıdan dönen işlem numarası
-  reason         String?
+  reason         RefundReason?  // Enum oldu
   raw            Json?         // Ödeme sağlayıcıdan gelen ham veri
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 }
-
+enum RefundReason {
+  CUSTOMER_REQUEST     // Müşteri talebi
+  PRODUCT_DEFECT       // Ürün arızalı / hasarlı
+  WRONG_ITEM_SENT      // Yanlış ürün gönderildi
+  SHIPPING_DELAY       // Kargo gecikmesi
+  OTHER                // Diğer
+}
 enum RefundStatus {
   PENDING     // İade başlatıldı ama henüz sonuçlanmadı
   SUCCEEDED   // Başarılı
