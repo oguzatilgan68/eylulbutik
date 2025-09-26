@@ -12,9 +12,11 @@ export async function POST(req: Request) {
     if (!productId || !rating || rating < 1 || rating > 5) {
       return NextResponse.json({ error: "INVALID_INPUT" }, { status: 400 });
     }
+
+    // Kullanıcının ürünü sipariş edip teslim aldığını kontrol et
     const order = await db.order.findFirst({
       where: {
-        userId: userId,
+        userId,
         items: { some: { productId } },
         shipment: { status: "DELIVERED" },
       },
@@ -29,18 +31,33 @@ export async function POST(req: Request) {
         { status: 403 }
       );
     }
+
+    // Review oluştur
     const created = await db.review.create({
       data: {
         productId,
         userId,
         rating,
-        title: title?.slice(0, 120) ?? null,
         content: content?.slice(0, 2000) ?? null,
-        isApproved: false, // Moderasyona tabi
+        isApproved: false, // İster moderasyona tabi bırakabilirsin
       },
     });
 
-    // İsteğe bağlı: Product ratingAvg / ratingCount güncellemesini cron/moderation sonrası yapın.
+    // Product ratingAvg ve ratingCount güncelle
+    const agg = await db.review.aggregate({
+      where: { productId, isApproved: true },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+
+    await db.product.update({
+      where: { id: productId },
+      data: {
+        ratingAvg: agg._avg.rating || 0,
+        ratingCount: agg._count.rating,
+      },
+    });
+
     return NextResponse.json({ ok: true, review: created });
   } catch (e) {
     console.error(e);

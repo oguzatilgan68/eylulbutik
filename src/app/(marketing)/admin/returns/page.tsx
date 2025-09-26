@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import clsx from "clsx";
+import { ReturnRequest } from "@/generated/prisma/client";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function ReturnsAdminPage() {
   const [list, setList] = useState<ReturnRequest[]>([]);
@@ -24,6 +27,8 @@ export default function ReturnsAdminPage() {
     const res = await fetch(`/api/admin/returns?${params.toString()}`);
     const json = await res.json();
     setList(json.data);
+    console.log(json.data, "list");
+
     setTotal(json.meta.total);
     setLoading(false);
   }
@@ -39,13 +44,12 @@ export default function ReturnsAdminPage() {
       body: JSON.stringify({ id, status: newStatus }),
     });
     const json = await res.json();
-    // optimistic refresh
     setList((prev) => prev.map((r) => (r.id === id ? json.data : r)));
     if (selected?.id === id) setSelected(json.data);
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-8 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="min-h-screen p-4 md:p-8 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
@@ -57,8 +61,8 @@ export default function ReturnsAdminPage() {
                 setQ(e.target.value);
                 setPage(1);
               }}
-              placeholder="Ürün adı, müşteri, sebep..."
-              className="w-full sm:w-64 rounded-xl border px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring focus:ring-indigo-500"
+              placeholder="Ara..."
+              className="w-full sm:w-64 rounded-lg border px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
             <select
               value={status}
@@ -66,7 +70,7 @@ export default function ReturnsAdminPage() {
                 setStatus(e.target.value);
                 setPage(1);
               }}
-              className="rounded-xl border px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring focus:ring-indigo-500"
+              className="rounded-lg border px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="">Tüm Durumlar</option>
               <option value="PENDING">Bekliyor</option>
@@ -77,97 +81,129 @@ export default function ReturnsAdminPage() {
           </div>
         </header>
 
-        {/* Table */}
-        <div className="overflow-x-auto bg-slate-50 dark:bg-slate-800 rounded-lg shadow-sm">
-          <table className="min-w-full table-auto divide-y divide-slate-200 dark:divide-slate-700">
-            <thead className="sticky top-0 bg-slate-100 dark:bg-slate-700 text-sm">
-              <tr>
-                <TableHeadCell>#</TableHeadCell>
-                <TableHeadCell>Müşteri</TableHeadCell>
-                <TableHeadCell>Ürünler</TableHeadCell>
-                <TableHeadCell>İade Sebebi</TableHeadCell>
-                <TableHeadCell>Durum</TableHeadCell>
-                <TableHeadCell>Tarih</TableHeadCell>
-                <TableHeadCell>İşlemler</TableHeadCell>
-              </tr>
-            </thead>
-            <tbody className="text-sm">
-              {loading ? (
-                <tr>
-                  <TableCell colSpan={7} center>
-                    Yükleniyor...
-                  </TableCell>
-                </tr>
-              ) : list.length === 0 ? (
-                <tr>
-                  <TableCell colSpan={7} center>
-                    Sonuç Bulunamadı
-                  </TableCell>
-                </tr>
-              ) : (
-                list.map((r, idx) => (
-                  <tr
-                    key={r.id}
-                    className="hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                  >
-                    <TableCell>{(page - 1) * perPage + idx + 1}</TableCell>
-                    <TableCell>
-                      <div className="font-medium">
-                        {r.user?.fullName || r.user?.email || "Guest"}
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">
-                        {r.user?.email}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>{r.items.length} item(s)</div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[200px]">
-                        {r.items
-                          .slice(0, 2)
-                          .map((i) => i.orderItem.name)
-                          .join(", ")}
-                        {r.items.length > 2 ? ", ..." : ""}
-                      </div>
-                    </TableCell>
-                    <TableCell className="truncate max-w-xs">
-                      {r.reason || r.comment || "-"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge status={r.status} />
-                    </TableCell>
-                    <TableCell>
-                      {new Date(r.createdAt).toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-2">
-                        <ActionButton onClick={() => setSelected(r)}>
-                          Open
-                        </ActionButton>
-                        {r.status !== "APPROVED" && (
-                          <ActionButton
-                            onClick={() => updateStatus(r.id, "APPROVED")}
-                          >
-                            Approve
-                          </ActionButton>
-                        )}
-                        {r.status !== "REJECTED" && (
-                          <ActionButton
-                            onClick={() => updateStatus(r.id, "REJECTED")}
-                          >
-                            Reject
-                          </ActionButton>
-                        )}
-                      </div>
-                    </TableCell>
+        {/* List */}
+        {loading ? (
+          <div className="py-10 text-center text-slate-500">Yükleniyor...</div>
+        ) : list.length === 0 ? (
+          <div className="py-10 text-center text-slate-500">
+            Sonuç bulunamadı
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Mobile: Cards */}
+            <div className="grid gap-4 sm:hidden">
+              {list.map((r) => (
+                <div
+                  key={r.id}
+                  className="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="font-medium">
+                      {r.user?.fullName ||
+                        r.user?.email ||
+                        r.user?.phone ||
+                        "Guest"}
+                    </div>
+                    <Badge status={r.status} />
+                  </div>
+                  <div className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+                    {r.items.length} ürün •{" "}
+                    {new Date(r.createdAt).toLocaleDateString()}
+                  </div>
+                  <div className="text-sm line-clamp-2 mb-3">
+                    {r.reason || r.comment || "-"}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <ActionButton onClick={() => setSelected(r)}>
+                      Detay
+                    </ActionButton>
+                    {r.status !== "APPROVED" && (
+                      <ActionButton
+                        onClick={() => updateStatus(r.id, "APPROVED")}
+                      >
+                        Onayla
+                      </ActionButton>
+                    )}
+                    {r.status !== "REJECTED" && (
+                      <ActionButton
+                        onClick={() => updateStatus(r.id, "REJECTED")}
+                      >
+                        Reddet
+                      </ActionButton>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: Table */}
+            <div className="hidden sm:block overflow-x-auto bg-slate-50 dark:bg-slate-800 rounded-lg shadow-sm">
+              <table className="min-w-full table-auto divide-y divide-slate-200 dark:divide-slate-700 text-sm">
+                <thead className="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
+                  <tr>
+                    <th className="p-3 text-left">Müşteri</th>
+                    <th className="p-3 text-left">Ürünler</th>
+                    <th className="p-3 text-left">Sebep</th>
+                    <th className="p-3 text-left">Durum</th>
+                    <th className="p-3 text-left">Tarih</th>
+                    <th className="p-3 text-left">İşlemler</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody>
+                  {list.map((r) => (
+                    <tr
+                      key={r.id}
+                      className="border-t border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    >
+                      <td className="p-3">
+                        <div className="font-medium">
+                          {r.user?.fullName || r.user?.email || "Guest"}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {r.user?.email}
+                        </div>
+                      </td>
+                      <td className="p-3">{r.items.length} ürün</td>
+                      <td className="p-3 truncate max-w-xs">
+                        {r.reason || r.comment || "-"}
+                      </td>
+                      <td className="p-3">
+                        <Badge status={r.status} />
+                      </td>
+                      <td className="p-3">
+                        {new Date(r.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="p-3">
+                        <div className="flex flex-wrap gap-2">
+                          <ActionButton onClick={() => setSelected(r)}>
+                            Detay
+                          </ActionButton>
+                          {r.status !== "APPROVED" && (
+                            <ActionButton
+                              onClick={() => updateStatus(r.id, "APPROVED")}
+                            >
+                              Onayla
+                            </ActionButton>
+                          )}
+                          {r.status !== "REJECTED" && (
+                            <ActionButton
+                              onClick={() => updateStatus(r.id, "REJECTED")}
+                            >
+                              Reddet
+                            </ActionButton>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* Pagination */}
-        <footer className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <footer className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="text-sm text-slate-500">Toplam: {total}</div>
           <div className="flex gap-2 items-center">
             <ActionButton
@@ -176,9 +212,9 @@ export default function ReturnsAdminPage() {
             >
               Önceki
             </ActionButton>
-            <div className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded text-sm">
+            <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded text-sm">
               {page}
-            </div>
+            </span>
             <ActionButton variant="ghost" onClick={() => setPage((p) => p + 1)}>
               Sonraki
             </ActionButton>
@@ -186,6 +222,7 @@ export default function ReturnsAdminPage() {
         </footer>
       </div>
 
+      {/* Modal */}
       {selected && (
         <DetailsModal
           returnRequest={selected}
@@ -197,40 +234,7 @@ export default function ReturnsAdminPage() {
   );
 }
 
-/* --- Utility Components --- */
-
-function TableHeadCell({ children }: { children: React.ReactNode }) {
-  return (
-    <th className="p-3 text-left font-semibold text-slate-700 dark:text-slate-200">
-      {children}
-    </th>
-  );
-}
-
-function TableCell({
-  children,
-  colSpan,
-  center,
-  className,
-}: {
-  children: React.ReactNode;
-  colSpan?: number;
-  center?: boolean;
-  className?: string;
-}) {
-  return (
-    <td
-      colSpan={colSpan}
-      className={clsx(
-        "p-3 align-middle",
-        center && "text-center text-slate-500 dark:text-slate-400",
-        className
-      )}
-    >
-      {children}
-    </td>
-  );
-}
+/* --- Small UI Components --- */
 
 function ActionButton({
   children,
@@ -249,10 +253,144 @@ function ActionButton({
         variant === "default" &&
           "bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600",
         variant === "ghost" &&
-          "bg-transparent hover:bg-slate-200 dark:hover:bg-slate-700"
+          "bg-transparent hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200"
       )}
     >
       {children}
     </button>
+  );
+}
+
+function Badge({ status }: { status: string }) {
+  const color = {
+    PENDING:
+      "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100",
+    APPROVED:
+      "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100",
+    REJECTED: "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100",
+    REFUNDED: "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100",
+  }[status];
+  return (
+    <span className={clsx("px-2 py-1 rounded text-xs font-medium", color)}>
+      {status}
+    </span>
+  );
+}
+function DetailsModal({
+  returnRequest,
+  onClose,
+  onUpdate,
+}: {
+  returnRequest: ReturnRequest;
+  onClose: () => void;
+  onUpdate: (id: string, status: string) => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b dark:border-slate-700">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            İade Talebi Detayı
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-4 space-y-4 text-sm">
+          <div>
+            <div className="font-medium">Müşteri</div>
+            <div className="text-slate-600 dark:text-slate-300">
+              {returnRequest.user?.fullName ||
+                returnRequest.user?.email ||
+                "Guest"}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {returnRequest.user?.email}
+            </div>
+          </div>
+          <div>
+            <div className="font-medium">İade Sebebi</div>
+            <div className="text-slate-600 dark:text-slate-300">
+              {returnRequest.reason || returnRequest.comment || "-"}
+            </div>
+          </div>
+          {/* Ürünler */}
+          <div>
+            <div className="font-medium">Ürünler</div>
+            <ul className="space-y-2 text-slate-600 dark:text-slate-300">
+              {returnRequest.items.map((i) => (
+                <li key={i.id} className="flex items-center gap-3">
+                  {i.orderItem.product && (
+                    <Link
+                      href={`/product/${i.orderItem.product.slug}`}
+                      target="_blank"
+                      className="flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded-md transition"
+                    >
+                      <Image
+                        src={
+                          i.orderItem.product.images?.[0]?.url ||
+                          "/placeholder.png"
+                        }
+                        alt={i.orderItem.product.name}
+                        width={50}
+                        height={50}
+                        className="w-12 h-12 object-cover rounded border dark:border-slate-700"
+                      />
+                      <div>
+                        <div className="font-medium">
+                          {i.orderItem.product.name}
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          x {i.qty}
+                        </div>
+                      </div>
+                    </Link>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <div className="font-medium">Durum</div>
+            <div className="text-slate-600 dark:text-slate-300">
+              {returnRequest.status}
+            </div>
+          </div>
+          <div>
+            <div className="font-medium">Oluşturulma Tarihi</div>
+            <div className="text-slate-600 dark:text-slate-300">
+              {new Date(returnRequest.createdAt).toLocaleString()}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end gap-2 p-4 border-t dark:border-slate-700">
+          {returnRequest.status !== "APPROVED" && (
+            <ActionButton
+              onClick={() => onUpdate(returnRequest.id, "APPROVED")}
+            >
+              Approve
+            </ActionButton>
+          )}
+          {returnRequest.status !== "REJECTED" && (
+            <ActionButton
+              onClick={() => onUpdate(returnRequest.id, "REJECTED")}
+            >
+              Reddet
+            </ActionButton>
+          )}
+          <ActionButton variant="ghost" onClick={onClose}>
+            Kapat
+          </ActionButton>
+        </div>
+      </div>
+    </div>
   );
 }

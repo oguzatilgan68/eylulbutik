@@ -1,11 +1,13 @@
+import { getAuthUserId } from "@/app/(marketing)/lib/auth";
 import { db } from "@/app/(marketing)/lib/db";
 import { ReturnReason } from "@/generated/prisma/client";
+import { get } from "http";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { orderId, userId, reason, comment, items } = body;
+    const { orderId, reason, comment, items } = body;
 
     if (!orderId) {
       return NextResponse.json(
@@ -13,7 +15,13 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-
+    const userId = await getAuthUserId();
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
     // items: [{ orderItemId, qty, reason }]
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
@@ -37,13 +45,12 @@ export async function POST(req: Request) {
       data: {
         order: { connect: { id: orderId } },
         user: userId ? { connect: { id: userId } } : undefined,
-        reason: "OTHER",
         comment,
         items: {
           create: items.map((it: any) => ({
             orderItem: { connect: { id: it.orderItemId } },
             qty: it.qty,
-            reason: it.reason ? (it.reason as ReturnReason) : undefined,
+            reason: it.reason as ReturnReason,
             status: "PENDING",
           })),
         },
@@ -65,7 +72,7 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
-    const userId = url.searchParams.get("userId");
+    const userId = await getAuthUserId();
     const page = Number(url.searchParams.get("page") || 1);
     const limit = 20;
 

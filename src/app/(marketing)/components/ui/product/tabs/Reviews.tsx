@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 
 interface Review {
   id: string;
-  user: { fullName: string };
+  user: { fullName: string; initials?: string };
   rating: number;
   title: string;
   content: string;
@@ -46,7 +46,13 @@ export default function Reviews({ productId }: ReviewsProps) {
         >
           <div className="flex justify-between items-center flex-wrap">
             <span className="font-semibold">{r.user.fullName}</span>
-            <span className="text-yellow-500">{r.rating} ⭐</span>
+            <div className="flex">
+              {Array.from({ length: r.rating }).map((_, i) => (
+                <span key={i} className="text-yellow-500">
+                  ⭐
+                </span>
+              ))}
+            </div>
           </div>
           {r.title && <h5 className="font-medium">{r.title}</h5>}
           <p className="text-gray-700 dark:text-gray-300">{r.content}</p>

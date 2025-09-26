@@ -60,7 +60,7 @@ export default function ReturnRequestModal({
 
       if (!res.ok) throw new Error("Iade oluşturulamadı");
       onClose();
-      router.push("/account/refund"); // Başarılıysa yönlendir
+      router.push("/account/returns"); // Başarılıysa yönlendir
     } catch (error) {
       console.error(error);
       alert("Bir hata oluştu.");

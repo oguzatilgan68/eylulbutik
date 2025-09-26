@@ -123,15 +123,18 @@ export default async function handler(
       const user = await db.user.findUnique({ where: { id: userId } });
       const order = await db.order.create({
         data: {
-          userId,
-          addressId: orderData.addressId,
+          user: {
+            connect: { id: userId },
+          },
+          address: {
+            connect: { id: orderData.addressId },
+          },
           phone: orderData?.phone || null,
-          email: user?.email || "",
           total: new Decimal(orderData.total || subtotal),
           subtotal: new Decimal(subtotal),
           discountTotal: new Decimal(orderData.discount || 0),
-          shippingTotal: new Decimal(0), // istersen shipping ekle
-          taxTotal: new Decimal(subtotal * 0.2), // istersen vergi ekle
+          shippingTotal: new Decimal(0),
+          taxTotal: new Decimal(subtotal * 0.2),
           status: "PAID",
           orderNo: `ORD-${Date.now()}`,
           items: {
@@ -154,8 +157,20 @@ export default async function handler(
         },
       });
     }
+    const cart = await db.cart.findFirst({
+      where: { userId },
+    });
 
-    return res.status(201).json({ success: false, error: iyziResponse });
+    if (cart) {
+      await db.cartItem.deleteMany({
+        where: { cartId: cart.id },
+      });
+
+      await db.cart.delete({
+        where: { id: cart.id },
+      });
+    }
+    return res.status(201).json({ success: true, data: iyziResponse });
   } catch (err) {
     console.error("Hata:", err);
     return res.status(400).json({ success: false, error: err });

@@ -42,6 +42,7 @@ export async function GET(req: NextRequest) {
   if (sort === "most-favorited") orderBy = { wishlists: { _count: "desc" } };
   if (sort === "best-selling") orderBy = { OrderItem: { _count: "desc" } };
   if (sort === "highest-rated") orderBy = { ratingAvg: "desc" };
+  if (sort === "most-reviewed") orderBy = { ratingCount: "desc" }; // ✅ en çok yorum yapılan
 
   const products = await db.product.findMany({
     where,
@@ -57,7 +58,13 @@ export async function GET(req: NextRequest) {
       },
       wishlists: true,
       Review: true,
-      OrderItem: true,
+      _count: {
+        select: {
+          OrderItem: true,
+          wishlists: true,
+          Review: true,
+        },
+      },
     },
     orderBy,
   });

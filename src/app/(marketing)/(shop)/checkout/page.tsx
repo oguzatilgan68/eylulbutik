@@ -31,8 +31,6 @@ export default function CheckoutPage() {
       );
       setSubtotal(total);
       setFinalTotal(total - discount);
-      data.items.map((item: any) => console.log(item.product));
-
       setOrderData((prev: any) => ({
         ...prev,
         basketItems: data.items.map((item: any) => ({

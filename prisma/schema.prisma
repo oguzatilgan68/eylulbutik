@@ -23,7 +23,7 @@ model User {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   Review       Review[]
-    returnRequests ReturnRequest[] 
+  returnRequests ReturnRequest[] 
 
 }
 
@@ -318,7 +318,6 @@ model ReturnRequest {
   userId      String?
   user        User?         @relation(fields: [userId], references: [id])
   status      ReturnStatus  @default(PENDING)
-  reason      ReturnReason
   comment     String?       // Müşteri ek açıklaması
   items       ReturnItem[]
   createdAt   DateTime      @default(now())
@@ -334,7 +333,8 @@ model ReturnItem {
   orderItem       OrderItem     @relation(fields: [orderItemId], references: [id])
   qty             Int           @default(1)  // Kaç adet iade ediliyor
   status          ReturnStatus  @default(PENDING)
-  reason          String?       // Ürün bazlı sebep
+  reason      ReturnReason     
+
 }
 model Refund {
   id             String        @id @default(uuid())
@@ -412,10 +412,10 @@ model Review {
   userId     String?
   user       User?    @relation(fields: [userId], references: [id])
   rating     Int
-  title      String?
   content    String?
   isApproved Boolean  @default(false)
   createdAt  DateTime @default(now())
+  @@unique([productId, userId])
 }
 model Wishlist {
   id       String    @id @default(uuid())
