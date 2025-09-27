@@ -1,5 +1,4 @@
 // pages/api/payment.ts
-import type { NextApiRequest, NextApiResponse } from "next";
 import { db } from "@/app/(marketing)/lib/db";
 import Iyzipay from "iyzipay";
 import { Decimal } from "@prisma/client/runtime/library";
@@ -14,15 +13,12 @@ const iyzipay = new Iyzipay({
 });
 
 // Basit token doğrulama
-export async function getAuthUserId(
-  req: NextApiRequest
-): Promise<string | null> {
-  const cookieHeader = req.headers.cookie || "";
+async function getAuthUserId(req: Request): Promise<string | null> {
+  const cookieHeader = req.headers.get("cookie") || "";
   const tokenCookie = cookieHeader
     .split(";")
     .map((c) => c.trim())
     .find((c) => c.startsWith("token="));
-
   const token = tokenCookie?.split("=")[1];
   if (!token) return null;
 
@@ -35,22 +31,25 @@ export async function getAuthUserId(
     return null;
   }
 }
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") return res.status(405).end();
 
-  const userId = await getAuthUserId(req);
-  if (!userId)
-    return res.status(401).json({ success: false, error: "Unauthorized" });
-
+export async function POST(req: Request) {
   try {
-    const { payment, orderData } = req.body;
+    const userId = await getAuthUserId(req);
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Unauthorized" }),
+        { status: 401 }
+      );
+    }
+
+    const body = await req.json();
+    const { payment, orderData } = body;
+
     if (!payment || !orderData?.addressId || !orderData?.total) {
-      return res
-        .status(400)
-        .json({ success: false, error: "Eksik sipariş bilgileri" });
+      return new Response(
+        JSON.stringify({ success: false, error: "Eksik sipariş bilgileri" }),
+        { status: 400 }
+      );
     }
 
     const requestBody = {
@@ -108,7 +107,6 @@ export default async function handler(
     };
 
     const iyziResponse: any = await new Promise((resolve, reject) => {
-      console.log("Iyzipay request body:", requestBody);
       iyzipay.payment.create(requestBody, (err, result) => {
         if (err) return reject(err);
         resolve(result);
@@ -125,12 +123,8 @@ export default async function handler(
 
       const order = await db.order.create({
         data: {
-          user: {
-            connect: { id: userId },
-          },
-          address: {
-            connect: { id: orderData.addressId },
-          },
+          user: { connect: { id: userId } },
+          address: { connect: { id: orderData.addressId } },
           phone: orderData?.phone || null,
           total: new Decimal(orderData.total || subtotal),
           subtotal: new Decimal(subtotal),
@@ -157,10 +151,9 @@ export default async function handler(
             },
           },
         },
-        include: {
-          items: true,
-        },
+        include: { items: true },
       });
+
       if (user?.email) {
         const orderItemsHtml = order.items
           .map(
@@ -172,14 +165,16 @@ export default async function handler(
           .join("");
 
         const mailHtml = `
-      <h2>Merhaba ${user.fullName},</h2>
-      <p>Siparişiniz başarıyla oluşturuldu.</p>
-      <p><b>Sipariş No:</b> ${order.orderNo}</p>
-      <ul>${orderItemsHtml}</ul>
-      <p><b>Toplam:</b> ${order.total.toFixed(2)}₺</p>
-      <p>Teşekkür ederiz! 🎉</p>
-      <a href="${process.env.NEXT_PUBLIC_BASE_URL}/orders/${order.id}">Siparişinizi görüntüleyin</a>
-    `;
+          <h2>Merhaba ${user.fullName},</h2>
+          <p>Siparişiniz başarıyla oluşturuldu.</p>
+          <p><b>Sipariş No:</b> ${order.orderNo}</p>
+          <ul>${orderItemsHtml}</ul>
+          <p><b>Toplam:</b> ${order.total.toFixed(2)}₺</p>
+          <p>Teşekkür ederiz! 🎉</p>
+          <a href="${process.env.NEXT_PUBLIC_BASE_URL}/orders/${
+          order.id
+        }">Siparişinizi görüntüleyin</a>
+        `;
 
         await sendEmail({
           to: user.email,
@@ -188,19 +183,13 @@ export default async function handler(
         });
       }
     }
-    const cart = await db.cart.findFirst({
-      where: { userId },
-    });
 
+    const cart = await db.cart.findFirst({ where: { userId } });
     if (cart) {
-      await db.cartItem.deleteMany({
-        where: { cartId: cart.id },
-      });
-
-      await db.cart.delete({
-        where: { id: cart.id },
-      });
+      await db.cartItem.deleteMany({ where: { cartId: cart.id } });
+      await db.cart.delete({ where: { id: cart.id } });
     }
+
     for (const item of orderData.basketItems) {
       if (item.variantId) {
         await db.productVariant.update({
@@ -210,9 +199,13 @@ export default async function handler(
       }
     }
 
-    return res.status(201).json({ success: true, data: iyziResponse });
+    return new Response(JSON.stringify({ success: true, data: iyziResponse }), {
+      status: 201,
+    });
   } catch (err) {
     console.error("Hata:", err);
-    return res.status(400).json({ success: false, error: err });
+    return new Response(JSON.stringify({ success: false, error: err }), {
+      status: 400,
+    });
   }
 }
