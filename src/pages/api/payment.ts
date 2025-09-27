@@ -4,6 +4,7 @@ import { db } from "@/app/(marketing)/lib/db";
 import Iyzipay from "iyzipay";
 import { Decimal } from "@prisma/client/runtime/library";
 import jwt from "jsonwebtoken";
+import { sendEmail } from "@/app/(marketing)/lib/mail";
 
 // Iyzipay client
 const iyzipay = new Iyzipay({
@@ -121,6 +122,7 @@ export default async function handler(
       );
 
       const user = await db.user.findUnique({ where: { id: userId } });
+
       const order = await db.order.create({
         data: {
           user: {
@@ -155,7 +157,36 @@ export default async function handler(
             },
           },
         },
+        include: {
+          items: true,
+        },
       });
+      if (user?.email) {
+        const orderItemsHtml = order.items
+          .map(
+            (i) =>
+              `<li>${i.name} - ${i.qty} x ${i.unitPrice.toFixed(2)}₺ = ${(
+                i.qty * Number(i.unitPrice)
+              ).toFixed(2)}₺</li>`
+          )
+          .join("");
+
+        const mailHtml = `
+      <h2>Merhaba ${user.fullName},</h2>
+      <p>Siparişiniz başarıyla oluşturuldu.</p>
+      <p><b>Sipariş No:</b> ${order.orderNo}</p>
+      <ul>${orderItemsHtml}</ul>
+      <p><b>Toplam:</b> ${order.total.toFixed(2)}₺</p>
+      <p>Teşekkür ederiz! 🎉</p>
+      <a href="${process.env.NEXT_PUBLIC_BASE_URL}/orders/${order.id}">Siparişinizi görüntüleyin</a>
+    `;
+
+        await sendEmail({
+          to: user.email,
+          subject: "Siparişiniz Alındı",
+          html: mailHtml,
+        });
+      }
     }
     const cart = await db.cart.findFirst({
       where: { userId },
@@ -170,6 +201,15 @@ export default async function handler(
         where: { id: cart.id },
       });
     }
+    for (const item of orderData.basketItems) {
+      if (item.variantId) {
+        await db.productVariant.update({
+          where: { id: item.variantId },
+          data: { stockQty: { decrement: item.qty } },
+        });
+      }
+    }
+
     return res.status(201).json({ success: true, data: iyziResponse });
   } catch (err) {
     console.error("Hata:", err);

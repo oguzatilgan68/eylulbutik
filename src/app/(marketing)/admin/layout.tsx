@@ -48,7 +48,11 @@ const navLinks: Array<{
       { href: "/admin/returns", label: "İadeler" },
     ],
   },
-  { href: "/admin/customers", label: "Müşteriler" },
+  {
+    href: "/admin/customers",
+    label: "Müşteriler",
+    children: [{ href: "/admin/customers", label: "Müşteriler" }],
+  },
   {
     href: "/admin/model-info",
     label: "Model Bilgileri",
@@ -86,7 +90,7 @@ export default function AdminLayout({
 function AdminNavLink({ link }: { link: (typeof navLinks)[number] }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-
+  if (!pathname) return null;
   const isActive = pathname.startsWith(link.href);
   const hasChildren = link.children && link.children.length > 0;
 

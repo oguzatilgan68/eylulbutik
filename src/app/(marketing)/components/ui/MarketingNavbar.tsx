@@ -101,7 +101,7 @@
     categories,
   }) => {
     const { theme, setTheme } = useTheme();
-    const { user, logout } = useUser(); // UserContext’ten alıyoruz
+    const { user } = useUser(); // UserContext’ten alıyoruz
 
     return (
       <header className="shadow-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">

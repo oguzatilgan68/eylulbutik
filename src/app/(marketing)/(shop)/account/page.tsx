@@ -9,7 +9,6 @@ export default function AccountPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [success, setSuccess] = useState("");
-
   useEffect(() => {
     if (user) {
       setFullName(user.fullName);
@@ -36,6 +35,18 @@ export default function AccountPage() {
   };
 
   if (!user) return <p className="text-center py-10">Yükleniyor...</p>;
+  const handleResend = async () => {
+    const res = await fetch("/api/resend-verification", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: user?.email }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) return alert(data.error);
+
+    alert(data.message);
+  };
 
   return (
     <div className="max-w-3xl mx-auto p-2 md:p-10">
@@ -47,6 +58,22 @@ export default function AccountPage() {
         {success && (
           <p className="text-green-500 bg-green-100 dark:bg-green-900 dark:text-green-300 p-3 rounded mb-6">
             {success}
+          </p>
+        )}
+        {user.emailVerified ? (
+          <p className="text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-300 p-3 rounded mb-6">
+            Email adresiniz doğrulandı.
+          </p>
+        ) : (
+          <p className="text-yellow-600 bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-300 p-3 rounded mb-6">
+            Email adresiniz doğrulanmadı. Lütfen emailinizi kontrol edin veya
+            <a
+              onClick={handleResend}
+              href="#"
+              className="text-pink-600 underline ml-1"
+            >
+              tekrar gönderin.
+            </a>
           </p>
         )}
 

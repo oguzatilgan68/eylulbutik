@@ -1,3 +1,4 @@
+// /api/products/route.ts
 import { db } from "@/app/(marketing)/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -8,21 +9,18 @@ export async function GET(req: NextRequest) {
   const inStock = searchParams.get("inStock");
   const category = searchParams.get("category");
   const attributesParam = searchParams.get("attributes");
-  let attributes: { [key: string]: string } = {};
+  const page = parseInt(searchParams.get("page") || "1", 10);
+  const limit = parseInt(searchParams.get("limit") || "10", 10);
 
+  let attributes: { [key: string]: string } = {};
   if (attributesParam) attributes = JSON.parse(attributesParam);
 
-  // Product filtreleme
+  // Filtreleme
   let where: any = {};
-  if (inStock === "true") {
-    where.inStock = true;
-  }
-  if (inStock === "false") {
-    where.inStock = false;
-  }
+  if (inStock === "true") where.inStock = true;
+  if (inStock === "false") where.inStock = false;
   if (category) where.category = { slug: category };
 
-  // Attribute filtreleme ProductProperty üzerinden
   if (Object.keys(attributes).length > 0) {
     where.AND = Object.entries(attributes).map(([key, value]) => ({
       properties: {
@@ -40,34 +38,38 @@ export async function GET(req: NextRequest) {
   if (sort === "price-desc") orderBy = { price: "desc" };
   if (sort === "popular") orderBy = { wishlists: { _count: "desc" } };
   if (sort === "most-favorited") orderBy = { wishlists: { _count: "desc" } };
-  if (sort === "best-selling") orderBy = { OrderItem: { _count: "desc" } };
+  if (sort === "best-selling") orderBy = { orderItems: { _count: "desc" } };
   if (sort === "highest-rated") orderBy = { ratingAvg: "desc" };
-  if (sort === "most-reviewed") orderBy = { ratingCount: "desc" }; // ✅ en çok yorum yapılan
+  if (sort === "most-reviewed") orderBy = { ratingCount: "desc" };
 
-  const products = await db.product.findMany({
-    where,
-    include: {
-      images: true,
-      brand: true,
-      category: true,
-      properties: {
-        include: {
-          propertyType: true,
-          propertyValue: true,
+  const [products, total] = await Promise.all([
+    db.product.findMany({
+      where,
+      include: {
+        images: true,
+        brand: true,
+        category: true,
+        properties: {
+          include: {
+            propertyType: true,
+            propertyValue: true,
+          },
+        },
+        wishlists: true,
+        reviews: true,
+        _count: {
+          select: {
+            orderItems: true,
+            wishlists: true,
+            reviews: true,
+          },
         },
       },
-      wishlists: true,
-      Review: true,
-      _count: {
-        select: {
-          OrderItem: true,
-          wishlists: true,
-          Review: true,
-        },
-      },
-    },
-    orderBy,
-  });
-
-  return NextResponse.json(products);
+      orderBy,
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    db.product.count({ where }),
+  ]);
+  return NextResponse.json({ products, total });
 }

@@ -27,7 +27,6 @@ export default function ReturnsAdminPage() {
     const res = await fetch(`/api/admin/returns?${params.toString()}`);
     const json = await res.json();
     setList(json.data);
-    console.log(json.data, "list");
 
     setTotal(json.meta.total);
     setLoading(false);

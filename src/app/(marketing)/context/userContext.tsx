@@ -15,6 +15,7 @@ interface User {
   email: string;
   phone?: string;
   role: "ADMIN" | "STAFF" | "CUSTOMER";
+  emailVerified: boolean;
 }
 
 interface UserContextType {

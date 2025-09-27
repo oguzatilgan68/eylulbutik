@@ -10,22 +10,25 @@ datasource db {
 }
 
 model User {
-  id           String     @id @default(uuid())
-  email        String     @unique
-  passwordHash String?
-  fullName     String
-  phone        String?    @db.VarChar(32)
-  role         Role       @default(CUSTOMER)
-  addresses    Address[]
-  orders       Order[]
-  wishlists    Wishlist[]
-  carts        Cart[]
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  Review       Review[]
-  returnRequests ReturnRequest[] 
-
+  id                         String          @id @default(uuid())
+  email                      String          @unique
+  passwordHash               String?
+  fullName                   String
+  phone                      String?         @db.VarChar(32)
+  role                       Role            @default(CUSTOMER)
+  addresses                  Address[]
+  orders                     Order[]
+  wishlists                  Wishlist[]
+  carts                       Cart[]
+  reviews                    Review[]        // küçük harf, çoğul
+  returnRequests             ReturnRequest[] // küçük harf, çoğul
+  emailVerified              Boolean         @default(false)
+  emailVerificationToken     String?         
+  emailVerificationTokenExpires DateTime?
+  createdAt                  DateTime        @default(now())
+  updatedAt                  DateTime        @updatedAt
 }
+
 
 enum Role {
   ADMIN
@@ -34,21 +37,21 @@ enum Role {
 }
 
 model Address {
- id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  title     String   // "Ev", "İş", "Aile" gibi
-  fullName  String
-  phone     String
-  city      String
-  district  String
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  title         String   // "Ev", "İş", ...
+  fullName      String
+  phone         String
+  city          String
+  district      String
   neighbourhood String
-  address1  String   // sokak/cadde/bina bilgisi
-  zip       String?
-  isDefault Boolean  @default(false)
-  Order     Order[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  address1      String   // sokak/cadde/bina
+  zip           String?
+  isDefault     Boolean  @default(false)
+  orders        Order[]  // küçük harf, çoğul (önceden 'Order' idi)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Brand {
@@ -59,15 +62,16 @@ model Brand {
 }
 
 model Category {
-  id       String     @id @default(uuid())
-  name     String
-  slug     String     @unique
-  parentId String?
-  imageUrl String?
-  parent   Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
-  children Category[] @relation("CategoryToCategory")
-  products Product[]
+  id        String     @id @default(uuid())
+  name      String
+  slug      String     @unique
+  parentId  String?
+  imageUrl  String?
+  parent    Category?  @relation("CategoryToCategory_parent", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryToCategory_parent")
+  products  Product[]
 }
+
 model Product {
   id          String           @id @default(uuid())
   name        String
@@ -87,15 +91,14 @@ model Product {
   ratingCount Int              @default(0)
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
-  CartItem    CartItem[]
-  OrderItem   OrderItem[]
-  Review      Review[]
+  cartItems   CartItem[]       // daha açıklayıcı isim
+  orderItems  OrderItem[]
+  reviews     Review[]
   wishlists   Wishlist[]       @relation("WishlistProducts")
   properties  ProductProperty[]
-  modelInfoId String?          // Ürünün mankeni
+  modelInfoId String?          
   modelInfo   ModelInfo?       @relation(fields: [modelInfoId], references: [id])
-  modelSize   String?     
-
+  modelSize   String?
 }
 
 model ModelInfo {
@@ -114,38 +117,37 @@ model ProductVariant {
   productId  String
   product    Product                @relation(fields: [productId], references: [id])
   sku        String?                @unique
-  price      Decimal?               @db.Decimal(10, 2) // Varyasyon özel fiyatı
+  price      Decimal?               @db.Decimal(10, 2)
   stockQty   Int                    @default(0)
   barcode    String?
   createdAt  DateTime               @default(now())
   updatedAt  DateTime               @updatedAt
-  images     VariantImage[]         // Her varyasyona özel görsel
+  images     VariantImage[]
   attributes ProductVariantAttribute[]
-  CartItem   CartItem[]
-  OrderItem  OrderItem[]
+  cartItems  CartItem[]
+  orderItems OrderItem[]
 }
 
 model VariantImage {
-  id         String          @id @default(uuid())
-  variantId  String
-  variant    ProductVariant  @relation(fields: [variantId], references: [id])
-  url        String
-  alt        String?
-  order      Int             @default(0)
+  id        String         @id @default(uuid())
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  url       String
+  alt       String?
+  order     Int            @default(0)
 }
 
-// 🔹 Yeni Attribute sistemi
 model AttributeType {
-  id      String           @id @default(uuid())
-  name    String           // Örn: Renk, Beden
-  values  AttributeValue[]
+  id     String           @id @default(uuid())
+  name   String
+  values AttributeValue[]
 }
 
 model AttributeValue {
-  id              String                  @id @default(uuid())
-  attributeTypeId String
-  value           String                  // Örn: "Kırmızı", "M"
-  type            AttributeType           @relation(fields: [attributeTypeId], references: [id])
+  id               String                      @id @default(uuid())
+  attributeTypeId  String
+  value            String
+  type             AttributeType               @relation(fields: [attributeTypeId], references: [id])
   variantAttributes ProductVariantAttribute[]
 }
 
@@ -153,10 +155,9 @@ model ProductVariantAttribute {
   id               String           @id @default(uuid())
   variantId        String
   attributeValueId String
-  variant ProductVariant @relation(fields: [variantId], references: [id])
-  value   AttributeValue @relation(fields: [attributeValueId], references: [id])
+  variant          ProductVariant   @relation(fields: [variantId], references: [id])
+  value            AttributeValue   @relation(fields: [attributeValueId], references: [id])
 }
-
 
 model ProductImage {
   id        String   @id @default(uuid())
@@ -167,13 +168,11 @@ model ProductImage {
   order     Int      @default(0)
 }
 
-
 enum ProductStatus {
   DRAFT
   PUBLISHED
   ARCHIVED
 }
-
 
 model Cart {
   id        String     @id @default(uuid())
@@ -232,9 +231,8 @@ model Order {
   payment       Payment?
   shipment      Shipment?
   createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @default(now()) @updatedAt
-  returnRequests ReturnRequest[]   // 👈 eklendi
-
+  updatedAt     DateTime    @updatedAt
+  returnRequests ReturnRequest[]
 }
 
 enum OrderStatus {
@@ -246,23 +244,23 @@ enum OrderStatus {
 }
 
 model OrderItem {
-  id        String          @id @default(uuid())
-  orderId   String
-  order     Order           @relation(fields: [orderId], references: [id])
-  productId String
-  product   Product         @relation(fields: [productId], references: [id])
-  variantId String?
-  variant   ProductVariant? @relation(fields: [variantId], references: [id])
-  name      String
-  qty       Int
-  unitPrice Decimal         @db.Decimal(10, 2)
-  returnItems ReturnItem[]  // 👈 eklendi
+  id         String          @id @default(uuid())
+  orderId    String
+  order      Order           @relation(fields: [orderId], references: [id])
+  productId  String
+  product    Product         @relation(fields: [productId], references: [id])
+  variantId  String?
+  variant    ProductVariant? @relation(fields: [variantId], references: [id])
+  name       String
+  qty        Int
+  unitPrice  Decimal         @db.Decimal(10, 2)
+  returnItems ReturnItem[]
 }
 
 model PropertyType {
   id       String           @id @default(uuid())
   name     String           @unique
-  values   PropertyValue[]  // Cascade ile silinecek
+  values   PropertyValue[]
   products ProductProperty[]
 }
 
@@ -282,18 +280,18 @@ model ProductProperty {
   propertyType    PropertyType  @relation(fields: [propertyTypeId], references: [id])
   propertyValueId String
   propertyValue   PropertyValue @relation(fields: [propertyValueId], references: [id])
-  @@unique([productId, propertyValueId]) // her ürün aynı değeri sadece 1 kez alabilir
+  @@unique([productId, propertyValueId])
 }
 
 model Payment {
-  id       String        @id @default(uuid())
-  orderId  String        @unique
-  order    Order         @relation(fields: [orderId], references: [id])
-  provider String
-  status   PaymentStatus @default(PENDING)
-  txId     String?
-  raw      Json?
- refunds  Refund[]      // 👈 eklendi
+  id        String        @id @default(uuid())
+  orderId   String        @unique
+  order     Order         @relation(fields: [orderId], references: [id])
+  provider  String
+  status    PaymentStatus @default(PENDING)
+  txId      String?
+  raw       Json?
+  refunds   Refund[]
 }
 
 enum PaymentStatus {
@@ -304,13 +302,15 @@ enum PaymentStatus {
   REFUNDED
   CANCELED
 }
+
 enum ReturnReason {
-  PRODUCT_DEFECT      // Ürün arızalı / hasarlı
-  WRONG_ITEM_SENT     // Yanlış ürün gönderildi
-  SHIPPING_DELAY      // Kargo gecikmesi
-  DONTLIKE_ITEM       // Ürünü Beğenmedim
-  OTHER               // Diğer
+  PRODUCT_DEFECT
+  WRONG_ITEM_SENT
+  SHIPPING_DELAY
+  DONTLIKE_ITEM
+  OTHER
 }
+
 model ReturnRequest {
   id          String        @id @default(uuid())
   orderId     String
@@ -318,11 +318,11 @@ model ReturnRequest {
   userId      String?
   user        User?         @relation(fields: [userId], references: [id])
   status      ReturnStatus  @default(PENDING)
-  comment     String?       // Müşteri ek açıklaması
+  comment     String?
   items       ReturnItem[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
-  refunds     Refund[]      // 👈 eklendi
+  refunds     Refund[]
 }
 
 model ReturnItem {
@@ -331,45 +331,47 @@ model ReturnItem {
   returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id])
   orderItemId     String
   orderItem       OrderItem     @relation(fields: [orderItemId], references: [id])
-  qty             Int           @default(1)  // Kaç adet iade ediliyor
+  qty             Int           @default(1)
   status          ReturnStatus  @default(PENDING)
-  reason      ReturnReason     
+  reason          ReturnReason
+}
 
-}
 model Refund {
-  id             String        @id @default(uuid())
-  paymentId      String
-  payment        Payment       @relation(fields: [paymentId], references: [id])
+  id              String         @id @default(uuid())
+  paymentId       String
+  payment         Payment        @relation(fields: [paymentId], references: [id])
   returnRequestId String?
-  returnRequest  ReturnRequest? @relation(fields: [returnRequestId], references: [id])
-  amount         Decimal       @db.Decimal(10, 2)  // İade edilen tutar
-  status         RefundStatus  @default(PENDING)
-  txId           String?       // Ödeme sağlayıcıdan dönen işlem numarası
-  reason         RefundReason?  // Enum oldu
-  raw            Json?         // Ödeme sağlayıcıdan gelen ham veri
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  returnRequest   ReturnRequest? @relation(fields: [returnRequestId], references: [id])
+  amount          Decimal        @db.Decimal(10, 2)
+  status          RefundStatus   @default(PENDING)
+  txId            String?
+  reason          RefundReason?
+  raw             Json?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 }
+
 enum RefundReason {
-  CUSTOMER_REQUEST     // Müşteri talebi
-  PRODUCT_DEFECT       // Ürün arızalı / hasarlı
-  WRONG_ITEM_SENT      // Yanlış ürün gönderildi
-  SHIPPING_DELAY       // Kargo gecikmesi
-  OTHER                // Diğer
+  CUSTOMER_REQUEST
+  PRODUCT_DEFECT
+  WRONG_ITEM_SENT
+  SHIPPING_DELAY
+  OTHER
 }
+
 enum RefundStatus {
-  PENDING     // İade başlatıldı ama henüz sonuçlanmadı
-  SUCCEEDED   // Başarılı
-  FAILED      // Başarısız
-  CANCELED    // İade iptal edildi
+  PENDING
+  SUCCEEDED
+  FAILED
+  CANCELED
 }
 
 enum ReturnStatus {
-  PENDING      // Talep alındı
-  APPROVED     // Onaylandı
-  REJECTED     // Reddedildi
-  RECEIVED     // Ürün teslim alındı
-  REFUNDED     // Ücret iadesi yapıldı
+  PENDING
+  APPROVED
+  REJECTED
+  RECEIVED
+  REFUNDED
 }
 
 model Shipment {
@@ -380,8 +382,8 @@ model Shipment {
   trackingNo String?
   status     ShipmentStatus @default(PENDING)
   raw        Json?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
 }
 
 enum ShipmentStatus {
@@ -417,9 +419,10 @@ model Review {
   createdAt  DateTime @default(now())
   @@unique([productId, userId])
 }
+
 model Wishlist {
   id       String    @id @default(uuid())
   userId   String
   user     User      @relation(fields: [userId], references: [id])
-  products Product[] @relation("WishlistProducts") // 👈 eşleşen relation adı
+  products Product[] @relation("WishlistProducts")
 }

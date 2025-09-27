@@ -17,7 +17,7 @@ export async function GET(request: Request) {
         items: {
           include: {
             product: {
-              include: { images: true, Review: true },
+              include: { images: true, reviews: { where: { userId } } },
             },
           },
         },

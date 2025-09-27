@@ -1,6 +1,8 @@
 import { db } from "@/app/(marketing)/lib/db";
 import { notFound } from "next/navigation";
 import Breadcrumb from "@/app/(marketing)/components/ui/breadcrumbs";
+import Image from "next/image";
+import Link from "next/link";
 
 export default async function OrderDetailPage({
   params,
@@ -12,30 +14,36 @@ export default async function OrderDetailPage({
     include: {
       items: {
         include: {
-          product: true,
+          product: {
+            include: { images: true },
+          },
           variant: true,
         },
       },
       payment: true,
+      address: true,
       shipment: true,
     },
   });
+
+  if (!order) return notFound();
+
   const breadcrumbItems = [
     { label: "Hesabım", href: "/account" },
     { label: "Siparişlerim", href: "/account/orders" },
-    { label: "Sipariş Detayı" }, // aktif sayfa href'siz olur
+    { label: "Sipariş Detayı" },
   ];
-  if (!order) return notFound();
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      {/* Breadcrumb: siparişlerim */}
+    <div className="max-w-5xl mx-auto px-4 py-8">
+      {/* Breadcrumb */}
       <Breadcrumb items={breadcrumbItems} />
       <h1 className="text-2xl font-bold mb-6 dark:text-white">
         Sipariş Detayı
       </h1>
-      {/* Sipariş Başlığı */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6">
+
+      {/* Sipariş Bilgisi */}
+      <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -54,58 +62,89 @@ export default async function OrderDetailPage({
                   : "bg-gray-200 text-gray-600"
               }`}
             >
-              {order.status === "PAID"
-                ? "Ödendi"
-                : order.status === "PENDING"
-                ? "Beklemede"
-                : "İptal Edildi"}
+              {order.status}
             </span>
           </div>
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
           {new Date(order.createdAt).toLocaleString("tr-TR")}
         </p>
-      </div>
+      </section>
+
+      {/* Adres Bilgisi */}
+      {order.address && (
+        <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6">
+          <h2 className="text-lg font-semibold mb-4">Teslimat Adresi</h2>
+          <p className="text-sm">{order.address.fullName}</p>
+          <p className="text-sm">{order.address.phone}</p>
+          <p className="text-sm">{order.address.address1}</p>
+          <p className="text-sm">
+            {order.address.city} / {order.address.district}
+          </p>
+          <p className="text-sm">{order.address.zip}</p>
+        </section>
+      )}
 
       {/* Ürünler */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6">
+      <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6">
         <h2 className="text-lg font-semibold mb-4">Ürünler</h2>
         <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-          {order.items.map((item) => (
-            <li
-              key={item.id}
-              className="py-4 flex items-center justify-between"
-            >
-              <div>
-                <p className="font-medium">{item.name}</p>
-                {item.variant && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {item.variant.name}
+          {order.items.map((item) => {
+            const productImage = item.product?.images?.[0]?.url;
+            return (
+              <li
+                key={item.id}
+                className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+              >
+                <div className="flex items-center gap-4">
+                  {productImage && (
+                    <Link href={`/product/${item.product.slug}`}>
+                      <Image
+                        src={productImage}
+                        alt={item.product.name}
+                        width={80}
+                        height={80}
+                        className="rounded-md object-cover"
+                      />
+                    </Link>
+                  )}
+                  <div>
+                    <p className="font-medium">{item.product.name}</p>
+                    {item.variant && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {item.variant.sku}
+                      </p>
+                    )}
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Adet: {item.qty}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p>
+                    {Number(item.unitPrice).toLocaleString("tr-TR", {
+                      style: "currency",
+                      currency: "TRY",
+                    })}
                   </p>
-                )}
-              </div>
-              <div className="text-right">
-                <p>
-                  {item.qty} ×{" "}
-                  {Number(item.unitPrice).toLocaleString("tr-TR", {
-                    style: "currency",
-                    currency: "TRY",
-                  })}
-                </p>
-                <p className="font-semibold">
-                  {(Number(item.unitPrice) * item.qty).toLocaleString("tr-TR", {
-                    style: "currency",
-                    currency: "TRY",
-                  })}
-                </p>
-              </div>
-            </li>
-          ))}
+                  <p className="font-semibold">
+                    {(Number(item.unitPrice) * item.qty).toLocaleString(
+                      "tr-TR",
+                      {
+                        style: "currency",
+                        currency: "TRY",
+                      }
+                    )}
+                  </p>
+                </div>
+              </li>
+            );
+          })}
         </ul>
-      </div>
+      </section>
 
       {/* Ödeme Özeti */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6">
+      <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6">
         <h2 className="text-lg font-semibold mb-4">Ödeme Özeti</h2>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
@@ -155,12 +194,12 @@ export default async function OrderDetailPage({
             </span>
           </div>
         </div>
-      </div>
+      </section>
 
+      {/* Ödeme ve Kargo Bilgisi */}
       <div className="flex flex-col md:flex-row gap-6 justify-between">
-        {/* Ödeme Bilgisi */}
         {order.payment && (
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6">
+          <section className="flex-1 bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6">
             <h2 className="text-lg font-semibold mb-4">Ödeme Bilgisi</h2>
             <p className="text-sm">
               Durum:{" "}
@@ -173,12 +212,11 @@ export default async function OrderDetailPage({
                 : "Başarısız"}
             </p>
             <p className="text-sm">Tx ID: {order.payment.txId}</p>
-          </div>
+          </section>
         )}
 
-        {/* Kargo Bilgisi */}
         {order.shipment && (
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+          <section className="flex-1 bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
             <h2 className="text-lg font-semibold mb-4">Kargo Bilgisi</h2>
             <p className="text-sm">Kargo Firması: {order.shipment.provider}</p>
             <p className="text-sm">Takip No: {order.shipment.trackingNo}</p>
@@ -192,7 +230,7 @@ export default async function OrderDetailPage({
                 ? "Teslim Edildi"
                 : "Bilinmiyor"}
             </p>
-          </div>
+          </section>
         )}
       </div>
     </div>
