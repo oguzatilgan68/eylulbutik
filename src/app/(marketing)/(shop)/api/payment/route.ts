@@ -1,4 +1,3 @@
-// pages/api/payment.ts
 import { db } from "@/app/(marketing)/lib/db";
 import Iyzipay from "iyzipay";
 import { Decimal } from "@prisma/client/runtime/library";
