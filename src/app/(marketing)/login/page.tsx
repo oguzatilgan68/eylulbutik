@@ -111,6 +111,15 @@ export default function LoginPage() {
             Kayıt Ol
           </Link>
         </p>
+        <p className="mt-2 text-gray-600 dark:text-gray-300 text-sm">
+          Şifrenizi mi unuttunuz?{" "}
+          <Link
+            href="/request-password-reset"
+            className="text-pink-500 hover:underline"
+          >
+            Şifre Sıfırlama
+          </Link>
+        </p>
       </form>
     </div>
   );

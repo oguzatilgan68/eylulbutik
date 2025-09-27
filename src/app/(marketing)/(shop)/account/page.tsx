@@ -2,6 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { useUser } from "../../context/userContext";
+import * as z from "zod";
+
+// Zod schema
+const accountSchema = z.object({
+  fullName: z.string().min(3, "Ad Soyad en az 3 karakter olmalı"),
+  email: z.email("Geçerli bir email girin"),
+  phone: z.string().optional(),
+});
 
 export default function AccountPage() {
   const { user, setUser } = useUser();
@@ -9,6 +17,9 @@ export default function AccountPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [success, setSuccess] = useState("");
+  const [error, setError] = useState("");
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+
   useEffect(() => {
     if (user) {
       setFullName(user.fullName);
@@ -20,33 +31,38 @@ export default function AccountPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSuccess("");
+    setError("");
+    setFormErrors({});
 
+    // Frontend Zod validasyonu
+    const parsed = accountSchema.safeParse({ fullName, email, phone });
+    if (!parsed.success) {
+      const fieldErrors: { [key: string]: string } = {};
+      parsed.error.issues.forEach((err: any) => {
+        if (err.path[0]) fieldErrors[err.path[0] as string] = err.message;
+      });
+      setFormErrors(fieldErrors);
+      return;
+    }
+
+    // Backend çağrısı
     const res = await fetch("/api/account/update", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ fullName, email, phone }),
     });
 
-    if (!res.ok) return;
-
     const data = await res.json();
+    if (!res.ok) {
+      setError(data.error || "Bir hata oluştu");
+      return;
+    }
+
     setUser(data.user);
     setSuccess("Bilgileriniz başarıyla güncellendi!");
   };
 
   if (!user) return <p className="text-center py-10">Yükleniyor...</p>;
-  const handleResend = async () => {
-    const res = await fetch("/api/resend-verification", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: user?.email }),
-    });
-
-    const data = await res.json();
-    if (!res.ok) return alert(data.error);
-
-    alert(data.message);
-  };
 
   return (
     <div className="max-w-3xl mx-auto p-2 md:p-10">
@@ -60,20 +76,9 @@ export default function AccountPage() {
             {success}
           </p>
         )}
-        {user.emailVerified ? (
-          <p className="text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-300 p-3 rounded mb-6">
-            Email adresiniz doğrulandı.
-          </p>
-        ) : (
-          <p className="text-yellow-600 bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-300 p-3 rounded mb-6">
-            Email adresiniz doğrulanmadı. Lütfen emailinizi kontrol edin veya
-            <a
-              onClick={handleResend}
-              href="#"
-              className="text-pink-600 underline ml-1"
-            >
-              tekrar gönderin.
-            </a>
+        {error && (
+          <p className="text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-300 p-3 rounded mb-6">
+            {error}
           </p>
         )}
 
@@ -86,8 +91,15 @@ export default function AccountPage() {
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition"
+              className={`w-full px-4 py-3 rounded-lg border ${
+                formErrors.fullName
+                  ? "border-red-500"
+                  : "border-gray-300 dark:border-gray-600"
+              } dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition`}
             />
+            {formErrors.fullName && (
+              <p className="text-red-500 mt-1">{formErrors.fullName}</p>
+            )}
           </div>
 
           <div>
@@ -98,8 +110,15 @@ export default function AccountPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition"
+              className={`w-full px-4 py-3 rounded-lg border ${
+                formErrors.email
+                  ? "border-red-500"
+                  : "border-gray-300 dark:border-gray-600"
+              } dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition`}
             />
+            {formErrors.email && (
+              <p className="text-red-500 mt-1">{formErrors.email}</p>
+            )}
           </div>
 
           <div>
@@ -114,16 +133,22 @@ export default function AccountPage() {
                 type="text"
                 value={phone}
                 onChange={(e) => {
-                  // Sadece rakam al ve 10 hane ile sınırla
                   const cleaned = e.target.value
                     .replace(/\D/g, "")
                     .slice(0, 10);
                   setPhone(cleaned);
                 }}
                 placeholder="5XXXXXXXXX"
-                className="w-full px-4 py-3 rounded-r-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition"
+                className={`w-full px-4 py-3 rounded-r-lg border ${
+                  formErrors.phone
+                    ? "border-red-500"
+                    : "border-gray-300 dark:border-gray-600"
+                } dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition`}
               />
             </div>
+            {formErrors.phone && (
+              <p className="text-red-500 mt-1">{formErrors.phone}</p>
+            )}
           </div>
 
           <button

@@ -20,7 +20,7 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [error, setError] = useState("");
+  const [backendError, setBackendError] = useState("");
 
   const {
     register,
@@ -31,7 +31,7 @@ export default function RegisterPage() {
   });
 
   const onSubmit = async (data: RegisterForm) => {
-    setError("");
+    setBackendError("");
 
     const res = await fetch("/api/auth/register", {
       method: "POST",
@@ -44,7 +44,8 @@ export default function RegisterPage() {
     if (res.ok) {
       router.push("/login");
     } else {
-      setError(result.error || "Kayıt sırasında hata oluştu");
+      // Backend’den gelen email/telefon çakışma hatasını göster
+      setBackendError(result.error || "Kayıt sırasında hata oluştu");
     }
   };
 
@@ -58,7 +59,8 @@ export default function RegisterPage() {
           Kayıt Ol
         </h1>
 
-        {error && <p className="text-red-500 mb-4">{error}</p>}
+        {/* Backend hatası */}
+        {backendError && <p className="text-red-500 mb-4">{backendError}</p>}
 
         {/* Full Name */}
         <input

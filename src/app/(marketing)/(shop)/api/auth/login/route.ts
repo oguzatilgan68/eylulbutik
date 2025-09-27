@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   const user = await db.user.findUnique({ where: { email } });
   if (!user || !user.passwordHash) {
     return NextResponse.json(
-      { error: "Email veya şifre hatalı" },
+      { error: "Kullanıcı bulunamadı veya parola yanlış" },
       { status: 401 }
     );
   }

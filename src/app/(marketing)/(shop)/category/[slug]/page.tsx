@@ -7,7 +7,6 @@ export default async function CategoryPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-
   // Kategoriye ait ürünler ve productPropertylerini include ile çek
   const products = await db.product.findMany({
     where: { category: { slug } },
@@ -18,9 +17,12 @@ export default async function CategoryPage({
           propertyValue: true, // value
         },
       },
+      category: {
+        select: { name: true },
+      },
     },
   });
-
+  const catName = products[0]?.category.name || "";
   // attributeTypes objesini oluştur
   const attributeTypes: { [key: string]: string[] } = {};
 
@@ -40,9 +42,7 @@ export default async function CategoryPage({
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6 dark:text-white">
-        {slug.replace("-", " ")}
-      </h1>
+      <h1 className="text-3xl font-bold mb-6 dark:text-white">{catName}</h1>
       <ProductList categorySlug={slug} attributeTypes={attributeTypes} />
     </div>
   );
