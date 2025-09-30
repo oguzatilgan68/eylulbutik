@@ -30,7 +30,7 @@ export default async function AdminCategoriesPage() {
           </Link>
         </td>
       </tr>
-      {category.children.map((child: any) => renderCategory(child, level + 1))}
+      {category.children?.map((child: any) => renderCategory(child, level + 1))}
     </React.Fragment>
   );
 

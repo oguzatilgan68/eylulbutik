@@ -9,9 +9,13 @@ export default async function MarketingLayout({
   children: React.ReactNode;
 }) {
   const categories = await db.category.findMany({
-    select: { id: true, name: true, slug: true },
+    where: { parentId: null }, // sadece üst kategoriler
+    include: {
+      children: { select: { id: true, name: true, slug: true } }, // alt kategoriler
+    },
     orderBy: { name: "asc" },
   });
+
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
       <UserProvider>

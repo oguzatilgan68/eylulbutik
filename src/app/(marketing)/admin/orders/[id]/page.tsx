@@ -17,7 +17,9 @@ const AdminOrderDetailPage = async (props: OrderPageProps) => {
           product: true,
           variant: {
             include: {
-              attributes: true,
+              attributes: {
+                include: { value: true },
+              },
             },
           },
         },
@@ -26,6 +28,7 @@ const AdminOrderDetailPage = async (props: OrderPageProps) => {
       shipment: true, // mevcut shipment
     },
   });
+
   const address = order?.addressId
     ? await db.address.findUnique({ where: { id: order.addressId } })
     : null;
@@ -87,7 +90,13 @@ const AdminOrderDetailPage = async (props: OrderPageProps) => {
                 <td className="p-2 text-sm dark:text-white">
                   {item.product.name}
                 </td>
-                <td className="p-2 text-sm dark:text-white">"Yok"</td>
+                <td className="p-2 text-sm dark:text-white">
+                  {item.variant
+                    ? item.variant.attributes
+                        .map((attr) => `${attr.value.value}`)
+                        .join(", ")
+                    : "Yok"}
+                </td>
                 <td className="p-2 text-sm dark:text-white">{item.qty}</td>
                 <td className="p-2 text-sm dark:text-white">
                   {item.unitPrice.toFixed(2)} ₺

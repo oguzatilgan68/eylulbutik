@@ -19,8 +19,6 @@ export async function GET(
         },
       },
     });
-    console.log(order, "order");
-
     if (!order) {
       return NextResponse.json(
         { error: "Sipariş bulunamadı" },

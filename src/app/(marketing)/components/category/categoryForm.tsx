@@ -126,7 +126,7 @@ export const CategoryForm = ({ initialData, onSubmit }: CategoryFormProps) => {
         <select
           value={parentId}
           onChange={(e) => setParentId(e.target.value)}
-          className="w-full border px-2 py-1 rounded"
+          className="w-full border px-2 py-1 rounded dark:text-gray-100 dark:bg-gray-800"
         >
           <option value="">Ana Kategori</option>
           {categories.map((c) => (
