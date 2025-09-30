@@ -19,7 +19,7 @@ export default function AccountPage() {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
-
+  const emailIsVerified = user?.emailVerified;
   useEffect(() => {
     if (user) {
       setFullName(user.fullName);
@@ -67,6 +67,33 @@ export default function AccountPage() {
   return (
     <div className="max-w-3xl mx-auto p-2 md:p-10">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 md:p-10">
+        {!emailIsVerified && (
+          <div className="bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-300 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6">
+            <p className="font-medium">
+              Email adresiniz doğrulanmamış. Lütfen email kutunuzu kontrol edin.
+            </p>
+            <button
+              className="mt-2 text-yellow-700 dark:text-yellow-300 underline"
+              onClick={async () => {
+                await fetch("/api/resend-verification", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ email: user.email }),
+                });
+                alert(
+                  "Doğrulama emaili gönderildi. Lütfen email kutunuzu kontrol edin."
+                );
+              }}
+            >
+              <span className="underline">Doğrulama emaili gönder</span>
+            </button>
+          </div>
+        )}
+        {emailIsVerified && (
+          <div className="bg-green-100 dark:bg-green-900 dark:text-green-300 border-l-4 border-green-500 text-green-700 p-4 mb-6">
+            <p className="font-medium">Email adresiniz doğrulanmış</p>
+          </div>
+        )}
         <h1 className="text-3xl md:text-4xl font-bold mb-8 text-gray-900 dark:text-gray-100">
           Kullanıcı Bilgilerim
         </h1>

@@ -1,3 +1,4 @@
+import type { NextApiRequest, NextApiResponse } from "next";
 import { db } from "@/app/(marketing)/lib/db";
 import Iyzipay from "iyzipay";
 import { Decimal } from "@prisma/client/runtime/library";
@@ -11,13 +12,14 @@ const iyzipay = new Iyzipay({
   uri: process.env.IYZICO_BASE_URL!,
 });
 
-// Basit token doğrulama
-async function getAuthUserId(req: Request): Promise<string | null> {
-  const cookieHeader = req.headers.get("cookie") || "";
+// Basit token doğrulama (cookie üzerinden)
+async function getAuthUserId(req: NextApiRequest): Promise<string | null> {
+  const cookieHeader = req.headers.cookie || "";
   const tokenCookie = cookieHeader
     .split(";")
     .map((c) => c.trim())
     .find((c) => c.startsWith("token="));
+
   const token = tokenCookie?.split("=")[1];
   if (!token) return null;
 
@@ -31,24 +33,28 @@ async function getAuthUserId(req: Request): Promise<string | null> {
   }
 }
 
-export async function POST(req: Request) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (req.method !== "POST") {
+    return res
+      .status(405)
+      .json({ success: false, error: "Method Not Allowed" });
+  }
+
   try {
     const userId = await getAuthUserId(req);
     if (!userId) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Unauthorized" }),
-        { status: 401 }
-      );
+      return res.status(401).json({ success: false, error: "Unauthorized" });
     }
 
-    const body = await req.json();
-    const { payment, orderData } = body;
+    const { payment, orderData } = req.body;
 
     if (!payment || !orderData?.addressId || !orderData?.total) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Eksik sipariş bilgileri" }),
-        { status: 400 }
-      );
+      return res
+        .status(400)
+        .json({ success: false, error: "Eksik sipariş bilgileri" });
     }
 
     const requestBody = {
@@ -164,16 +170,119 @@ export async function POST(req: Request) {
           .join("");
 
         const mailHtml = `
-          <h2>Merhaba ${user.fullName},</h2>
-          <p>Siparişiniz başarıyla oluşturuldu.</p>
-          <p><b>Sipariş No:</b> ${order.orderNo}</p>
-          <ul>${orderItemsHtml}</ul>
-          <p><b>Toplam:</b> ${order.total.toFixed(2)}₺</p>
-          <p>Teşekkür ederiz! 🎉</p>
-          <a href="${process.env.NEXT_PUBLIC_BASE_URL}/orders/${
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sipariş Onayı</title>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    background-color: #f7f7f7;
+  }
+  .email-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+  .header {
+    background-color: #ff6f61;
+    color: #ffffff;
+    text-align: center;
+    padding: 25px 20px;
+    font-size: 24px;
+    font-weight: bold;
+  }
+  .content {
+    padding: 30px 20px;
+    color: #333333;
+    line-height: 1.6;
+  }
+  .content h2 {
+    color: #ff6f61;
+  }
+  .content p {
+    margin: 10px 0;
+  }
+  .order-details {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f4f4f4;
+    border-radius: 5px;
+  }
+  .order-details ul {
+    padding-left: 20px;
+  }
+  .button {
+    display: inline-block;
+    padding: 12px 25px;
+    margin: 20px 0;
+    background-color: #ff6f61;
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    text-align: center;
+  }
+  .footer {
+    padding: 20px;
+    text-align: center;
+    font-size: 12px;
+    color: #888888;
+    background-color: #f7f7f7;
+  }
+  @media only screen and (max-width: 480px) {
+    .email-container {
+      width: 95% !important;
+    }
+    .header {
+      font-size: 20px !important;
+      padding: 15px !important;
+    }
+    .content {
+      padding: 20px 15px !important;
+    }
+    .button {
+      padding: 10px 20px !important;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="header">
+      Eylül Butik
+    </div>
+    <div class="content">
+      <h2>Merhaba ${user.fullName},</h2>
+      <p>Siparişiniz başarıyla oluşturuldu. 🎉</p>
+      <div class="order-details">
+        <p><b>Sipariş No:</b> ${order.orderNo}</p>
+        <ul>
+          ${orderItemsHtml}
+        </ul>
+        <p><b>Toplam:</b> ${order.total.toFixed(2)}₺</p>
+      </div>
+      <p style="text-align:center;">
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/orders/${
           order.id
-        }">Siparişinizi görüntüleyin</a>
-        `;
+        }" class="button">Siparişinizi Görüntüleyin</a>
+      </p>
+      <p>Teşekkür ederiz! 💖</p>
+    </div>
+    <div class="footer">
+      &copy; ${new Date().getFullYear()} Eylül Butik. Tüm hakları saklıdır.
+    </div>
+  </div>
+</body>
+</html>
+`;
 
         await sendEmail({
           to: user.email,
@@ -181,30 +290,28 @@ export async function POST(req: Request) {
           html: mailHtml,
         });
       }
-    }
 
-    const cart = await db.cart.findFirst({ where: { userId } });
-    if (cart) {
-      await db.cartItem.deleteMany({ where: { cartId: cart.id } });
-      await db.cart.delete({ where: { id: cart.id } });
-    }
+      // Sepeti temizle
+      const cart = await db.cart.findFirst({ where: { userId } });
+      if (cart) {
+        await db.cartItem.deleteMany({ where: { cartId: cart.id } });
+        await db.cart.delete({ where: { id: cart.id } });
+      }
 
-    for (const item of orderData.basketItems) {
-      if (item.variantId) {
-        await db.productVariant.update({
-          where: { id: item.variantId },
-          data: { stockQty: { decrement: item.qty } },
-        });
+      // Stok düşür
+      for (const item of orderData.basketItems) {
+        if (item.variantId) {
+          await db.productVariant.update({
+            where: { id: item.variantId },
+            data: { stockQty: { decrement: item.qty } },
+          });
+        }
       }
     }
 
-    return new Response(JSON.stringify({ success: true, data: iyziResponse }), {
-      status: 201,
-    });
+    return res.status(201).json({ success: true, data: iyziResponse });
   } catch (err) {
     console.error("Hata:", err);
-    return new Response(JSON.stringify({ success: false, error: err }), {
-      status: 400,
-    });
+    return res.status(400).json({ success: false, error: err });
   }
 }

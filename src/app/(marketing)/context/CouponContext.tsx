@@ -25,20 +25,18 @@ const CouponContext = createContext<CouponContextType | undefined>(undefined);
 export function CouponProvider({ children }: { children: ReactNode }) {
   const [coupon, setCouponState] = useState<CouponData | null>(null);
 
-  // LocalStorage’dan yükle
   useEffect(() => {
-    const saved = localStorage.getItem("coupon");
+    const saved = sessionStorage.getItem("coupon");
     if (saved) {
       setCouponState(JSON.parse(saved));
     }
   }, []);
 
-  // LocalStorage’a kaydet
   useEffect(() => {
     if (coupon) {
-      localStorage.setItem("coupon", JSON.stringify(coupon));
+      sessionStorage.setItem("coupon", JSON.stringify(coupon));
     } else {
-      localStorage.removeItem("coupon");
+      sessionStorage.removeItem("coupon");
     }
   }, [coupon]);
 

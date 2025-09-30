@@ -88,9 +88,7 @@ export default function CheckoutPage() {
               payment: orderData.payment,
             }),
           });
-
           const data = await res.json();
-
           if (data.success) {
             alert("Ödeme başarılı!");
             setOrderData((prev: any) => ({ ...prev, id: data.orderId }));

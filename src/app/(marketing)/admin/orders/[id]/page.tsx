@@ -12,7 +12,16 @@ const AdminOrderDetailPage = async (props: OrderPageProps) => {
     where: { id: params.id },
     include: {
       user: true,
-      items: { include: { product: true, variant: true } },
+      items: {
+        include: {
+          product: true,
+          variant: {
+            include: {
+              attributes: true,
+            },
+          },
+        },
+      },
       payment: true,
       shipment: true, // mevcut shipment
     },
@@ -78,6 +87,7 @@ const AdminOrderDetailPage = async (props: OrderPageProps) => {
                 <td className="p-2 text-sm dark:text-white">
                   {item.product.name}
                 </td>
+                <td className="p-2 text-sm dark:text-white">"Yok"</td>
                 <td className="p-2 text-sm dark:text-white">{item.qty}</td>
                 <td className="p-2 text-sm dark:text-white">
                   {item.unitPrice.toFixed(2)} ₺
