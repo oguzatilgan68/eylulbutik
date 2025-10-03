@@ -1,36 +1,61 @@
-// components/ui/Breadcrumb.tsx
-import Link from "next/link";
+"use client";
 
-type Crumb = {
+import Link from "next/link";
+import Head from "next/head";
+
+interface BreadcrumbItem {
   label: string;
-  href?: string;
-};
+  href?: string; // son item için opsiyonel
+}
 
 interface BreadcrumbProps {
-  items: Crumb[];
+  items: BreadcrumbItem[];
 }
 
 export default function Breadcrumb({ items }: BreadcrumbProps) {
+  // JSON-LD schema hazırlama
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.label,
+      item: item.href ? `${process.env.NEXTAUTH_URL}${item.href}` : undefined,
+    })),
+  };
+
   return (
-    <nav className="text-sm mb-4" aria-label="Breadcrumb">
-      <ol className="list-reset flex text-gray-600 dark:text-gray-400">
-        {items.map((item, index) => (
-          <li key={index} className="flex items-center">
-            {item.href ? (
-              <Link href={item.href} className="hover:underline">
-                {item.label}
-              </Link>
-            ) : (
-              <span className="text-gray-800 dark:text-gray-200">
-                {item.label}
-              </span>
-            )}
-            {index < items.length - 1 && (
-              <span className="mx-2 text-gray-500 dark:text-gray-400">/</span>
-            )}
-          </li>
-        ))}
-      </ol>
-    </nav>
+    <>
+      <Head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </Head>
+
+      <nav
+        aria-label="breadcrumb"
+        className="text-sm text-gray-600 dark:text-gray-300 mb-4"
+      >
+        <ol className="flex flex-wrap gap-1 items-center">
+          {items.map((item, index) => {
+            const isLast = index === items.length - 1;
+            return (
+              <li key={index} className="flex items-center">
+                {index > 0 && <span className="mx-2">›</span>}
+                {isLast || !item.href ? (
+                  <span className="font-semibold">{item.label}</span>
+                ) : (
+                  <Link href={item.href} className="hover:underline">
+                    {item.label}
+                  </Link>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+    </>
   );
 }
