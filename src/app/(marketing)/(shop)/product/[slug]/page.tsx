@@ -1,4 +1,3 @@
-import { db } from "@/app/(marketing)/lib/db";
 import ProductClient from "./ProductClient";
 
 interface Attribute {
@@ -17,8 +16,8 @@ interface Variant {
 
 interface Property {
   id: string;
-  key: string; // propertyType.name
-  value: string; // propertyValue.value
+  key: string;
+  value: string;
 }
 
 interface SafeProduct {
@@ -51,58 +50,20 @@ interface ProductPageProps {
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
 
-  const product = await db.product.findUnique({
-    where: { slug },
-    include: {
-      images: true,
-      category: true,
-      brand: true,
-      modelInfo: true,
-      variants: {
-        include: {
-          images: true,
-          attributes: {
-            include: {
-              value: {
-                include: { type: true },
-              },
-            },
-          },
-        },
-      },
-      properties: {
-        include: {
-          propertyType: true,
-          propertyValue: true,
-        },
-      },
-    },
-  });
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_APP_URL}/api/products/${slug}`,
+    {
+      cache: "no-store", // Her zaman güncel veri gelsin
+    }
+  );
 
-  if (!product)
+  if (!res.ok) {
     return (
       <p className="text-gray-700 dark:text-gray-300 p-8">Ürün bulunamadı.</p>
     );
+  }
 
-  // Decimal → number dönüşümü ve attributes & properties mapping
-  const safeProduct: SafeProduct = {
-    ...product,
-    price: product.price ? Number(product.price) : 0,
-    variants: product.variants.map((v) => ({
-      ...v,
-      price: v.price ? Number(v.price) : 0,
-      attributes: v.attributes.map((a: any) => ({
-        id: a.id,
-        key: a.value.type.name,
-        value: a.value.value,
-      })),
-    })),
-    properties: product.properties.map((p: any) => ({
-      id: p.id,
-      key: p.propertyType.name,
-      value: p.propertyValue.value,
-    })),
-  };
+  const product: SafeProduct = await res.json();
 
-  return <ProductClient product={safeProduct} />;
+  return <ProductClient product={product} />;
 }

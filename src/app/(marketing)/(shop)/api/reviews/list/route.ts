@@ -12,7 +12,6 @@ export async function GET(req: Request) {
       select: {
         id: true,
         rating: true,
-        title: true,
         content: true,
         createdAt: true,
         user: { select: { fullName: true } },

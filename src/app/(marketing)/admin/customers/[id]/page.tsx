@@ -1,11 +1,12 @@
 import { db } from "@/app/(marketing)/lib/db";
 import { notFound } from "next/navigation";
 
-export default async function EditUserPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function EditUserPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   const user = await db.user.findUnique({ where: { id: params.id } });
   if (!user) return notFound();
 

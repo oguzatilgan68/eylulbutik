@@ -1,32 +1,43 @@
-import { db } from "@/app/(marketing)/lib/db";
-import { notFound } from "next/navigation";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import Breadcrumb from "@/app/(marketing)/components/ui/breadcrumbs";
 import Image from "next/image";
 import Link from "next/link";
 
-export default async function OrderDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const order = await db.order.findUnique({
-    where: { id: params.id },
-    include: {
-      items: {
-        include: {
-          product: {
-            include: { images: true },
-          },
-          variant: true,
-        },
-      },
-      payment: true,
-      address: true,
-      shipment: true,
-    },
-  });
+interface OrderDetailPageProps {
+  id: string;
+}
 
-  if (!order) return notFound();
+export default async function OrderDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
+  const [order, setOrder] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { id } = params;
+  useEffect(() => {
+    const fetchOrder = async () => {
+      try {
+        const res = await fetch(`/api/orders/${id}`);
+        if (!res.ok) throw new Error("Sipariş bulunamadı");
+        const data = await res.json();
+        setOrder(data);
+      } catch (err: any) {
+        setError(err.message || "Bir hata oluştu");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrder();
+  }, [id]);
+
+  if (loading) return <p className="p-4">Yükleniyor...</p>;
+  if (error) return <p className="p-4 text-red-500">{error}</p>;
+  if (!order) return <p className="p-4 text-gray-700">Sipariş bulunamadı.</p>;
 
   const breadcrumbItems = [
     { label: "Hesabım", href: "/account" },
@@ -89,7 +100,7 @@ export default async function OrderDetailPage({
       <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6">
         <h2 className="text-lg font-semibold mb-4">Ürünler</h2>
         <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-          {order.items.map((item) => {
+          {order.items.map((item: any) => {
             const productImage = item.product?.images?.[0]?.url;
             return (
               <li
@@ -143,60 +154,7 @@ export default async function OrderDetailPage({
         </ul>
       </section>
 
-      {/* Ödeme Özeti */}
-      <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6">
-        <h2 className="text-lg font-semibold mb-4">Ödeme Özeti</h2>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span>Ara Toplam</span>
-            <span>
-              {Number(order.subtotal).toLocaleString("tr-TR", {
-                style: "currency",
-                currency: "TRY",
-              })}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span>İndirim</span>
-            <span className="text-red-500">
-              -{" "}
-              {Number(order.discountTotal).toLocaleString("tr-TR", {
-                style: "currency",
-                currency: "TRY",
-              })}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span>Kargo</span>
-            <span>
-              {Number(order.shippingTotal).toLocaleString("tr-TR", {
-                style: "currency",
-                currency: "TRY",
-              })}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span>Vergi</span>
-            <span>
-              {Number(order.taxTotal).toLocaleString("tr-TR", {
-                style: "currency",
-                currency: "TRY",
-              })}
-            </span>
-          </div>
-          <div className="border-t border-gray-300 dark:border-gray-700 pt-2 flex justify-between font-semibold">
-            <span>Toplam</span>
-            <span>
-              {Number(order.total).toLocaleString("tr-TR", {
-                style: "currency",
-                currency: "TRY",
-              })}
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* Ödeme ve Kargo Bilgisi */}
+      {/* Ödeme ve Kargo */}
       <div className="flex flex-col md:flex-row gap-6 justify-between">
         {order.payment && (
           <section className="flex-1 bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-6">

@@ -2,59 +2,54 @@ import { getAuthUserId } from "@/app/(marketing)/lib/auth";
 import { db } from "@/app/(marketing)/lib/db";
 import { NextResponse } from "next/server";
 
-async function isAdmin(userId: string) {
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
-  });
-  return user?.role === "ADMIN";
-}
-
-// Listeleme
-export async function GET() {
+// Listeleme (pagination + filtreleme)
+export async function GET(req: Request) {
   const userId = await getAuthUserId();
-  if (!userId || !(await isAdmin(userId))) {
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const reviews = await db.review.findMany({
-    include: {
-      product: { select: { id: true, slug: true, name: true } },
-      user: { select: { id: true, fullName: true, email: true } },
-    },
-    orderBy: { createdAt: "desc" },
+  const { searchParams } = new URL(req.url);
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "10");
+  const approved = searchParams.get("approved"); // "true", "false" ya da null
+  const q = searchParams.get("q") || ""; // ürün veya kullanıcı adına göre arama
+
+  const skip = (page - 1) * limit;
+
+  const where: any = {
+    ...(approved === "true" ? { isApproved: true } : {}),
+    ...(approved === "false" ? { isApproved: false } : {}),
+    ...(q
+      ? {
+          OR: [
+            { product: { name: { contains: q, mode: "insensitive" } } },
+            { user: { fullName: { contains: q, mode: "insensitive" } } },
+            { user: { email: { contains: q, mode: "insensitive" } } },
+          ],
+        }
+      : {}),
+  };
+
+  const [reviews, total] = await Promise.all([
+    db.review.findMany({
+      where,
+      include: {
+        product: { select: { id: true, slug: true, name: true } },
+        user: { select: { id: true, fullName: true, email: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+    }),
+    db.review.count({ where }),
+  ]);
+
+  return NextResponse.json({
+    data: reviews,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
   });
-
-  return NextResponse.json(reviews);
-}
-
-// Güncelleme (onayla / düzenle)
-export async function PUT(req: Request) {
-  const userId = await getAuthUserId();
-  if (!userId || !(await isAdmin(userId))) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { id, data } = await req.json();
-
-  const review = await db.review.update({
-    where: { id },
-    data,
-  });
-
-  return NextResponse.json(review);
-}
-
-// Silme (reddetme)
-export async function DELETE(req: Request) {
-  const userId = await getAuthUserId();
-  if (!userId || !(await isAdmin(userId))) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { id } = await req.json();
-
-  await db.review.delete({ where: { id } });
-
-  return NextResponse.json({ success: true });
 }

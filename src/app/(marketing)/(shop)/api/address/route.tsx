@@ -7,8 +7,7 @@ import { db } from "@/app/(marketing)/lib/db";
 export async function GET() {
   const userId = await getAuthUserId();
   if (!userId)
-    return NextResponse.json({ error: "UserId required" }, { status: 400 });
-
+    return NextResponse.json({ error: "User required" }, { status: 401 });
   try {
     const addresses = await db.address.findMany({
       where: { userId },
@@ -28,6 +27,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const data = addressSchema.parse(body);
     const userId = await getAuthUserId();
+    if (!userId)
+      return NextResponse.json({ error: "User required" }, { status: 401 });
     // Eğer varsayılan adres seçilmişse, önce diğerlerini false yap
     if (data.isDefault) {
       await db.address.updateMany({
@@ -56,6 +57,8 @@ export async function PUT(req: NextRequest) {
 
     // Eğer varsayılan adres seçilmişse, önce diğerlerini false yap
     const userId = await getAuthUserId();
+    if (!userId)
+      return NextResponse.json({ error: "User required" }, { status: 401 });
     if (updateData.isDefault) {
       await db.address.updateMany({
         where: { userId, isDefault: true },

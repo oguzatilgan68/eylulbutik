@@ -1,41 +1,31 @@
-import { db } from "@/app/(marketing)/lib/db";
 import { ShipmentSection } from "./ShipmentSection";
 
-// ✅ Server Component + Client Wrapper ayırıyoruz
 interface OrderPageProps {
   params: Promise<{ id: string }>;
 }
 
+// ✅ Yardımcı fonksiyonlar
+const formatCurrency = (amount: number) => `${amount.toFixed(2)} ₺`;
+const textClass = "dark:text-gray-200";
+
 const AdminOrderDetailPage = async (props: OrderPageProps) => {
   const params = await props.params;
-  const order = await db.order.findUnique({
-    where: { id: params.id },
-    include: {
-      user: true,
-      items: {
-        include: {
-          product: true,
-          variant: {
-            include: {
-              attributes: {
-                include: { value: true },
-              },
-            },
-          },
-        },
-      },
-      payment: true,
-      shipment: true, // mevcut shipment
-    },
-  });
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_APP_URL}/api/admin/orders/${params.id}`,
+    {
+      cache: "no-store", // güncel veri için
+    }
+  );
 
-  const address = order?.addressId
-    ? await db.address.findUnique({ where: { id: order.addressId } })
-    : null;
-  if (!order)
+  if (!res.ok) {
     return (
-      <p className="text-red-500 dark:text-red-400">Sipariş bulunamadı.</p>
+      <p className="text-red-500 dark:text-red-400">
+        Sipariş bulunamadı veya hata oluştu.
+      </p>
     );
+  }
+
+  const { order, address } = await res.json();
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
@@ -48,24 +38,23 @@ const AdminOrderDetailPage = async (props: OrderPageProps) => {
         <h2 className="text-xl font-semibold dark:text-white">
           Müşteri Bilgileri
         </h2>
-        <p className="dark:text-gray-200">
-          {order.user?.fullName || order.email}
-        </p>
-        <p className="dark:text-gray-200">{order.email}</p>
-        <p className="dark:text-gray-200">{order.phone}</p>
+        <p className={textClass}>{order.user?.fullName || order.user?.phone}</p>
+        <p className={textClass}>{order.user?.email}</p>
+        <p className={textClass}>{order.phone}</p>
+
         {address && (
           <div className="mt-2 p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-900">
             <h3 className="font-semibold dark:text-white">Adres</h3>
-            <p className="dark:text-gray-200">{address.fullName}</p>
-            <p className="dark:text-gray-200">{address.phone}</p>
-            <p className="dark:text-gray-200">
-              {address.city} {address.district} {address.neighbourhood + " "}
-              Mah.
+            <p className={textClass}>{address.fullName}</p>
+            <p className={textClass}>{address.phone}</p>
+            <p className={textClass}>
+              {address.city} {address.district} {address.neighbourhood} Mah.{" "}
               {address.address1}
             </p>
           </div>
         )}
       </section>
+
       {/* ---------------- Ürünler ---------------- */}
       <section>
         <h2 className="text-xl font-semibold dark:text-white">
@@ -82,30 +71,37 @@ const AdminOrderDetailPage = async (props: OrderPageProps) => {
             </tr>
           </thead>
           <tbody>
-            {order.items.map((item) => (
-              <tr
-                key={item.id}
-                className="border-t border-gray-200 dark:border-gray-700"
-              >
-                <td className="p-2 text-sm dark:text-white">
-                  {item.product.name}
-                </td>
-                <td className="p-2 text-sm dark:text-white">
-                  {item.variant
-                    ? item.variant.attributes
-                        .map((attr) => `${attr.value.value}`)
-                        .join(", ")
-                    : "Yok"}
-                </td>
-                <td className="p-2 text-sm dark:text-white">{item.qty}</td>
-                <td className="p-2 text-sm dark:text-white">
-                  {item.unitPrice.toFixed(2)} ₺
-                </td>
-                <td className="p-2 text-sm dark:text-white">
-                  {(Number(item.unitPrice) * Number(item.qty)).toFixed(2)} ₺
-                </td>
-              </tr>
-            ))}
+            {order.items.map((item: any) => {
+              const variantText = item.variant
+                ? item.variant.attributes
+                    .map(
+                      (attr: any) =>
+                        `${attr.value.type.name}: ${attr.value.value}`
+                    )
+                    .join(", ")
+                : "Yok";
+
+              return (
+                <tr
+                  key={item.id}
+                  className="border-t border-gray-200 dark:border-gray-700"
+                >
+                  <td className={`p-2 text-sm dark:text-white`}>
+                    {item.product.name}
+                  </td>
+                  <td className={`p-2 text-sm dark:text-white`}>
+                    {variantText}
+                  </td>
+                  <td className={`p-2 text-sm dark:text-white`}>{item.qty}</td>
+                  <td className={`p-2 text-sm dark:text-white`}>
+                    {formatCurrency(Number(item.unitPrice))}
+                  </td>
+                  <td className={`p-2 text-sm dark:text-white`}>
+                    {formatCurrency(Number(item.unitPrice) * Number(item.qty))}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </section>
@@ -115,11 +111,11 @@ const AdminOrderDetailPage = async (props: OrderPageProps) => {
         <h2 className="text-xl font-semibold dark:text-white">
           Ödeme Bilgileri
         </h2>
-        <p className="dark:text-gray-200">
+        <p className={textClass}>
           Ödeme Durumu:{" "}
           {order.payment?.status === "SUCCEEDED" ? "Başarılı" : "Başarısız"}
         </p>
-        <p className="dark:text-gray-200">Toplam: {order.total.toFixed(2)} ₺</p>
+        <p className={textClass}>Toplam: {formatCurrency(order.total)}</p>
       </section>
 
       {/* ---------------- Kargo ---------------- */}
