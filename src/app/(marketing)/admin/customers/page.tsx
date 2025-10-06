@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { CheckCircle, XCircle } from "lucide-react"; // ikonlar
+import Pagination from "../../components/ui/Pagination";
 
 interface User {
   id: string;
@@ -109,33 +110,7 @@ export default function CustomersPage() {
       </table>
 
       {/* Sayfalama */}
-      <div className="mt-4 flex gap-2">
-        <button
-          disabled={page <= 1}
-          onClick={() => setPage((p) => p - 1)}
-          className="px-2 py-1 border rounded disabled:opacity-50"
-        >
-          Önceki
-        </button>
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-          <button
-            key={p}
-            onClick={() => setPage(p)}
-            className={`px-2 py-1 border rounded ${
-              p === page ? "bg-blue-500 text-white" : ""
-            }`}
-          >
-            {p}
-          </button>
-        ))}
-        <button
-          disabled={page >= totalPages}
-          onClick={() => setPage((p) => p + 1)}
-          className="px-2 py-1 border rounded disabled:opacity-50"
-        >
-          Sonraki
-        </button>
-      </div>
+      <Pagination page={page} totalPages={10} onPageChange={setPage} />
     </div>
   );
 }

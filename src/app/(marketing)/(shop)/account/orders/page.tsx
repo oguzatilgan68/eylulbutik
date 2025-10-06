@@ -1,42 +1,29 @@
-// server component
-import { db } from "@/app/(marketing)/lib/db";
-import { getAuthUserId } from "@/app/(marketing)/lib/auth";
+import { cookies } from "next/headers";
 import OrdersListClient from "./orderClient";
+import { Order } from "@/generated/prisma";
 
 export default async function OrdersPage() {
-  const userId = await getAuthUserId();
-
-  const orders = await db.order.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-    include: {
-      items: {
-        include: { product: true },
+  const cookieStore = await cookies(); // tüm cookie'leri al
+  let orders: Order[];
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/orders`, {
+      cache: "no-store",
+      headers: {
+        Cookie: cookieStore.toString(), // cookie'leri API'ye gönder
       },
-    },
-  });
+    });
 
-  // Prisma Decimal ve Date tiplerini plain JS değerlerine çeviriyoruz
-  const plainOrders = orders.map((order) => ({
-    ...order,
-    subtotal: Number(order.subtotal),
-    discountTotal: Number(order.discountTotal),
-    shippingTotal: Number(order.shippingTotal),
-    taxTotal: Number(order.taxTotal),
-    total: Number(order.total),
-    createdAt: order.createdAt.toISOString(),
-    updatedAt: order.updatedAt.toISOString(),
-    items: order.items.map((item) => ({
-      ...item,
-      unitPrice: Number(item.unitPrice),
-      product: {
-        ...item.product,
-        price: Number(item.product.price),
-        createdAt: item.product.createdAt.toISOString(),
-        updatedAt: item.product.updatedAt.toISOString(),
-      },
-    })),
-  }));
+    if (!res.ok) {
+      throw new Error("Siparişler yüklenemedi");
+    }
 
-  return <OrdersListClient orders={plainOrders} />;
+    orders = await res.json();
+  } catch (err) {
+    console.error("OrdersPage fetch hatası:", err);
+    return (
+      <p className="p-4 text-red-500">Siparişler yüklenirken hata oluştu.</p>
+    );
+  }
+
+  return <OrdersListClient orders={orders} />;
 }

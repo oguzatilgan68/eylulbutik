@@ -1,13 +1,25 @@
 // client component
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import ReturnRequestModal from "@/app/(marketing)/components/ui/returnRequestModal";
 
 export default function OrdersListClient({ orders }: { orders: any[] }) {
+  const [loading, setLoading] = useState(!orders);
   const [openModalOrderId, setOpenModalOrderId] = useState<string | null>(null);
-
-  if (orders.length === 0) return <p>Henüz siparişiniz yok.</p>;
+  useEffect(() => {
+    if (orders) setLoading(false);
+  }, [orders]);
+  if (loading) {
+    return (
+      <div className="p-8 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+  if (!orders || orders.length === 0) {
+    return <p className="p-4 text-gray-600">Henüz siparişiniz bulunmuyor.</p>;
+  }
 
   return (
     <div className="space-y-4">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Pagination from "../../components/ui/Pagination";
 
 interface Order {
   id: string;
@@ -93,33 +94,7 @@ export default function AdminOrdersPage() {
       </table>
 
       {/* Sayfalama */}
-      <div className="flex gap-2 mt-4">
-        <button
-          disabled={page <= 1}
-          onClick={() => setPage((p) => p - 1)}
-          className="px-2 py-1 border rounded disabled:opacity-50"
-        >
-          Önceki
-        </button>
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-          <button
-            key={p}
-            onClick={() => setPage(p)}
-            className={`px-2 py-1 border rounded ${
-              p === page ? "bg-blue-500 text-white" : ""
-            }`}
-          >
-            {p}
-          </button>
-        ))}
-        <button
-          disabled={page >= totalPages}
-          onClick={() => setPage((p) => p + 1)}
-          className="px-2 py-1 border rounded disabled:opacity-50"
-        >
-          Sonraki
-        </button>
-      </div>
+      <Pagination page={page} totalPages={10} onPageChange={setPage} />
     </div>
   );
 }

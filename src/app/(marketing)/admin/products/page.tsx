@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Pagination from "../../components/ui/Pagination";
 
 interface Product {
   id: string;
@@ -137,25 +138,7 @@ export default function AdminProductsPage() {
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-center items-center gap-2 mt-4">
-        <button
-          onClick={() => setPage((p) => Math.max(p - 1, 1))}
-          disabled={page === 1}
-          className="px-3 py-1 border rounded disabled:opacity-50"
-        >
-          Önceki
-        </button>
-        <span>
-          {page} / {totalPages}
-        </span>
-        <button
-          onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-          disabled={page === totalPages}
-          className="px-3 py-1 border rounded disabled:opacity-50"
-        >
-          Sonraki
-        </button>
-      </div>
+      <Pagination page={page} totalPages={10} onPageChange={setPage} />
     </div>
   );
 }

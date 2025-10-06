@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { ShipmentSection } from "./ShipmentSection";
 
 interface OrderPageProps {
@@ -5,18 +6,24 @@ interface OrderPageProps {
 }
 
 // ✅ Yardımcı fonksiyonlar
-const formatCurrency = (amount: number) => `${amount.toFixed(2)} ₺`;
-const textClass = "dark:text-gray-200";
 
 const AdminOrderDetailPage = async (props: OrderPageProps) => {
   const params = await props.params;
+  const cookieStore = await cookies(); // tüm cookie'leri al
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_APP_URL}/api/admin/orders/${params.id}`,
     {
-      cache: "no-store", // güncel veri için
+      cache: "no-store",
+      headers: {
+        Cookie: cookieStore.toString(),
+      },
     }
   );
-
+  const formatCurrency = (amount?: number | string) => {
+    if (!amount) return "0.00 ₺";
+    return `${Number(amount).toFixed(2)} ₺`;
+  };
+  const textClass = "dark:text-gray-200";
   if (!res.ok) {
     return (
       <p className="text-red-500 dark:text-red-400">

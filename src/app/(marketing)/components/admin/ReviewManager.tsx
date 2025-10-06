@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import useSWR, { mutate } from "swr";
+import Pagination from "../ui/Pagination";
 
 const fetcher = (url: string) =>
   fetch(url).then((res) => {
@@ -175,25 +176,7 @@ export default function ReviewManager() {
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Toplam {total} yorum
           </p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="px-3 py-1 border rounded disabled:opacity-50"
-            >
-              Önceki
-            </button>
-            <span>
-              Sayfa {page} / {totalPages}
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="px-3 py-1 border rounded disabled:opacity-50"
-            >
-              Sonraki
-            </button>
-          </div>
+          <Pagination page={page} totalPages={10} onPageChange={setPage} />
         </div>
       )}
     </div>

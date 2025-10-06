@@ -270,23 +270,7 @@ function Pagination({ page, setPage, total, perPage }: any) {
   return (
     <footer className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
       <div className="text-sm text-slate-500">Toplam: {total}</div>
-      <div className="flex gap-2 items-center">
-        <button
-          onClick={() => setPage((p: number) => Math.max(1, p - 1))}
-          className="px-3 py-1 rounded border text-sm"
-        >
-          Önceki
-        </button>
-        <div className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded text-sm">
-          {page}
-        </div>
-        <button
-          onClick={() => setPage((p: number) => p + 1)}
-          className="px-3 py-1 rounded border text-sm"
-        >
-          Sonraki
-        </button>
-      </div>
+      <Pagination page={page} totalPages={10} onPageChange={setPage} />
     </footer>
   );
 }

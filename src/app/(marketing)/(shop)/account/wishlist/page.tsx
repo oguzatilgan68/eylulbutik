@@ -1,25 +1,25 @@
-import { db } from "@/app/(marketing)/lib/db";
-import { getAuthUserId } from "@/app/(marketing)/lib/auth";
-import { serializeProduct } from "@/app/(marketing)/lib/serializers";
-import WishlistGrid from "./WishlistGrid";
 import { redirect } from "next/navigation";
+import WishlistGrid from "./WishlistGrid";
+import { cookies } from "next/headers";
 
 export default async function WishlistPage() {
-  const userId = await getAuthUserId();
+  const cookieStore = await cookies(); // tüm cookie'leri al
+  const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/wishlist`, {
+    cache: "no-store",
+    headers: {
+      Cookie: cookieStore.toString(),
+    },
+  });
 
-  if (!userId) {
+  if (res.status === 401) {
     redirect("/login");
   }
 
-  const wishlist = await db.wishlist.findFirst({
-    where: { userId },
-    include: { products: { include: { images: true, brand: true } } },
-  });
+  const data = await res.json();
 
-  if (!wishlist || wishlist.products.length === 0)
+  if (!data.products || data.products.length === 0) {
     return <p>Favori ürününüz yok.</p>;
+  }
 
-  const products = wishlist.products.map(serializeProduct);
-
-  return <WishlistGrid products={products} userId={userId} />;
+  return <WishlistGrid products={data.products} userId={data.userId} />;
 }

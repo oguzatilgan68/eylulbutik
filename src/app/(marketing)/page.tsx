@@ -1,12 +1,33 @@
+import { Category } from "@/generated/prisma";
+import { cookies } from "next/headers";
 import Link from "next/link";
-import { db } from "./lib/db";
 
 export default async function HomePage() {
   // Üst kategorileri çekiyoruz
-  const categories = await db.category.findMany({
-    where: { parentId: null },
-    orderBy: { name: "asc" },
-  });
+  const cookieStore = await cookies(); // tüm cookie'leri al
+  let categories: Category[];
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL}/api/categories`,
+      {
+        cache: "no-store",
+        headers: {
+          Cookie: cookieStore.toString(), // cookie'leri API'ye gönder
+        },
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error("Kategoriler yüklenemedi");
+    }
+
+    categories = await res.json();
+  } catch (err) {
+    console.error("OrdersPage fetch hatası:", err);
+    return (
+      <p className="p-4 text-red-500">Siparişler yüklenirken hata oluştu.</p>
+    );
+  }
 
   return (
     <div className="px-4 py-8 md:px-12 lg:px-24 xl:px-32">

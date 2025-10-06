@@ -89,11 +89,6 @@ export default function AccountPage() {
             </button>
           </div>
         )}
-        {emailIsVerified && (
-          <div className="bg-green-100 dark:bg-green-900 dark:text-green-300 border-l-4 border-green-500 text-green-700 p-4 mb-6">
-            <p className="font-medium">Email adresiniz doğrulanmış</p>
-          </div>
-        )}
         <h1 className="text-3xl md:text-4xl font-bold mb-8 text-gray-900 dark:text-gray-100">
           Kullanıcı Bilgilerim
         </h1>
