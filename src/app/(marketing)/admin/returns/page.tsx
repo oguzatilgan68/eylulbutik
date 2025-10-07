@@ -2,7 +2,26 @@
 
 import { useEffect, useState } from "react";
 import clsx from "clsx";
-import { ReturnRequest } from "@/generated/prisma/client";
+// Define an extended type to include user and items
+import {
+  ReturnRequest as PrismaReturnRequest,
+  User,
+  ReturnItem,
+} from "@/generated/prisma/client";
+
+type ReturnRequest = PrismaReturnRequest & {
+  user?: User | null;
+  items: (ReturnItem & {
+    orderItem: {
+      product: {
+        slug: string;
+        name: string;
+        images?: { url: string }[];
+      };
+    };
+    qty: number;
+  })[];
+};
 import Image from "next/image";
 import Link from "next/link";
 
@@ -110,7 +129,7 @@ export default function ReturnsAdminPage() {
                     {new Date(r.createdAt).toLocaleDateString()}
                   </div>
                   <div className="text-sm line-clamp-2 mb-3">
-                    {r.reason || r.comment || "-"}
+                    {r.comment || "-"}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <ActionButton onClick={() => setSelected(r)}>
@@ -164,7 +183,7 @@ export default function ReturnsAdminPage() {
                       </td>
                       <td className="p-3">{r.items.length} ürün</td>
                       <td className="p-3 truncate max-w-xs">
-                        {r.reason || r.comment || "-"}
+                        {r.comment || "-"}
                       </td>
                       <td className="p-3">
                         <Badge status={r.status} />
@@ -316,7 +335,7 @@ function DetailsModal({
           <div>
             <div className="font-medium">İade Sebebi</div>
             <div className="text-slate-600 dark:text-slate-300">
-              {returnRequest.reason || returnRequest.comment || "-"}
+              {returnRequest.comment || "-"}
             </div>
           </div>
           {/* Ürünler */}
