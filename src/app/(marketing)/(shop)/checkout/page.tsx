@@ -157,7 +157,6 @@ export default function CheckoutPage() {
           {step === 2 && (
             <PaymentStep
               orderData={orderData}
-              setOrderData={setOrderData}
               prevStep={prevStep}
               nextStep={nextStep} // sadece step’i ilerletiyoruz
             />
@@ -173,7 +172,6 @@ export default function CheckoutPage() {
         <div className="w-full lg:w-1/3">
           <OrderSummary
             subtotal={subtotal}
-            initialDiscount={discount}
             onApply={(d, f) => {
               setDiscount(d);
               setFinalTotal(f);
