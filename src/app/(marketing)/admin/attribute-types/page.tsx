@@ -1,5 +1,6 @@
 import Link from "next/link";
 import DeleteButton from "../../components/attribute-types/DeleteButton";
+import { Key, ReactElement, JSXElementConstructor, ReactNode, ReactPortal } from "react";
 
 export default async function AttributeTypesPage() {
   const types = await fetch(
@@ -37,7 +38,7 @@ export default async function AttributeTypesPage() {
       </div>
 
       <div className="space-y-3">
-        {types.map((t) => (
+        {types.map((t: { id: Key | null | undefined; name: string, values: any[]; }) => (
           <div
             key={t.id}
             className="p-3 border rounded flex justify-between items-center"
@@ -55,7 +56,7 @@ export default async function AttributeTypesPage() {
               >
                 Düzenle
               </Link>
-              <DeleteButton id={t.id} />
+              <DeleteButton id={t.id ? String(t.id) : ""} />
             </div>
           </div>
         ))}
