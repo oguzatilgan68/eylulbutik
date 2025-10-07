@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   if (attributesParam) attributes = JSON.parse(attributesParam);
 
   // Filtreleme
-  let where: any = {};
+  const where: any = {};
   if (inStock === "true") where.inStock = true;
   if (inStock === "false") where.inStock = false;
   if (category) where.category = { slug: category };
