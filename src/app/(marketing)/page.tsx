@@ -1,5 +1,6 @@
 import { Category } from "@/generated/prisma";
 import { cookies } from "next/headers";
+import Image from "next/image";
 import Link from "next/link";
 
 export default async function HomePage() {
@@ -44,8 +45,11 @@ export default async function HomePage() {
               className="group relative block rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300"
             >
               {category.imageUrl ? (
-                <img
+                <Image
+                  priority
                   src={category.imageUrl}
+                  height={100}
+                  width={100}
                   alt={category.name}
                   className="w-full h-64 md:h-80 lg:h-[400px] xl:h-[500px] object-cover group-hover:scale-105 transition-transform duration-300"
                 />

@@ -30,7 +30,7 @@ const faqs = [
       <p>
         Siparişiniz, stok durumuna bağlı olarak 1–3 iş günü içerisinde kargoya
         verilir. Kargo süresi ise bulunduğunuz şehre göre değişir. Kargo takip
-        numaranızı operatör sitesinden kontrol edebilirsiniz.
+        numaranızı sipariş detay sayfasından kontrol edebilirsiniz.
       </p>
     ),
   },
