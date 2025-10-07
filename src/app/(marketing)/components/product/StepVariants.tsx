@@ -123,7 +123,7 @@ export default function StepVariants({ attributeTypes, uploadImage }: Props) {
                   <button
                     type="button"
                     onClick={() => {
-                      const arr = (v.images || []).filter((_, j) => j !== i);
+                      const arr = (v.images || []).filter((img: any, j: number) => j !== i);
                       updateVariant(idx, { images: arr });
                     }}
                     className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
