@@ -15,6 +15,9 @@ export default function CheckoutPage() {
   const [subtotal, setSubtotal] = useState(0);
   const [discount, setDiscount] = useState(0);
   const [finalTotal, setFinalTotal] = useState(0);
+  const [paymentStatus, setPaymentStatus] = useState<
+    "PENDING" | "SUCCEEDED" | "FAILED"
+  >("PENDING");
 
   const nextStep = () => setStep((prev) => Math.min(prev + 1, 3));
   const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
@@ -77,33 +80,31 @@ export default function CheckoutPage() {
 
   // 💳 Ödeme işlemi, step 3'e geçildiğinde tetiklenecek
   useEffect(() => {
-    const makePayment = async () => {
-      if (step === 3 && orderData.payment) {
-        try {
-          const res = await fetch("/api/payment", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              orderData,
-              payment: orderData.payment,
-            }),
-          });
-          const data = await res.json();
-          if (data.success) {
-            alert("Ödeme başarılı!");
-            setOrderData((prev: any) => ({ ...prev, id: data.orderId }));
-          } else {
-            alert("Ödeme başarısız! " + (data.error?.message || ""));
-          }
-        } catch (err) {
-          console.error(err);
-          alert("Sunucu hatası, lütfen tekrar deneyin.");
-        }
-      }
-    };
+    if (!orderData?.payment?.merchantOid) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch("/api/paytr/status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ merchantOid: orderData.payment.merchantOid }),
+        });
+        const data = await res.json();
 
-    makePayment();
-  }, [step, orderData.payment]);
+        if (data.status === "SUCCEEDED") {
+          setPaymentStatus("SUCCEEDED");
+          setStep(3); // otomatik olarak Step3
+          clearInterval(interval);
+        } else if (data.status === "FAILED") {
+          setPaymentStatus("FAILED");
+          clearInterval(interval);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [orderData.payment?.merchantOid]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -160,6 +161,11 @@ export default function CheckoutPage() {
               prevStep={prevStep}
               nextStep={nextStep} // sadece step’i ilerletiyoruz
             />
+          )}
+          {paymentStatus === "FAILED" && step === 3 && (
+            <div className="text-red-600 font-semibold mt-6">
+              Ödeme başarısız oldu. Lütfen tekrar deneyin.
+            </div>
           )}
           {step === 3 && <SummaryStep orderData={orderData} />}
         </div>
