@@ -26,7 +26,10 @@ export async function GET(req: Request, props: { params: Promise<Params> }) {
 
     // isim ve soyisim baş harflerini üretelim
     const formattedReviews = reviews.map((review) => {
-      const parts = review.user.fullName.split(" ").filter(Boolean);
+      const parts =
+        review.user && review.user.fullName
+          ? review.user.fullName.split(" ").filter(Boolean)
+          : [];
       const fullName = parts.map((p) => p[0]?.toUpperCase() || "").join("");
 
       return {
