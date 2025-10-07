@@ -15,7 +15,16 @@ export default function StepProperties({ propertyTypes }: Props) {
     const newProps = properties.filter(
       (p) => p.propertyTypeId !== propertyTypeId
     );
-    if (propertyValueId) newProps.push({ propertyTypeId, propertyValueId }); // artık propertyValueId kaydediyoruz
+    if (propertyValueId) {
+      const valueObj = propertyTypes
+        .find((pt) => pt.id === propertyTypeId)
+        ?.values.find((v) => v.id === propertyValueId);
+      newProps.push({
+        propertyTypeId,
+        propertyValueId,
+        value: valueObj?.value || "",
+      }); // artık propertyValueId kaydediyoruz
+    }
     setValue("properties", newProps);
   };
 
