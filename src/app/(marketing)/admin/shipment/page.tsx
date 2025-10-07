@@ -54,7 +54,7 @@ export default function ShipmentsAdmin() {
 
   useEffect(() => {
     fetchList();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [q, filterProvider, filterStatus, page]);
 
   /* ---------------- CRUD ---------------- */
