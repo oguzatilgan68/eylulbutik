@@ -221,7 +221,7 @@ export default function CartPage() {
       <div className="w-full lg:w-1/3 bg-white dark:bg-gray-800 p-6 rounded-lg shadow space-y-4">
         <OrderSummary
           subtotal={subtotal}
-          initialDiscount={discount}
+          showCheckoutButton={true}
           onApply={(d) => setDiscount(d)}
           onCheckout={() => router.push("/checkout")}
         />
