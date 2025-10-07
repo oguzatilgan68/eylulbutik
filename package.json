@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --no-lint --turbopack",
-    "build": "next --no-lint build",
+    "build": "next build",
     "start": "next start",
     "postinstall": "prisma generate",
     "analyze": "cross-env ANALYZE=true next build"
