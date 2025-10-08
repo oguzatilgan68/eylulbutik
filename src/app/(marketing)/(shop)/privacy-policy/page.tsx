@@ -1,34 +1,34 @@
 "use client";
 
 import Breadcrumb from "../../components/ui/breadcrumbs";
+import { useGenericData } from "../../context/GenericDataContext";
 
 const PrivacyPolicy = () => {
   const breadcrumbs = [
     { label: "Ana Sayfa", href: "/" },
     { label: "İade Koşulları", href: "/return-conditions" },
   ];
+  const genericData = useGenericData();
   return (
     <main className="max-w-5xl mx-auto px-4 py-10">
       <Breadcrumb items={breadcrumbs} />
       <article className="prose dark:prose-invert max-w-none">
         <h1>Gizlilik Politikası</h1>
         <p>
-          <strong>Eylulbutik Tekstil Sanayi ve Ticaret Ltd. Şti.</strong>{" "}
-          (“Eylül Butik” veya “Şirket”) olarak kişisel verilerinizin gizliliğine
-          büyük önem veriyoruz. 6698 sayılı Kişisel Verilerin Korunması Kanunu
-          (“KVKK”) kapsamında gerekli tüm tedbirleri alıyoruz. Bu Gizlilik
-          Politikası; <strong>eylulbutik.vercel.app</strong> internet sitesi
-          (“Site”) ve Eylul Butik mobil uygulaması (“Mobil Uygulama”) üzerinden
-          topladığımız kişisel verilerin işlenme amaçlarını, yöntemlerini ve
-          haklarınızı açıklamaktadır.
+          <strong>Eylulbutik Tekstil Sanayi ve Ticaret Ltd. Şti.</strong> (
+          {genericData?.brandName} veya “Şirket”) olarak kişisel verilerinizin
+          gizliliğine büyük önem veriyoruz. 6698 sayılı Kişisel Verilerin
+          Korunması Kanunu (“KVKK”) kapsamında gerekli tüm tedbirleri alıyoruz.
+          Bu Gizlilik Politikası; <strong>eylulbutik.vercel.app</strong>{" "}
+          internet sitesi (“Site”) ve Eylul Butik mobil uygulaması (“Mobil
+          Uygulama”) üzerinden topladığımız kişisel verilerin işlenme
+          amaçlarını, yöntemlerini ve haklarınızı açıklamaktadır.
         </p>
 
         <section>
           <h2>Veri Sorumlusu</h2>
           <p>
-            Veri Sorumlusu: Panayır Mahallesi İstanbul Yolu Caddesi No:421,
-            Osmangazi, Bursa adresinde faaliyet gösteren Eylul Butik Tekstil
-            Sanayi ve Ticaret Ltd. Şti.
+            Veri Sorumlusu: {genericData?.brandName} - {genericData?.address}
           </p>
         </section>
 

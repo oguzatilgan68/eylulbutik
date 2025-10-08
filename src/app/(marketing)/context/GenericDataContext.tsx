@@ -1,14 +1,15 @@
 // src/context/GenericDataContext.tsx
 "use client";
+import { GenericData } from "@/generated/prisma";
 import { createContext, useContext } from "react";
 
-const GenericDataContext = createContext<any>(null);
+const GenericDataContext = createContext<GenericData | null>(null);
 
 export function GenericDataProvider({
   value,
   children,
 }: {
-  value: any;
+  value: GenericData;
   children: React.ReactNode;
 }) {
   return (

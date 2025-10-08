@@ -1,12 +1,15 @@
 "use client";
 
 import Breadcrumb from "../../components/ui/breadcrumbs";
+import { useGenericData } from "../../context/GenericDataContext";
 
 const ReturnPage = () => {
   const breadcrumbs = [
     { label: "Ana Sayfa", href: "/" },
     { label: "İade Koşulları", href: "/return-conditions" },
   ];
+  const genericData = useGenericData();
+
   return (
     <main className="max-w-5xl mx-auto px-4 py-10">
       <Breadcrumb items={breadcrumbs} />
@@ -22,7 +25,7 @@ const ReturnPage = () => {
           </p>
           <p>
             Cayma hakkının kullanılabilmesi için bu süre içinde SATICI’ya yazılı
-            olarak veya e-posta (<strong>eylulbutik@gmail.com</strong>) ya da
+            olarak veya e-posta (<strong>{genericData?.email}</strong>) ya da
             web sitesi/mobil uygulama üzerinden bildirim yapılmalıdır.
           </p>
         </section>

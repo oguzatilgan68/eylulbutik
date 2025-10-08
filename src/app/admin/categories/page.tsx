@@ -1,22 +1,41 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { db } from "@/app/(marketing)/lib/db";
 import React from "react";
 
-export default async function AdminCategoriesPage() {
-  const categories = await db.category.findMany({
-    where: { parentId: null },
-    include: { children: true },
-    orderBy: { name: "asc" },
-  });
+interface Category {
+  id: string;
+  name: string;
+  children?: Category[];
+}
 
-  const renderCategory = (category: any, level = 0) => (
+export default function AdminCategoriesPage() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch("/api/categories");
+        if (!res.ok) throw new Error("Kategoriler alınamadı");
+        const data = await res.json();
+        setCategories(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  const renderCategory = (category: Category, level = 0) => (
     <React.Fragment key={category.id}>
-      <tr
-        key={category.id}
-        className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900"
-      >
+      <tr className="border-b hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-900 transition-colors">
         <td
-          className="px-4 py-2 pl-4"
+          className="px-4 py-2"
           style={{ paddingLeft: `${level * 20 + 16}px` }}
         >
           {category.name}
@@ -24,37 +43,54 @@ export default async function AdminCategoriesPage() {
         <td className="px-4 py-2">
           <Link
             href={`/admin/categories/${category.id}`}
-            className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+            className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
           >
             Düzenle
           </Link>
         </td>
       </tr>
-      {category.children?.map((child: any) => renderCategory(child, level + 1))}
+      {category.children?.map((child) => renderCategory(child, level + 1))}
     </React.Fragment>
   );
 
+  if (loading) return <p className="text-center mt-4">Yükleniyor...</p>;
+
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Kategoriler</h2>
+    <div className="p-4 space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+        <h2 className="text-2xl font-bold dark:text-white">Kategoriler</h2>
         <Link
           href="/admin/categories/new"
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="self-start sm:self-auto px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 active:bg-blue-800 transition-colors"
         >
-          Yeni Kategori
+          + Yeni Kategori
         </Link>
       </div>
 
-      <table className="w-full table-auto border-collapse bg-white dark:bg-gray-800 rounded shadow">
-        <thead className="bg-gray-100 dark:bg-gray-700">
-          <tr>
-            <th className="px-4 py-2 text-left">Kategori Adı</th>
-            <th className="px-4 py-2 text-left">İşlemler</th>
-          </tr>
-        </thead>
-        <tbody>{categories.map((category) => renderCategory(category))}</tbody>
-      </table>
+      <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+        <table className="w-full text-left text-sm border-collapse bg-white dark:bg-gray-800">
+          <thead className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+            <tr>
+              <th className="px-4 py-2">Kategori Adı</th>
+              <th className="px-4 py-2">İşlemler</th>
+            </tr>
+          </thead>
+          <tbody>
+            {categories.length > 0 ? (
+              categories.map((cat) => renderCategory(cat))
+            ) : (
+              <tr>
+                <td
+                  colSpan={2}
+                  className="px-4 py-2 text-center text-gray-500 dark:text-gray-400"
+                >
+                  Henüz kategori eklenmemiş.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

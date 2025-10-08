@@ -47,9 +47,7 @@ export default function ModelInfoPage() {
 
       const res = await fetch(url, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
 
@@ -73,10 +71,8 @@ export default function ModelInfoPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Silmek istediğine emin misin?")) return;
-    const res = await fetch(`/api/model-info/${id}`, {
-      method: "DELETE",
-    });
 
+    const res = await fetch(`/api/model-info/${id}`, { method: "DELETE" });
     if (!res.ok) {
       const errorText = await res.text();
       throw new Error(`Silme işlemi başarısız: ${res.status} - ${errorText}`);
@@ -84,92 +80,105 @@ export default function ModelInfoPage() {
     fetchModels();
   };
 
+  const inputClass =
+    "w-full p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none transition";
+
+  const fields = [
+    { name: "height", label: "Boy" },
+    { name: "weight", label: "Kilo" },
+    { name: "chest", label: "Göğüs" },
+    { name: "waist", label: "Bel" },
+    { name: "hip", label: "Kalça" },
+  ];
+
   return (
-    <div className="p-4 dark:bg-gray-900 dark:text-white min-h-screen">
-      <h1 className="text-2xl font-bold mb-4">Mankenler</h1>
-      <div className="mt-8 p-4 border rounded dark:border-gray-700 max-w-md">
-        <h2 className="text-xl font-semibold mb-2">
-          {editId ? "Manken Düzenle" : "Yeni Manken"}
+    <div className="p-6 dark:bg-gray-900 dark:text-white min-h-screen">
+      <h1 className="text-3xl font-bold mb-8 text-center text-gray-900 dark:text-gray-100">
+        Manken Bilgileri
+      </h1>
+      {/* Form Alanı */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md max-w-lg mx-auto mb-10">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
+          {editId ? "Manken Düzenle" : "Yeni Manken Ekle"}
         </h2>
-        <input
-          type="text"
-          placeholder="İsim"
-          value={form.name || ""}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-          className="w-full mb-2 p-2 border rounded dark:bg-gray-800 dark:border-gray-600"
-        />
-        <div className="grid grid-cols-2 gap-2 mb-2">
+
+        <div className="space-y-3">
           <input
-            type="number"
-            placeholder="Boy"
-            value={form.height || ""}
-            onChange={(e) =>
-              setForm({ ...form, height: parseInt(e.target.value) })
-            }
-            className="p-2 border rounded dark:bg-gray-800 dark:border-gray-600"
+            type="text"
+            placeholder="İsim"
+            value={form.name || ""}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            className={inputClass}
           />
-          <input
-            type="number"
-            placeholder="Kilo"
-            value={form.weight || ""}
-            onChange={(e) =>
-              setForm({ ...form, weight: parseInt(e.target.value) })
-            }
-            className="p-2 border rounded dark:bg-gray-800 dark:border-gray-600"
-          />
-          <input
-            type="number"
-            placeholder="Göğüs"
-            value={form.chest || ""}
-            onChange={(e) =>
-              setForm({ ...form, chest: parseInt(e.target.value) })
-            }
-            className="p-2 border rounded dark:bg-gray-800 dark:border-gray-600"
-          />
-          <input
-            type="number"
-            placeholder="Bel"
-            value={form.waist || ""}
-            onChange={(e) =>
-              setForm({ ...form, waist: parseInt(e.target.value) })
-            }
-            className="p-2 border rounded dark:bg-gray-800 dark:border-gray-600"
-          />
-          <input
-            type="number"
-            placeholder="Kalça"
-            value={form.hip || ""}
-            onChange={(e) =>
-              setForm({ ...form, hip: parseInt(e.target.value) })
-            }
-            className="p-2 border rounded dark:bg-gray-800 dark:border-gray-600"
-          />
-        </div>
-        <button
-          onClick={handleSubmit}
-          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-        >
-          {editId ? "Güncelle" : "Ekle"}
-        </button>
-      </div>
-      <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {models.map((m) => (
-          <div key={m.id} className="p-4 border rounded dark:border-gray-700">
-            <h2 className="font-semibold">{m.name}</h2>
-            <p>Boy: {m.height ?? "-"}</p>
-            <p>Kilo: {m.weight ?? "-"}</p>
-            <p>Göğüs: {m.chest ?? "-"}</p>
-            <p>Bel: {m.waist ?? "-"}</p>
-            <p>Kalça: {m.hip ?? "-"}</p>
-            <div className="mt-2 flex gap-2">
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {fields.map((f) => (
+              <input
+                key={f.name}
+                type="number"
+                placeholder={f.label}
+                value={form[f.name as keyof Model] ?? ""}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    [f.name]: parseInt(e.target.value) || undefined,
+                  })
+                }
+                className={inputClass}
+              />
+            ))}
+          </div>
+
+          <div className="flex gap-2 justify-end pt-2">
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="px-4 py-2 bg-pink-600 text-white rounded hover:bg-pink-700 transition disabled:opacity-50"
+            >
+              {editId ? "Güncelle" : "Ekle"}
+            </button>
+            {editId && (
               <button
-                className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                onClick={() => {
+                  setEditId(null);
+                  setForm({});
+                }}
+                className="px-4 py-2 border rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+              >
+                İptal
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Manken Listesi */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {models.map((m) => (
+          <div
+            key={m.id}
+            className="p-5 rounded-lg shadow border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 transition hover:shadow-md"
+          >
+            <h3 className="font-bold text-lg mb-2 text-gray-800 dark:text-gray-100">
+              {m.name}
+            </h3>
+            <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+              <p>Boy: {m.height ?? "-"}</p>
+              <p>Kilo: {m.weight ?? "-"}</p>
+              <p>Göğüs: {m.chest ?? "-"}</p>
+              <p>Bel: {m.waist ?? "-"}</p>
+              <p>Kalça: {m.hip ?? "-"}</p>
+            </div>
+
+            <div className="mt-4 flex gap-2">
+              <button
+                className="flex-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition"
                 onClick={() => handleEdit(m)}
               >
                 Düzenle
               </button>
               <button
-                className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                className="flex-1 px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition"
                 onClick={() => handleDelete(m.id)}
               >
                 Sil
@@ -178,6 +187,13 @@ export default function ModelInfoPage() {
           </div>
         ))}
       </div>
+
+      {/* Boş Liste Durumu */}
+      {!models.length && !loading && (
+        <p className="text-center text-gray-600 dark:text-gray-400 mt-10">
+          Henüz kayıtlı manken bulunmuyor.
+        </p>
+      )}
     </div>
   );
 }

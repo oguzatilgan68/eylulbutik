@@ -52,10 +52,7 @@ const navLinks = [
   {
     href: "/admin/model-info",
     label: "Model Bilgileri",
-    children: [
-      { href: "/admin/model-info", label: "Model Bilgileri" },
-      { href: "/admin/model-info/new", label: "Yeni Model Bilgisi" },
-    ],
+    children: [{ href: "/admin/model-info", label: "Model Bilgileri" }],
   },
   {
     href: "/admin/generic-data",
