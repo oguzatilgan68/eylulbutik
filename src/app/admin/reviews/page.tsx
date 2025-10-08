@@ -1,5 +1,5 @@
+"use client";
 import { DynamicComponents } from "@/app/utils/dynamic-import";
-
 const { ReviewManager } = DynamicComponents;
 
 export default function AdminReviewsPage() {
