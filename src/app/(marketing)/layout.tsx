@@ -19,7 +19,6 @@ export default async function MarketingLayout({
     },
   });
   const genericData = await getGenericData();
-
   if (res.status === 401) {
     redirect("/login");
   }
@@ -28,7 +27,24 @@ export default async function MarketingLayout({
     <div className="flex flex-col min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
       <UserProvider>
         <MarketingNavbar categories={categories} />
-        <GenericDataProvider value={genericData}>
+        <GenericDataProvider
+          value={
+            genericData ?? {
+              id: "",
+              email: null,
+              phone: null,
+              createdAt: new Date(),
+              address: null,
+              brandName: null,
+              logoUrl: null,
+              instagramUrl: null,
+              facebookUrl: null,
+              youtubeUrl: null,
+              tiktokUrl: null,
+              description: null,
+            }
+          }
+        >
           <main className="flex-1 container mx-auto p-2">{children}</main>
           <Footer />
         </GenericDataProvider>

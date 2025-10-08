@@ -3,7 +3,7 @@
 import { GenericData } from "@/generated/prisma";
 import { createContext, useContext } from "react";
 
-const GenericDataContext = createContext<GenericData | null>(null);
+const GenericDataContext = createContext<GenericData>({} as GenericData);
 
 export function GenericDataProvider({
   value,
