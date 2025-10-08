@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import ThemeProviders from "./(marketing)/components/ui/ThemeProvider";
 import "./globals.css";
+import LoadingProvider from "./providers/LoadingProvider";
 
 export const metadata: Metadata = {
   title: "EylülButik | Kadın, Erkek ve Çocuk Giyim Modası",
@@ -71,7 +72,9 @@ export default function RootLayout({
   return (
     <html lang="tr" suppressHydrationWarning>
       <body>
-        <ThemeProviders>{children}</ThemeProviders>
+        <LoadingProvider>
+          <ThemeProviders>{children}</ThemeProviders>
+        </LoadingProvider>
       </body>
     </html>
   );

@@ -48,7 +48,7 @@ export default async function HomePage() {
                 <div className="relative w-full h-64 md:h-80 lg:h-[400px] xl:h-[500px]">
                   <Image
                     src={category.imageUrl}
-                    alt={category.name}
+                    alt={`${category.name} kategorisi`}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                   />

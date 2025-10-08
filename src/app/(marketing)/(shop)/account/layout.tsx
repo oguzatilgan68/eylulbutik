@@ -23,9 +23,8 @@ export default function AccountLayout({
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto p-3">
         <h1 className="text-3xl font-bold mb-6">Hesabım</h1>
-
         <div className="flex flex-col md:flex-row gap-6">
           {/* Sol Menü */}
           <nav className="md:w-1/4 flex flex-col space-y-1">

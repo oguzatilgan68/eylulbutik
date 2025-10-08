@@ -25,7 +25,7 @@ export default async function MarketingLayout({
     <div className="flex flex-col min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
       <UserProvider>
         <MarketingNavbar categories={categories} />
-        <main className="flex-1 container mx-auto px-4 py-8">{children}</main>
+        <main className="flex-1 container mx-auto p-2">{children}</main>
         <Footer />
       </UserProvider>
     </div>

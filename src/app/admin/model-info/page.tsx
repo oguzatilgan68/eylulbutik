@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
 
 interface Model {
   id: string;
@@ -22,8 +21,11 @@ export default function ModelInfoPage() {
   const fetchModels = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("/api/admin/model-info");
-      setModels(res.data);
+      const res = await fetch("/api/admin/model-info");
+      if (res.ok) {
+        const data = await res.json();
+        setModels(data);
+      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -37,16 +39,30 @@ export default function ModelInfoPage() {
 
   const handleSubmit = async () => {
     try {
-      if (editId) {
-        await axios.patch(`/api/admin/model-info/${editId}`, form);
-      } else {
-        await axios.post("/api/admin/model-info", form);
+      const url = editId
+        ? `/api/admin/model-info/${editId}`
+        : `/api/admin/model-info`;
+
+      const method = editId ? "PATCH" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(form),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`İstek başarısız: ${res.status} - ${errorText}`);
       }
+
       setForm({});
       setEditId(null);
-      fetchModels();
+      await fetchModels();
     } catch (error) {
-      console.error(error);
+      console.error("Veri gönderme hatası:", error);
     }
   };
 
@@ -57,7 +73,14 @@ export default function ModelInfoPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Silmek istediğine emin misin?")) return;
-    await axios.delete(`/api/model-info/${id}`);
+    const res = await fetch(`/api/model-info/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Silme işlemi başarısız: ${res.status} - ${errorText}`);
+    }
     fetchModels();
   };
 

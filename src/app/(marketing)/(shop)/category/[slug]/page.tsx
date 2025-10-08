@@ -7,7 +7,6 @@ export default async function CategoryPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  // Kategoriye ait ürünler ve productPropertylerini include ile çek
   const products = await db.product.findMany({
     where: { category: { slug } },
     include: {
