@@ -9,9 +9,12 @@ import {
   FaTwitter,
   FaYoutube,
 } from "react-icons/fa";
+import { useGenericData } from "../../context/GenericDataContext";
 
 export const Footer = () => {
   const year = new Date().getFullYear();
+  const genericData = useGenericData();
+  console.log(genericData);
 
   const categoryLinks = [
     { name: "Tişört", href: "/category/tisort" },
@@ -77,22 +80,49 @@ export const Footer = () => {
             Telefon: +90 555 555 55 55
           </a>
           <div className="flex space-x-4 mb-4 mt-3">
-            <Link href="https://facebook.com" aria-label="Facebook">
-              <FaFacebookF className="hover:text-blue-600 transition" />
-            </Link>
-            <Link href="https://instagram.com" aria-label="Instagram">
-              <FaInstagram className="hover:text-pink-500 transition" />
-            </Link>
-            <Link href="https://tiktok.com" aria-label="Tiktok">
-              <FaTiktok className="hover:text-black dark:hover:text-white transition" />
-            </Link>
-            <Link href="https://twitter.com" aria-label="Twitter">
-              <FaTwitter className="hover:text-sky-500 transition" />
-            </Link>
-            <Link href="https://youtube.com" aria-label="Youtube">
-              <FaYoutube className="hover:text-red-600 transition" />
-            </Link>
+            {genericData.facebookUrl && (
+              <Link href={genericData.facebookUrl} aria-label="Facebook">
+                <FaFacebookF className="hover:text-blue-600 transition" />
+              </Link>
+            )}
+            {genericData.instagramUrl && (
+              <Link
+                href={
+                  genericData.instagramUrl.startsWith("http")
+                    ? genericData.instagramUrl
+                    : `https://instagram.com/${genericData.instagramUrl}`
+                }
+                aria-label="Instagram"
+              >
+                <FaInstagram className="hover:text-pink-500 transition" />
+              </Link>
+            )}
+            {genericData.tiktokUrl && (
+              <Link
+                href={
+                  genericData.tiktokUrl.startsWith("http")
+                    ? genericData.tiktokUrl
+                    : `https://tiktok.com/@${genericData.tiktokUrl}`
+                }
+                aria-label="Tiktok"
+              >
+                <FaTiktok className="hover:text-black dark:hover:text-white transition" />
+              </Link>
+            )}
+            {genericData.youtubeUrl && (
+              <Link
+                href={
+                  genericData.youtubeUrl.startsWith("http")
+                    ? genericData.youtubeUrl
+                    : `https://youtube.com/@${genericData.youtubeUrl}`
+                }
+                aria-label="Youtube"
+              >
+                <FaYoutube className="hover:text-red-600 transition" />
+              </Link>
+            )}
           </div>
+
           {/* Ödeme ikonları */}
         </div>
         <div className="flex gap-4">
@@ -107,10 +137,7 @@ export const Footer = () => {
       {/* Alt kısım */}
       <div className="border-t border-gray-300 dark:border-gray-700 mt-8 pt-4 text-center text-sm">
         <p>
-          © {year} Eylül Butik. Tüm hakları saklıdır. |
-          <Link href="/sitemap.xml" className="hover:underline">
-            Site Haritası
-          </Link>
+          © {year} {genericData.brandName} Tüm hakları saklıdır. |
         </p>
       </div>
     </footer>

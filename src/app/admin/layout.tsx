@@ -57,6 +57,11 @@ const navLinks = [
       { href: "/admin/model-info/new", label: "Yeni Model Bilgisi" },
     ],
   },
+  {
+    href: "/admin/generic-data",
+    label: "Site Ayarları",
+    children: [{ href: "/admin/generic-data", label: "Site Ayarları" }],
+  },
 ];
 
 export default function AdminLayout({

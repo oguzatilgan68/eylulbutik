@@ -436,3 +436,17 @@ model Wishlist {
   user     User      @relation(fields: [userId], references: [id])
   products Product[] @relation("WishlistProducts")
 }
+model GenericData {
+  id           String   @id @default(cuid())
+  brandName    String?
+  logoUrl      String?
+  phone        String?
+  email        String?
+  address      String?
+  instagramUrl String?
+  facebookUrl  String?
+  youtubeUrl   String?
+  tiktokUrl    String?
+  description  String?   // footer veya meta açıklama için
+  createdAt    DateTime  @default(now())
+}
