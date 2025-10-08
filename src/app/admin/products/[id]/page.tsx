@@ -7,7 +7,8 @@ import {
   PropertyType,
 } from "@/app/(marketing)/components/product/types/types";
 import { supabase } from "@/app/(marketing)/lib/supabase/supabaseClient";
-import ProductForm from "@/app/(marketing)/components/forms/ProductForm";
+import { DynamicComponents } from "@/app/utils/dynamic-import";
+const { ProductForm } = DynamicComponents;
 
 export default async function EditProductPage(props: {
   params: Promise<{ id: string }>;
@@ -76,20 +77,23 @@ export default async function EditProductPage(props: {
     ]);
 
   const propertyTypes: PropertyType[] = Object.values(
-    rawPropertyValues.reduce((acc, pv) => {
-      if (!acc[pv.propertyType.id]) {
-        acc[pv.propertyType.id] = {
-          id: pv.propertyType.id,
-          name: pv.propertyType.name,
-          values: [],
-        };
-      }
-      acc[pv.propertyType.id].values.push({
-        id: pv.id,
-        value: pv.value,
-      });
-      return acc;
-    }, {} as Record<string, PropertyType>)
+    rawPropertyValues.reduce(
+      (acc, pv) => {
+        if (!acc[pv.propertyType.id]) {
+          acc[pv.propertyType.id] = {
+            id: pv.propertyType.id,
+            name: pv.propertyType.name,
+            values: [],
+          };
+        }
+        acc[pv.propertyType.id].values.push({
+          id: pv.id,
+          value: pv.value,
+        });
+        return acc;
+      },
+      {} as Record<string, PropertyType>
+    )
   );
 
   // 🔹 Update handler

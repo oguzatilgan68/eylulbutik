@@ -4,6 +4,7 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
 });
 
 const nextConfig: NextConfig = {
+  swcMinify: false,
   eslint: {
     ignoreDuringBuilds: true,
   },

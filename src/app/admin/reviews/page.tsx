@@ -1,4 +1,6 @@
-import ReviewManager from "@/app/(marketing)/components/admin/ReviewManager";
+import { DynamicComponents } from "@/app/utils/dynamic-import";
+
+const { ReviewManager } = DynamicComponents;
 
 export default function AdminReviewsPage() {
   return (

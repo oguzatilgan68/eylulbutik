@@ -1,4 +1,6 @@
-import AttributeForm from "@/app/(marketing)/components/forms/AttributeForm";
+import { DynamicComponents } from "@/app/utils/dynamic-import";
+
+const { AttributeForm } = DynamicComponents;
 
 export default function NewAttributePage() {
   const handleSubmit = async (data: { name: string; values: string[] }) => {

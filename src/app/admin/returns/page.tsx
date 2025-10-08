@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import clsx from "clsx";
-// Define an extended type to include user and items
 import {
   ReturnRequest as PrismaReturnRequest,
   User,

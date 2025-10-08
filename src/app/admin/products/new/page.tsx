@@ -7,9 +7,10 @@ import {
   ProductFormData,
   PropertyType,
 } from "@/app/(marketing)/components/product/types/types";
-import ProductForm from "@/app/(marketing)/components/forms/ProductForm";
 import { supabase } from "@/app/(marketing)/lib/supabase/supabaseClient";
 import { v4 as uuidv4 } from "uuid";
+import { DynamicComponents } from "@/app/utils/dynamic-import";
+const { ProductForm } = DynamicComponents;
 
 async function generateUniqueSlug(name: string) {
   const baseSlug = slugify(name, { lower: true, strict: true });
