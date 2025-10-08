@@ -14,10 +14,8 @@ export const Footer = () => {
   const year = new Date().getFullYear();
 
   const categoryLinks = [
-    { name: "Kadın", href: "/kategori/kadin" },
-    { name: "Erkek", href: "/kategori/erkek" },
-    { name: "Çocuk", href: "/kategori/cocuk" },
-    { name: "Aksesuar", href: "/kategori/aksesuar" },
+    { name: "Tişört", href: "/category/tisort" },
+    { name: "Pantolon", href: "/category/pantolon" },
   ];
 
   const accountLinks = [

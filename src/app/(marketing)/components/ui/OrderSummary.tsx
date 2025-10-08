@@ -104,19 +104,18 @@ export default function OrderSummary({
         Toplam: {finalAmount.toFixed(2)} TL
       </p>
 
-      <div className="flex gap-2 items-center">
+      <div className="flex gap-2 flex-wrap items-center">
         <input
           type="text"
           placeholder="Kupon kodu"
           value={code}
           onChange={(e) => setCode(e.target.value)}
-          className="flex-1 border px-2 py-1 rounded dark:bg-gray-700 dark:text-white"
+          className="w-[70%] border px-2 py-1 rounded dark:bg-gray-700 dark:text-white"
         />
-
         {discountAmount === 0 ? (
           <button
             onClick={applyCoupon}
-            className="bg-pink-500 text-white px-4 py-1 rounded hover:bg-pink-600 transition disabled:opacity-50"
+            className="flex-shrink-0 bg-pink-500 text-white px-4 py-1 rounded hover:bg-pink-600 transition disabled:opacity-50"
           >
             {loading ? "Kontrol..." : "Uygula"}
           </button>
@@ -124,12 +123,13 @@ export default function OrderSummary({
         {discountAmount > 0 && (
           <button
             onClick={removeCoupon}
-            className="bg-gray-400 text-white px-4 py-1 rounded hover:bg-gray-500 transition"
+            className="flex-shrink-0 bg-gray-400 text-white px-4 py-1 rounded hover:bg-gray-500 transition"
           >
             Kaldır
           </button>
         )}
       </div>
+
       {message && <p className="text-sm text-red-500">{message}</p>}
 
       {showCheckoutButton && (
