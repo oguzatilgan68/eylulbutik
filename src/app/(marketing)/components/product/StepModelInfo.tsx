@@ -3,7 +3,6 @@
 import { useFormContext } from "react-hook-form";
 import { ProductFormData } from "../product/types/types";
 import { useEffect, useState } from "react";
-import axios from "axios";
 
 interface Model {
   id: string;
@@ -27,8 +26,11 @@ export default function StepModelInfo() {
   useEffect(() => {
     const fetchModels = async () => {
       try {
-        const res = await axios.get("/api/admin/model-info");
-        setModels(res.data);
+        const res = await fetch("/api/admin/model-info");
+        if (res.ok) {
+          const data = await res.json();
+          setModels(data);
+        }
       } catch (error) {
         console.error(error);
       }
