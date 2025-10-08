@@ -10,11 +10,12 @@ interface Props {
 
 export default function StepBasicInfo({ categories, brands }: Props) {
   const { register } = useFormContext<ProductFormData>();
+
   const inputClass =
     "w-full p-2 rounded border dark:bg-gray-800 dark:border-gray-600 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all";
 
   return (
-    <div className="space-y-4 sm:space-y-5">
+    <div className="space-y-5">
       {/* Ürün Adı */}
       <div>
         <label className="block mb-1 text-sm text-gray-700 dark:text-gray-300">
@@ -54,8 +55,25 @@ export default function StepBasicInfo({ categories, brands }: Props) {
         />
       </div>
 
-      {/* Kategori & Marka */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {/* Grid: Yayın, Kategori, Marka */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Yayın */}
+        <div>
+          <label className="block mb-1 text-sm text-gray-700 dark:text-gray-300">
+            Yayın
+          </label>
+          <select
+            {...register("status")}
+            className={inputClass}
+            defaultValue="DRAFT"
+          >
+            <option value="DRAFT">Taslak</option>
+            <option value="PUBLISHED">Yayına Al</option>
+            <option value="ARCHIVED">Arşiv</option>
+          </select>
+        </div>
+
+        {/* Kategori */}
         <div>
           <label className="block mb-1 text-sm text-gray-700 dark:text-gray-300">
             Kategori
@@ -66,7 +84,7 @@ export default function StepBasicInfo({ categories, brands }: Props) {
             defaultValue=""
           >
             <option value="">- Kategori Seç -</option>
-            {categories.length > 0 ? (
+            {categories.length ? (
               categories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -78,6 +96,7 @@ export default function StepBasicInfo({ categories, brands }: Props) {
           </select>
         </div>
 
+        {/* Marka */}
         <div>
           <label className="block mb-1 text-sm text-gray-700 dark:text-gray-300">
             Marka
@@ -88,7 +107,7 @@ export default function StepBasicInfo({ categories, brands }: Props) {
             defaultValue=""
           >
             <option value="">- Marka Seç -</option>
-            {brands.length > 0 ? (
+            {brands.length ? (
               brands.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}

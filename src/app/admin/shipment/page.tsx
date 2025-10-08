@@ -7,7 +7,7 @@ import {
   Shipment,
   ShipmentModal,
   STATUSES,
-} from "../../components/shipment/shipmentModal";
+} from "@/app/(marketing)/components/shipment/shipmentModal";
 
 /* ---------------- Types ---------------- */
 
@@ -54,7 +54,6 @@ export default function ShipmentsAdmin() {
 
   useEffect(() => {
     fetchList();
-     
   }, [q, filterProvider, filterStatus, page]);
 
   /* ---------------- CRUD ---------------- */

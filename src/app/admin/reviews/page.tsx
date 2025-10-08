@@ -1,4 +1,4 @@
-import ReviewManager from "../../components/admin/ReviewManager";
+import ReviewManager from "@/app/(marketing)/components/admin/ReviewManager";
 
 export default function AdminReviewsPage() {
   return (

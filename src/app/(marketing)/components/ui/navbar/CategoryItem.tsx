@@ -28,7 +28,8 @@ export const CategoryItem: React.FC<{ cat: Category; level?: number }> = ({
         {/* Kategori adı → slug link */}
         <Link
           href={`/category/${cat.slug}`}
-          className="hover:text-pink-500 transition-colors flex-1 text-left"
+          className="flex-1 text-left py-2 px-2 hover:text-pink-500 transition-colors rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+          aria-label={`${cat.name} kategorisine git`}
         >
           {cat.name}
         </Link>
@@ -37,7 +38,12 @@ export const CategoryItem: React.FC<{ cat: Category; level?: number }> = ({
         {hasChildren && (
           <button
             onClick={() => setOpen(!open)}
-            className="ml-2 text-xs text-gray-600 dark:text-gray-300"
+            className="ml-2 p-2 text-sm text-gray-600 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-pink-500"
+            aria-label={
+              open
+                ? `${cat.name} alt kategorilerini kapat`
+                : `${cat.name} alt kategorilerini aç`
+            }
           >
             {open ? "−" : "+"}
           </button>

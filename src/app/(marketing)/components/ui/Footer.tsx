@@ -104,12 +104,6 @@ export const Footer = () => {
             src="/guvenli-alisveris.png"
             alt="Güvenli Alışveriş"
           />
-          <Image
-            width={268}
-            height={20}
-            src="/iyzico-ile-ode.svg"
-            alt="Kredi Kartları Geçerli"
-          />
         </div>
       </div>
       {/* Alt kısım */}

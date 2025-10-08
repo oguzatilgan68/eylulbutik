@@ -31,7 +31,7 @@ export default async function HomePage() {
   }
 
   return (
-    <div className="px-4 py-8 md:px-12 lg:px-24 xl:px-32">
+    <div className="py-8">
       {categories.length === 0 ? (
         <p className="text-gray-700 dark:text-gray-300 text-center">
           Henüz kategori yok.
@@ -45,14 +45,14 @@ export default async function HomePage() {
               className="group relative block rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300"
             >
               {category.imageUrl ? (
-                <Image
-                  priority
-                  src={category.imageUrl}
-                  height={100}
-                  width={100}
-                  alt={category.name}
-                  className="w-full h-64 md:h-80 lg:h-[400px] xl:h-[500px] object-cover group-hover:scale-105 transition-transform duration-300"
-                />
+                <div className="relative w-full h-64 md:h-80 lg:h-[400px] xl:h-[500px]">
+                  <Image
+                    src={category.imageUrl}
+                    alt={category.name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
               ) : (
                 <div className="w-full h-64 md:h-80 lg:h-[400px] xl:h-[500px] bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                   <span className="text-gray-500 dark:text-gray-300">

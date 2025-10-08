@@ -1,6 +1,12 @@
+import DeleteButton from "@/app/(marketing)/components/attribute-types/DeleteButton";
 import Link from "next/link";
-import DeleteButton from "../../components/attribute-types/DeleteButton";
-import { Key, ReactElement, JSXElementConstructor, ReactNode, ReactPortal } from "react";
+import {
+  Key,
+  ReactElement,
+  JSXElementConstructor,
+  ReactNode,
+  ReactPortal,
+} from "react";
 
 export default async function AttributeTypesPage() {
   const types = await fetch(
@@ -38,28 +44,30 @@ export default async function AttributeTypesPage() {
       </div>
 
       <div className="space-y-3">
-        {types.map((t: { id: Key | null | undefined; name: string, values: any[]; }) => (
-          <div
-            key={t.id}
-            className="p-3 border rounded flex justify-between items-center"
-          >
-            <div>
-              <div className="font-medium">{t.name}</div>
-              <div className="text-sm text-gray-500">
-                {t.values.map((v) => v.value).join(", ") || "Değer yok"}
+        {types.map(
+          (t: { id: Key | null | undefined; name: string; values: any[] }) => (
+            <div
+              key={t.id}
+              className="p-3 border rounded flex justify-between items-center"
+            >
+              <div>
+                <div className="font-medium">{t.name}</div>
+                <div className="text-sm text-gray-500">
+                  {t.values.map((v) => v.value).join(", ") || "Değer yok"}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Link
+                  href={`/admin/attribute-types/${t.id}/edit`}
+                  className="px-2 py-1 bg-yellow-500 text-white rounded text-sm"
+                >
+                  Düzenle
+                </Link>
+                <DeleteButton id={t.id ? String(t.id) : ""} />
               </div>
             </div>
-            <div className="flex gap-2">
-              <Link
-                href={`/admin/attribute-types/${t.id}/edit`}
-                className="px-2 py-1 bg-yellow-500 text-white rounded text-sm"
-              >
-                Düzenle
-              </Link>
-              <DeleteButton id={t.id ? String(t.id) : ""} />
-            </div>
-          </div>
-        ))}
+          )
+        )}
       </div>
     </div>
   );
