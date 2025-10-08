@@ -8,7 +8,7 @@ import {
 } from "@/app/(marketing)/components/product/types/types";
 import { supabase } from "@/app/(marketing)/lib/supabase/supabaseClient";
 import { DynamicComponents } from "@/app/utils/dynamic-import";
-const { ProductForm } = DynamicComponents;
+import ProductForm from "@/app/(marketing)/components/forms/ProductForm";
 
 export default async function EditProductPage(props: {
   params: Promise<{ id: string }>;

@@ -10,7 +10,7 @@ import {
 import { supabase } from "@/app/(marketing)/lib/supabase/supabaseClient";
 import { v4 as uuidv4 } from "uuid";
 import { DynamicComponents } from "@/app/utils/dynamic-import";
-const { ProductForm } = DynamicComponents;
+import ProductForm from "@/app/(marketing)/components/forms/ProductForm";
 
 async function generateUniqueSlug(name: string) {
   const baseSlug = slugify(name, { lower: true, strict: true });
@@ -135,20 +135,23 @@ export default async function NewProductPage() {
 
   // Tipi PropertyType[] haline getir
   const propertyTypes: PropertyType[] = Object.values(
-    rawPropertyValues.reduce((acc, pv) => {
-      if (!acc[pv.propertyType.id]) {
-        acc[pv.propertyType.id] = {
-          id: pv.propertyType.id,
-          name: pv.propertyType.name,
-          values: [],
-        };
-      }
-      acc[pv.propertyType.id].values.push({
-        id: pv.id,
-        value: pv.value,
-      });
-      return acc;
-    }, {} as Record<string, PropertyType>)
+    rawPropertyValues.reduce(
+      (acc, pv) => {
+        if (!acc[pv.propertyType.id]) {
+          acc[pv.propertyType.id] = {
+            id: pv.propertyType.id,
+            name: pv.propertyType.name,
+            values: [],
+          };
+        }
+        acc[pv.propertyType.id].values.push({
+          id: pv.id,
+          value: pv.value,
+        });
+        return acc;
+      },
+      {} as Record<string, PropertyType>
+    )
   );
 
   const uploadImage = async (file: File) => {
