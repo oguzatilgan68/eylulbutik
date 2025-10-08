@@ -19,8 +19,7 @@ export const DynamicComponents = {
     () => import("@/app/(marketing)/components/forms/AttributeForm"),
     { ssr: false }
   ),
-  ProductForm:dynamic(
-    ()=>import("@/app/(marketing)/components/forms/ProductForm")
-  )
-
+  ProductForm: dynamic(
+    () => import("@/app/(marketing)/components/forms/ProductForm")
+  ),
 };

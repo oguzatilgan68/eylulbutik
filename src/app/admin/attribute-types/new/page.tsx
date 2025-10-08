@@ -1,3 +1,4 @@
+"use client";
 import { DynamicComponents } from "@/app/utils/dynamic-import";
 
 const { AttributeForm } = DynamicComponents;
