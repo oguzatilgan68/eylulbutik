@@ -1,5 +1,6 @@
 "use client";
 
+import Breadcrumb from "@/app/(marketing)/components/ui/breadcrumbs";
 import { useState } from "react";
 
 export default function ChangePasswordPage() {
@@ -45,46 +46,57 @@ export default function ChangePasswordPage() {
       setError("Sunucu hatası");
     }
   };
-
+  const breadcrumbs = [
+    {
+      label: "Hesabım",
+      href: "/account",
+    },
+    {
+      label: "Şifremi Değiştir",
+    },
+  ];
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white dark:bg-gray-800 rounded shadow">
-      <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">
-        Şifre Değiştir
-      </h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="password"
-          placeholder="Eski Şifre"
-          value={oldPassword}
-          onChange={(e) => setOldPassword(e.target.value)}
-          className="w-full p-2 border rounded dark:bg-gray-700 dark:text-white"
-          required
-        />
-        <input
-          type="password"
-          placeholder="Yeni Şifre"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          className="w-full p-2 border rounded dark:bg-gray-700 dark:text-white"
-          required
-        />
-        <input
-          type="password"
-          placeholder="Yeni Şifre (Tekrar)"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          className="w-full p-2 border rounded dark:bg-gray-700 dark:text-white"
-          required
-        />
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
-        >
-          Değiştir
-        </button>
-      </form>
-      {message && <p className="text-green-500 mt-2">{message}</p>}
-      {error && <p className="text-red-500 mt-2">{error}</p>}
-    </div>
+    <>
+      <Breadcrumb items={breadcrumbs} />
+      <div className="max-w-md mx-auto mt-10 p-6 bg-white dark:bg-gray-800 rounded shadow">
+        <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">
+          Şifre Değiştir
+        </h1>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="password"
+            placeholder="Eski Şifre"
+            value={oldPassword}
+            onChange={(e) => setOldPassword(e.target.value)}
+            className="w-full p-2 border rounded dark:bg-gray-700 dark:text-white"
+            required
+          />
+          <input
+            type="password"
+            placeholder="Yeni Şifre"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="w-full p-2 border rounded dark:bg-gray-700 dark:text-white"
+            required
+          />
+          <input
+            type="password"
+            placeholder="Yeni Şifre (Tekrar)"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="w-full p-2 border rounded dark:bg-gray-700 dark:text-white"
+            required
+          />
+          <button
+            type="submit"
+            className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
+          >
+            Değiştir
+          </button>
+        </form>
+        {message && <p className="text-green-500 mt-2">{message}</p>}
+        {error && <p className="text-red-500 mt-2">{error}</p>}
+      </div>
+    </>
   );
 }

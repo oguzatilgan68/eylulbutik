@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 
 interface ProductImagesProps {
@@ -32,7 +32,13 @@ export default function ProductImages({
   const handleNext = () => setLightboxIdx((prev) => (prev + 1) % images.length);
   const handlePrev = () =>
     setLightboxIdx((prev) => (prev - 1 + images.length) % images.length);
-
+  useEffect(() => {
+    if (lightboxOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+  }, [lightboxOpen]);
   const renderImage = (img: any, className = "object-cover") => (
     <Image
       src={img.url}
@@ -96,55 +102,41 @@ export default function ProductImages({
 
       {/* Lightbox */}
       {lightboxOpen && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex flex-col items-center justify-center">
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex flex-col items-center justify-center px-4">
           {/* Close */}
           <button
             onClick={() => setLightboxOpen(false)}
-            className="absolute top-5 right-5 text-white text-2xl font-bold"
+            className="absolute top-4 right-4 z-50 text-white text-3xl font-bold"
             aria-label="Lightbox Kapat"
           >
             ×
           </button>
 
           {/* Lightbox Ana Görsel */}
-          <div className="relative w-full max-w-4xl h-[80vh] flex items-center justify-center">
-            {renderImage(images[lightboxIdx], "object-contain")}
+          <div className="relative w-full max-w-4xl h-full flex items-center justify-center">
+            {renderImage(images[lightboxIdx], "object-contain max-h-full")}
           </div>
 
           {/* Prev / Next */}
-          <button
-            onClick={handlePrev}
-            className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl font-bold"
-            aria-label="Önceki Görsel"
-          >
-            ‹
-          </button>
-          <button
-            onClick={handleNext}
-            className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl font-bold"
-            aria-label="Sonraki Görsel"
-          >
-            ›
-          </button>
-
-          {/* Lightbox Thumbnail */}
-          <div className="flex gap-2 mt-4 overflow-x-auto max-w-full px-4">
-            {images.map((img, idx) => (
+          {/* Prev / Next Butonları */}
+          {images.length > 1 && (
+            <>
               <button
-                key={idx}
-                onClick={() => setLightboxIdx(idx)}
-                className={`border-2 rounded transition ${lightboxIdx === idx ? "border-pink-500" : "border-gray-500"}`}
+                onClick={handlePrev}
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-50 text-white text-4xl font-bold bg-black bg-opacity-30 p-2 rounded-full"
+                aria-label="Önceki Görsel"
               >
-                <Image
-                  src={img.url}
-                  width={60}
-                  height={60}
-                  alt={img.alt || "Lightbox küçük görseli"}
-                  className="object-cover"
-                />
+                ‹
               </button>
-            ))}
-          </div>
+              <button
+                onClick={handleNext}
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-50 text-white text-4xl font-bold bg-black bg-opacity-30 p-2 rounded-full"
+                aria-label="Sonraki Görsel"
+              >
+                ›
+              </button>
+            </>
+          )}
         </div>
       )}
     </>
