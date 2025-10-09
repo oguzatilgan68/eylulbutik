@@ -30,7 +30,7 @@ export default function GenericDataPage() {
   const fields = [
     { name: "brandName", placeholder: "Marka Adı" },
     { name: "logoUrl", placeholder: "Logo URL" },
-    { name: "phone", placeholder: "Telefon" },
+    { name: "phone", placeholder: "5XXXXXXXXX 10 Haneli" },
     { name: "email", placeholder: "E-posta" },
     { name: "address", placeholder: "Adres" },
     { name: "instagramUrl", placeholder: "Instagram" },

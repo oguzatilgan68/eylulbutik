@@ -1,6 +1,6 @@
 // client component
 "use client";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import ReturnRequestModal from "@/app/(marketing)/components/ui/returnRequestModal";
 
@@ -30,7 +30,9 @@ export default function OrdersListClient({ orders }: { orders: any[] }) {
         >
           <div className="flex justify-between mb-2">
             <span className="font-semibold">Sipariş No: {order.orderNo}</span>
-            <span>{order.status}</span>
+            <span>
+              {order.status === "PAID" ? "Sipariş Verildi" : "Tamamlandı"}
+            </span>
           </div>
 
           <ul className="space-y-1">

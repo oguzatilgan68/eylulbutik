@@ -7,8 +7,8 @@ export default async function OrdersPage() {
   const cookieStore = await cookies(); // tüm cookie'leri al
   let orders: Order[];
   const breadcrumbs = [
-    { label: "Hesabım", href: "/hesabım" },
-    { label: "Siparişlerim", href: "/orders" },
+    { label: "Hesabım", href: "/account" },
+    { label: "Siparişlerim" },
   ];
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/orders`, {

@@ -2,6 +2,7 @@
 
 import Breadcrumb from "@/app/(marketing)/components/ui/breadcrumbs";
 import { useGenericData } from "@/app/(marketing)/context/GenericDataContext";
+import Link from "next/link";
 import React from "react";
 import {
   FaFacebookF,
@@ -39,29 +40,23 @@ const CustomerService: React.FC = () => {
         {/* Sosyal Medya */}
         <div className="flex flex-wrap justify-center gap-6">
           {genericData.email && (
-            <a
-              href={genericData.email}
+            <Link
+              href={`mailto:${genericData.email}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 dark:text-blue-400 hover:scale-110 transition-transform"
-              aria-label="Email"
+              aria-label={`E-posta gönder: ${genericData.email}`}
             >
               <FaMailBulk size={28} />
-            </a>
+            </Link>
           )}
-          {genericData.facebookUrl && (
-            <a
-              href={genericData.facebookUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 dark:text-blue-400 hover:scale-110 transition-transform"
-              aria-label="Facebook"
-            >
-              <FaFacebookF size={28} />
-            </a>
+          {genericData?.facebookUrl && (
+            <Link href={genericData?.facebookUrl} aria-label="Facebook">
+              <FaFacebookF className="hover:text-blue-600 transition" />
+            </Link>
           )}
           {genericData.instagramUrl && (
-            <a
+            <Link
               href={
                 genericData?.instagramUrl.startsWith("http")
                   ? genericData?.instagramUrl
@@ -73,10 +68,10 @@ const CustomerService: React.FC = () => {
               aria-label="Instagram"
             >
               <FaInstagram size={28} />
-            </a>
+            </Link>
           )}
           {genericData.phone && (
-            <a
+            <Link
               href={`https://wa.me/${genericData.phone}`}
               target="_blank"
               rel="noopener noreferrer"
@@ -84,22 +79,22 @@ const CustomerService: React.FC = () => {
               aria-label="WhatsApp"
             >
               <FaWhatsapp size={28} />
-            </a>
+            </Link>
           )}
           {genericData.phone && (
-            <a
-              href={`tel:+${genericData.phone}`}
+            <Link
+              href={`tel:+90${genericData.phone}`}
               className="text-gray-700 dark:text-gray-300 hover:text-pink-600 dark:hover:text-pink-400 transition-colors flex items-center gap-2"
               aria-label="Telefon"
             >
               <FaPhoneAlt size={28} />
-            </a>
+            </Link>
           )}
         </div>
 
         {/* Adres */}
         {genericData?.address && (
-          <a
+          <Link
             href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
               genericData.address
             )}`}
@@ -110,7 +105,7 @@ const CustomerService: React.FC = () => {
           >
             <FaMapMarkerAlt className="mr-2 text-pink-500" />
             <span>{genericData.address}</span>
-          </a>
+          </Link>
         )}
       </div>
     </section>
