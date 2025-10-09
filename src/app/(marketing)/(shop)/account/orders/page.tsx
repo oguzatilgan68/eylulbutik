@@ -1,10 +1,15 @@
 import { cookies } from "next/headers";
 import OrdersListClient from "./orderClient";
 import { Order } from "@/generated/prisma";
+import Breadcrumb from "@/app/(marketing)/components/ui/breadcrumbs";
 
 export default async function OrdersPage() {
   const cookieStore = await cookies(); // tüm cookie'leri al
   let orders: Order[];
+  const breadcrumbs = [
+    { label: "Hesabım", href: "/hesabım" },
+    { label: "Siparişlerim", href: "/orders" },
+  ];
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/orders`, {
       cache: "no-store",
@@ -25,5 +30,10 @@ export default async function OrdersPage() {
     );
   }
 
-  return <OrdersListClient orders={orders} />;
+  return (
+    <>
+      <Breadcrumb items={breadcrumbs} />
+      <OrdersListClient orders={orders} />
+    </>
+  );
 }

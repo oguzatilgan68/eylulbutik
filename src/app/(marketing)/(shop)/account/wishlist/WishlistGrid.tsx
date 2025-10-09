@@ -20,8 +20,6 @@ export default function WishlistGrid({
     setProducts((prev) => prev.filter((p) => p.id !== productId));
   };
 
-  if (products.length === 0) return <p>Favori ürününüz yok.</p>;
-
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {products.map((product) => (

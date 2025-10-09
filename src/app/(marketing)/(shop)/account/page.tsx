@@ -1,185 +1,173 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
+import Link from "next/link";
 import { useUser } from "../../context/userContext";
-import * as z from "zod";
-
-// Zod schema
-const accountSchema = z.object({
-  fullName: z.string().min(3, "Ad Soyad en az 3 karakter olmalı"),
-  email: z.email("Geçerli bir email girin"),
-  phone: z.string().optional(),
-});
+import {
+  FiHeart,
+  FiMapPin,
+  FiShoppingBag,
+  FiRotateCcw,
+  FiKey,
+  FiCreditCard,
+  FiMessageCircle,
+  FiHelpCircle,
+  FiPhone,
+  FiLogOut,
+} from "react-icons/fi";
+import LogoutButton from "../../components/ui/LogoutButton";
 
 export default function AccountPage() {
-  const { user, setUser } = useUser();
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [success, setSuccess] = useState("");
-  const [error, setError] = useState("");
-  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
-  const emailIsVerified = user?.emailVerified;
-  useEffect(() => {
-    if (user) {
-      setFullName(user.fullName);
-      setEmail(user.email);
-      setPhone(user.phone || "");
-    }
-  }, [user]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSuccess("");
-    setError("");
-    setFormErrors({});
-
-    // Frontend Zod validasyonu
-    const parsed = accountSchema.safeParse({ fullName, email, phone });
-    if (!parsed.success) {
-      const fieldErrors: { [key: string]: string } = {};
-      parsed.error.issues.forEach((err: any) => {
-        if (err.path[0]) fieldErrors[err.path[0] as string] = err.message;
-      });
-      setFormErrors(fieldErrors);
-      return;
-    }
-
-    // Backend çağrısı
-    const res = await fetch("/api/account/update", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fullName, email, phone }),
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.error || "Bir hata oluştu");
-      return;
-    }
-
-    setUser(data.user);
-    setSuccess("Bilgileriniz başarıyla güncellendi!");
-  };
-
+  const { user } = useUser();
   if (!user) return <p className="text-center py-10">Yükleniyor...</p>;
 
   return (
-    <div className="max-w-3xl mx-auto p-2 md:p-10">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 md:p-10">
-        {!emailIsVerified && (
-          <div className="bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-300 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6">
-            <p className="font-medium">
-              Email adresiniz doğrulanmamış. Lütfen email kutunuzu kontrol edin.
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Üst Bilgi Kartı */}
+      <div className="bg-white dark:bg-gray-800 p-3 rounded-2xl flex items-center justify-between shadow-sm">
+        <div className="flex items-center space-x-3">
+          <div className="w-14 h-14 rounded-full bg-pink-500 flex items-center justify-center text-white text-2xl font-bold">
+            {user.fullName?.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <p className="text-gray-900 dark:text-gray-100 font-semibold text-lg">
+              {user.fullName}
             </p>
-            <button
-              className="mt-2 text-yellow-700 dark:text-yellow-300 underline"
-              onClick={async () => {
-                await fetch("/api/resend-verification", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ email: user.email }),
-                });
-                alert(
-                  "Doğrulama emaili gönderildi. Lütfen email kutunuzu kontrol edin."
-                );
-              }}
-            >
-              <span className="underline">Doğrulama emaili gönder</span>
-            </button>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              {user.phone ? `0${user.phone}` : user.email}
+            </p>
           </div>
-        )}
-        <h1 className="text-3xl md:text-4xl font-bold mb-8 text-gray-900 dark:text-gray-100">
-          Kullanıcı Bilgilerim
-        </h1>
+        </div>
+        <Link
+          href="/account/my-info"
+          className="border border-pink-500 text-pink-500 px-3 py-1 rounded-full text-sm font-medium hover:bg-pink-50 dark:hover:bg-gray-700 transition"
+        >
+          Bilgilerim
+        </Link>
+      </div>
 
-        {success && (
-          <p className="text-green-500 bg-green-100 dark:bg-green-900 dark:text-green-300 p-3 rounded mb-6">
-            {success}
-          </p>
-        )}
-        {error && (
-          <p className="text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-300 p-3 rounded mb-6">
-            {error}
-          </p>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block mb-2 text-gray-700 dark:text-gray-200 font-medium">
-              Ad Soyad
-            </label>
-            <input
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className={`w-full px-4 py-3 rounded-lg border ${
-                formErrors.fullName
-                  ? "border-red-500"
-                  : "border-gray-300 dark:border-gray-600"
-              } dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition`}
-            />
-            {formErrors.fullName && (
-              <p className="text-red-500 mt-1">{formErrors.fullName}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block mb-2 text-gray-700 dark:text-gray-200 font-medium">
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={`w-full px-4 py-3 rounded-lg border ${
-                formErrors.email
-                  ? "border-red-500"
-                  : "border-gray-300 dark:border-gray-600"
-              } dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition`}
-            />
-            {formErrors.email && (
-              <p className="text-red-500 mt-1">{formErrors.email}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block mb-2 text-gray-700 dark:text-gray-200 font-medium">
-              Telefon
-            </label>
-            <div className="flex items-center">
-              <span className="inline-block px-3 py-3 rounded-l-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-r-0 border-gray-300 dark:border-gray-600">
-                +90
-              </span>
-              <input
-                type="text"
-                value={phone}
-                onChange={(e) => {
-                  const cleaned = e.target.value
-                    .replace(/\D/g, "")
-                    .slice(0, 10);
-                  setPhone(cleaned);
-                }}
-                placeholder="5XXXXXXXXX"
-                className={`w-full px-4 py-3 rounded-r-lg border ${
-                  formErrors.phone
-                    ? "border-red-500"
-                    : "border-gray-300 dark:border-gray-600"
-                } dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition`}
-              />
-            </div>
-            {formErrors.phone && (
-              <p className="text-red-500 mt-1">{formErrors.phone}</p>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            className="w-full md:w-auto bg-pink-500 hover:bg-pink-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-colors"
+      {/* Sık Kullanılanlar */}
+      <div className="p-4">
+        <h2 className="font-semibold text-gray-800 dark:text-gray-200 mb-3">
+          Sık Kullanılanlar
+        </h2>
+        <div className="grid grid-cols-2 gap-3">
+          <Link
+            href="/account/orders"
+            className="flex flex-col items-center justify-center p-4 rounded-lg bg-white dark:bg-gray-800 shadow hover:shadow-md transition"
           >
-            Güncelle
-          </button>
-        </form>
+            <FiShoppingBag className="text-pink-500 text-2xl mb-1" />
+            <span className="text-gray-700 dark:text-gray-200 text-sm font-medium">
+              Siparişlerim
+            </span>
+          </Link>
+          <Link
+            href="/account/addresses"
+            className="flex flex-col items-center justify-center p-4 rounded-lg bg-white dark:bg-gray-800 shadow hover:shadow-md transition"
+          >
+            <FiMapPin className="text-pink-500 text-2xl mb-1" />
+            <span className="text-gray-700 dark:text-gray-200 text-sm font-medium">
+              Adreslerim
+            </span>
+          </Link>
+          <Link
+            href="/account/wishlist"
+            className="flex flex-col items-center justify-center p-4 rounded-lg bg-white dark:bg-gray-800 shadow hover:shadow-md transition"
+          >
+            <FiHeart className="text-pink-500 text-2xl mb-1" />
+            <span className="text-gray-700 dark:text-gray-200 text-sm font-medium">
+              Favorilerim
+            </span>
+          </Link>
+          <Link
+            href="/account/myreviews"
+            className="flex flex-col items-center justify-center p-4 rounded-lg bg-white dark:bg-gray-800 shadow hover:shadow-md transition"
+          >
+            <FiMessageCircle className="text-pink-500 text-2xl mb-1" />
+            <span className="text-gray-700 dark:text-gray-200 text-sm font-medium">
+              Yorumlarım
+            </span>
+          </Link>
+        </div>
+      </div>
+
+      {/* Diğer İşlemler */}
+      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+        <h2 className="font-semibold text-gray-800 dark:text-gray-200 mb-3">
+          Diğer İşlemler
+        </h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow divide-y divide-gray-100 dark:divide-gray-700">
+          <Link
+            href="/account/returns"
+            className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+          >
+            <div className="flex items-center space-x-3">
+              <FiRotateCcw className="text-gray-500 dark:text-gray-300" />
+              <span className="text-gray-800 dark:text-gray-200">
+                İadelerim
+              </span>
+            </div>
+            <span className="text-gray-400">›</span>
+          </Link>
+          <Link
+            href="/account/change-password"
+            className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+          >
+            <div className="flex items-center space-x-3">
+              <FiKey className="text-gray-500 dark:text-gray-300" />
+              <span className="text-gray-800 dark:text-gray-200">
+                Şifre Değiştir
+              </span>
+            </div>
+            <span className="text-gray-400">›</span>
+          </Link>
+          <Link
+            href="/account/cards"
+            className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+          >
+            <div className="flex items-center space-x-3">
+              <FiCreditCard className="text-gray-500 dark:text-gray-300" />
+              <span className="text-gray-800 dark:text-gray-200">
+                Kayıtlı Kredi/Banka Kartlarım
+              </span>
+            </div>
+            <span className="text-gray-400">›</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* Yardım & Destek */}
+      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+        <h2 className="font-semibold text-gray-800 dark:text-gray-200 mb-3">
+          Yardım & Destek
+        </h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow divide-y divide-gray-100 dark:divide-gray-700">
+          <Link
+            href="/sss"
+            className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+          >
+            <div className="flex items-center space-x-3">
+              <FiHelpCircle className="text-gray-500 dark:text-gray-300" />
+              <span className="text-gray-800 dark:text-gray-200">
+                Sıkça Sorulan Sorular
+              </span>
+            </div>
+            <span className="text-gray-400">›</span>
+          </Link>
+          <Link
+            href="/account/support"
+            className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+          >
+            <div className="flex items-center space-x-3">
+              <FiPhone className="text-gray-500 dark:text-gray-300" />
+              <span className="text-gray-800 dark:text-gray-200">
+                Müşteri Hizmetleri
+              </span>
+            </div>
+            <span className="text-gray-400">›</span>
+          </Link>
+          <LogoutButton />
+        </div>
       </div>
     </div>
   );

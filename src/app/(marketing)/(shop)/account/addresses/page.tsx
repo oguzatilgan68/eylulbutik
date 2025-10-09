@@ -3,12 +3,16 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import AddressesClient from "./AddressesClient";
+import Breadcrumb from "@/app/(marketing)/components/ui/breadcrumbs";
 
 export default function AddressesPage() {
   const [addresses, setAddresses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const breadcrumbs = [
+    { label: "Hesabım", href: "/account" },
+    { label: "Adreslerim", href: "/addresses" },
+  ];
   useEffect(() => {
     const fetchAddresses = async () => {
       try {
@@ -30,13 +34,13 @@ export default function AddressesPage() {
 
   return (
     <div className="space-y-4">
+      <Breadcrumb items={breadcrumbs} />
       <Link
         href="/account/addresses/new"
         className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
       >
         Yeni Adres Ekle
       </Link>
-
       <AddressesClient addresses={addresses} />
     </div>
   );

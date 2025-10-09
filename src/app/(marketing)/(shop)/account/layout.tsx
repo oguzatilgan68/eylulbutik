@@ -1,17 +1,24 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import LogoutButton from "../../components/ui/LogoutButton";
+import {
+  FaBox,
+  FaHeart,
+  FaMapMarkerAlt,
+  FaSignOutAlt,
+  FaUndo,
+  FaUser,
+} from "react-icons/fa";
+import { FaMessage } from "react-icons/fa6";
 
-const NAV_ITEMS = [
-  { href: "/account", label: "Kullanıcı Bilgilerim" },
-  { href: "/account/wishlist", label: "Favorilerim" },
-  { href: "/account/orders", label: "Siparişlerim" },
-  { href: "/account/myreviews", label: "Yorumlarım" },
-  { href: "/account/returns", label: "İadelerim" },
-  { href: "/account/addresses", label: "Adreslerim" },
+const menuItems = [
+  { label: "Hesabım", icon: <FaUser />, href: "/account" },
+  { label: "Siparişlerim", icon: <FaBox />, href: "/account/orders" },
+  { label: "Favorilerim", icon: <FaHeart />, href: "/account/wishlist" },
+  { label: "Yorumlarım", icon: <FaMessage />, href: "/account/myreviews" },
+  { label: "Adreslerim", icon: <FaMapMarkerAlt />, href: "/account/addresses" },
+  { label: "İadelerim", icon: <FaUndo />, href: "/account/returns" },
 ];
 
 export default function AccountLayout({
@@ -22,37 +29,32 @@ export default function AccountLayout({
   const pathname = usePathname();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-      <div className="max-w-6xl mx-auto p-3">
-        <h1 className="text-3xl font-bold mb-6">Hesabım</h1>
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Sol Menü */}
-          <nav className="md:w-1/4 flex flex-col space-y-1">
-            {NAV_ITEMS.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`px-4 py-2 rounded transition-colors ${
-                    isActive
-                      ? "text-pink-500 border-b-2 border-pink-500 font-medium"
-                      : "hover:bg-gray-200 dark:hover:bg-gray-800"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-            <LogoutButton />
-          </nav>
+    <div className="flex flex-col lg:flex-row gap-6 w-full max-w-7xl mx-auto px-2 py-4">
+      {/* Sol Menü — Sadece desktop görünümde */}
+      <aside className="hidden lg:block w-64 bg-white dark:bg-gray-800 rounded-2xl shadow p-4 space-y-2">
+        {menuItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition ${
+              pathname === item.href
+                ? "bg-gray-100 dark:bg-gray-700 font-semibold"
+                : ""
+            }`}
+          >
+            <span className="text-pink-500">{item.icon}</span>
+            <span>{item.label}</span>
+          </Link>
+        ))}
 
-          {/* Sağ İçerik */}
-          <div className="flex-1 bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-            {children}
-          </div>
-        </div>
-      </div>
+        <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-red-100 dark:hover:bg-red-700/30 transition w-full">
+          <FaSignOutAlt className="text-red-500" />
+          <span>Çıkış Yap</span>
+        </button>
+      </aside>
+
+      {/* İçerik Alanı */}
+      <main className="flex-1 w-full">{children}</main>
     </div>
   );
 }

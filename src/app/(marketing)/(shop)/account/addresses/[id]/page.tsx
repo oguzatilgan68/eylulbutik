@@ -1,6 +1,7 @@
 "use client";
 
 import AddressForm from "@/app/(marketing)/components/forms/AddressForm";
+import Breadcrumb from "@/app/(marketing)/components/ui/breadcrumbs";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, use } from "react";
 
@@ -20,11 +21,18 @@ export default function EditAddressPage({
   }, [id]);
 
   if (!address) return <p>Yükleniyor...</p>;
-
+  const breadcrumbs = [
+    { label: "Hesabım", href: "/account" },
+    { label: "Adreslerim", href: "/account/addresses" },
+    { label: "Adresi Düzenle" },
+  ];
   return (
-    <AddressForm
-      defaultValues={address}
-      onSuccess={() => router.push("/account/addresses")}
-    />
+    <>
+      <Breadcrumb items={breadcrumbs} />
+      <AddressForm
+        defaultValues={address}
+        onSuccess={() => router.push("/account/addresses")}
+      />
+    </>
   );
 }

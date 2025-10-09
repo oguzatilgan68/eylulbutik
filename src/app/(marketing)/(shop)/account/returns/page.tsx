@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import ReturnsList from "./returnDetailModal";
 import Pagination from "@/app/(marketing)/components/ui/Pagination";
+import Breadcrumb from "@/app/(marketing)/components/ui/breadcrumbs";
 
 interface ReturnItem {
   id: string;
@@ -34,6 +35,11 @@ export default function ReturnsPage() {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
 
+  const breadcrumbs = [
+    { label: "Hesabım", href: "/account" },
+    { label: "İade Talepleri", href: "/account/returns" },
+  ];
+
   const fetchReturns = async (pageNumber: number) => {
     try {
       setLoading(true);
@@ -52,14 +58,29 @@ export default function ReturnsPage() {
     fetchReturns(page);
   }, [page]);
 
-  if (loading) return <p className="p-4">Yükleniyor...</p>;
-  if (error) return <p className="p-4 text-red-500">{error}</p>;
+  if (loading)
+    return (
+      <p className="p-6 text-center text-gray-500 dark:text-gray-400">
+        Yükleniyor...
+      </p>
+    );
+
+  if (error)
+    return <p className="p-6 text-center text-red-500 font-medium">{error}</p>;
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
-      <ReturnsList returns={returns} />
-      {returns.length > 0 && (
-        <Pagination page={page} totalPages={10} onPageChange={setPage} />
+      <Breadcrumb items={breadcrumbs} />
+
+      {returns.length === 0 ? (
+        <div className="py-16 text-center text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
+          <p className="text-lg font-medium">İade talebiniz bulunmamaktadır.</p>
+        </div>
+      ) : (
+        <>
+          <ReturnsList returns={returns} />
+          <Pagination page={page} totalPages={10} onPageChange={setPage} />
+        </>
       )}
     </div>
   );
