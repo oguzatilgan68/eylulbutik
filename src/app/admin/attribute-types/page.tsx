@@ -10,7 +10,7 @@ import {
 
 export default async function AttributeTypesPage() {
   const types = await fetch(
-    `${process.env.NEXT_PUBLIC_SITE_URL}/api/attribute-types`,
+    `${process.env.NEXT_PUBLIC_APP_URL}/api/attribute-types`,
     {
       cache: "no-store",
     }

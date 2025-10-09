@@ -6,7 +6,7 @@ const { AttributeForm } = DynamicComponents;
 export default function NewAttributePage() {
   const handleSubmit = async (data: { name: string; values: string[] }) => {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/api/attribute-types`,
+      `${process.env.NEXT_PUBLIC_APP_URL}/api/attribute-types`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

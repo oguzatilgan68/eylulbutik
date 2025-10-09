@@ -25,7 +25,7 @@ export default function EditAttributePage(props: {
     const fetchData = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_SITE_URL}/api/attribute-types/${params.id}`,
+          `${process.env.NEXT_PUBLIC_APP_URL}/api/attribute-types/${params.id}`,
           { cache: "no-store" }
         );
         if (!res.ok) throw new Error("Attribute yüklenemedi");
@@ -46,7 +46,7 @@ export default function EditAttributePage(props: {
   const handleSubmit = async (data: { name: string; values: string[] }) => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/api/attribute-types`,
+        `${process.env.NEXT_PUBLIC_APP_URL}/api/attribute-types`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
