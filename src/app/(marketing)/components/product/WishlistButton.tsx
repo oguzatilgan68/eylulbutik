@@ -60,7 +60,6 @@ export default function WishlistButton({ productId }: Props) {
       aria-label={inWishlist ? "Favorilerden çıkar" : "Favorilere ekle"}
     >
       <Heart className={`h-5 w-5 ${inWishlist ? "fill-current" : ""}`} />
-      {inWishlist ? "Favoride" : "Favoriye Ekle"}
     </Button>
   );
 }

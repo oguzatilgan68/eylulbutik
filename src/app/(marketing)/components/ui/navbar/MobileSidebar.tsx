@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState } from "react";
 import { FiX, FiChevronRight, FiChevronLeft } from "react-icons/fi";
-import { SearchBar } from "./SearchBar";
 
 interface Category {
   id: string;
@@ -92,6 +91,7 @@ export const MobileSidebar: React.FC<Props> = ({
                   <button
                     onClick={() => setCurrent(cat)}
                     className="text-gray-600 dark:text-gray-300"
+                    aria-label={`${cat.children[0].name} Kategorisi`}
                   >
                     <FiChevronRight />
                   </button>
