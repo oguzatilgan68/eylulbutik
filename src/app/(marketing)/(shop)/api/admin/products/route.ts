@@ -15,9 +15,7 @@ export async function GET(req: NextRequest) {
     const maxPrice = parseFloat(searchParams.get("maxPrice") || "0");
     const sortField = searchParams.get("sortField") || "name";
     const sortOrder = searchParams.get("sortOrder") === "desc" ? "desc" : "asc";
-
     const where: any = {};
-
     if (search) {
       where.OR = [{ name: { contains: search, mode: "insensitive" } }];
     }

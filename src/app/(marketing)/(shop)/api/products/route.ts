@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   if (attributesParam) attributes = JSON.parse(attributesParam);
 
   // Filtreleme
-  const where: any = {};
+  const where: Record<string, unknown> = {};
   if (inStock === "true") where.inStock = true;
   if (inStock === "false") where.inStock = false;
   if (category) where.category = { slug: category };
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Sıralama
-  let orderBy: any = { createdAt: "desc" };
+  let orderBy: Record<string, unknown> = { createdAt: "desc" };
   if (sort === "price-asc") orderBy = { price: "asc" };
   if (sort === "price-desc") orderBy = { price: "desc" };
   if (sort === "popular") orderBy = { wishlists: { _count: "desc" } };
