@@ -37,7 +37,7 @@ export default function EditProductPropertyPage() {
       .then(setProducts);
 
     // Düzenlenecek ProductProperty'i çek
-    fetch(`/api/product-properties/${params.id}`)
+    fetch(`/api/admin/product-properties/${params.id}`)
       .then((res) => res.json())
       .then((data) => setForm(data));
   }, [params.id]);
@@ -50,7 +50,7 @@ export default function EditProductPropertyPage() {
   const handleSubmit = async () => {
     if (!form.productId || !form.name || !form.value) return;
 
-    const res = await fetch(`/api/product-properties/${form.id}`, {
+    const res = await fetch(`/api/admin/product-properties/${form.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),

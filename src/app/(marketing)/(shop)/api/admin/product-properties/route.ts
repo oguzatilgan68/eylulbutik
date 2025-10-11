@@ -41,19 +41,28 @@ export async function POST(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const { id, values } = await req.json();
+
     if (!id || !values?.length) {
       return NextResponse.json({ error: "Eksik alanlar" }, { status: 400 });
     }
 
-    // Eski değerleri sil
-    await db.propertyValue.deleteMany({ where: { propertyTypeId: id } });
+    // Mevcut değerleri al
+    const existingValues = await db.propertyValue.findMany({
+      where: { propertyTypeId: id },
+      select: { value: true },
+    });
+    const existingValueStrings = existingValues.map((v) => v.value);
 
-    // Yeni değerleri ekle
+    // Sadece yeni değerleri ekle
+    const newValues = values.filter(
+      (v: string) => !existingValueStrings.includes(v)
+    );
+
     const updated = await db.propertyType.update({
       where: { id },
       data: {
         values: {
-          create: values.map((v: string) => ({ value: v })),
+          create: newValues.map((v: string) => ({ value: v })),
         },
       },
       include: { values: true },

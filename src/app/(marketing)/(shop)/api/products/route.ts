@@ -11,7 +11,6 @@ export async function GET(req: NextRequest) {
   const attributesParam = searchParams.get("attributes");
   const page = parseInt(searchParams.get("page") || "1", 10);
   const limit = parseInt(searchParams.get("limit") || "10", 10);
-
   let attributes: { [key: string]: string } = {};
   if (attributesParam) attributes = JSON.parse(attributesParam);
 

@@ -25,7 +25,7 @@ export default function PropertyTypesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   // 🟢 Listeyi yükle
   useEffect(() => {
-    fetch("/api/product-properties")
+    fetch("/api/admin/product-properties")
       .then((res) => res.json())
       .then(setTypes);
   }, []);

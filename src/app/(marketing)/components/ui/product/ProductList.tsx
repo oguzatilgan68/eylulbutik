@@ -63,21 +63,40 @@ export const ProductList: React.FC<ProductListProps> = ({
   useEffect(() => {
     if (page > 1) fetchProducts(false);
   }, [page]);
-
+  const handleAddToCart = async (productId: string) => {
+    try {
+      const res = await fetch("/api/cart/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId, quantity: 1 }),
+      });
+      if (!res.ok) throw new Error("Sepete eklenemedi");
+    } catch (err) {
+      console.error("Sepete ekleme hatası:", err);
+    }
+  };
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Sıralama ve Filtreleme Butonları */}
-      <div className="flex justify-between gap-3 mb-6">
+      <div className="flex flex-wrap gap-3 mb-6">
         <button
           onClick={() => setIsFilterOpen(true)}
-          className="flex-1 md:flex-none md:px-4 md:w-auto border border-gray-300 dark:border-gray-700 rounded-md py-2 text-sm font-medium dark:bg-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+          className="
+      flex-1 md:flex-none md:px-4 md:w-auto 
+      border border-gray-300 dark:border-gray-700 
+      rounded-md py-2 text-sm font-medium 
+      dark:bg-gray-800 dark:text-gray-100 
+      hover:bg-gray-100 dark:hover:bg-gray-700 
+      transition text-center
+    "
         >
           Filtrele
         </button>
+
         <select
-          className="flex-1 md:flex-none md:w-auto md:px-3 md:py-1.5 border border-gray-300 dark:border-gray-700 rounded-md text-sm font-medium dark:bg-gray-800 dark:text-gray-100 cursor-pointer hover:border-gray-400 dark:hover:border-gray-600 transition"
           value={sort}
           onChange={(e) => setSort(e.target.value)}
+          className="flex-1 md:flex-none md:w-auto border border-gray-300 dark:border-gray-700 rounded-md py-2 px-3 text-sm font-medium dark:bg-gray-800 dark:text-gray-100 cursor-pointer hover:border-gray-400 dark:hover:border-gray-600 transition"
         >
           <option value="latest">Yeni</option>
           <option value="price-asc">Fiyat: Artan</option>
@@ -105,7 +124,11 @@ export const ProductList: React.FC<ProductListProps> = ({
         <>
           <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-6">
             {products.map((p) => (
-              <ProductCard key={p.id} product={p} />
+              <ProductCard
+                onAddToCart={handleAddToCart}
+                key={p.id}
+                product={p}
+              />
             ))}
           </div>
 

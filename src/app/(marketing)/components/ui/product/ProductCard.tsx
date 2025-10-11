@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Button } from "@/app/(marketing)/components/ui/button";
 import { Heart, X } from "lucide-react";
 import { useState } from "react";
 import Swal from "sweetalert2"; // sweetalert2 kullanıyoruz
@@ -15,6 +14,7 @@ interface ProductCardProps {
     price: string | number;
     images?: { url: string }[];
     isFavorite?: boolean;
+    variants?: { id: string; name: string; price: number; value: string }[]; // opsiyonel varyantlar
   };
   onRemove?: (id: string) => Promise<void>; // wishlist'te X butonu async
   onToggleFavorite?: (id: string) => Promise<void>; // kalp tıklama async
@@ -90,34 +90,6 @@ export const ProductCard = ({
     }
   };
 
-  const handleAddToCart = async () => {
-    if (!onAddToCart || loadingCart) return;
-
-    setLoadingCart(true);
-    try {
-      await onAddToCart(product.id);
-      Swal.fire({
-        icon: "success",
-        title: "Sepete eklendi",
-        toast: true,
-        position: "top-end",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-    } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "Sepete eklenemedi",
-        toast: true,
-        position: "top-end",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-    } finally {
-      setLoadingCart(false);
-    }
-  };
-
   return (
     <div className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
       {onRemove && (
@@ -173,14 +145,6 @@ export const ProductCard = ({
         <p className="text-gray-700 dark:text-gray-300 font-medium">
           ₺{product.price}
         </p>
-
-        <Button
-          onClick={handleAddToCart}
-          disabled={loadingCart}
-          className={`mt-2 w-full bg-red-500 hover:bg-red-600 text-white ${loadingCart ? "cursor-not-allowed opacity-50" : ""}`}
-        >
-          {loadingCart ? "Ekleniyor..." : "Sepete Ekle"}
-        </Button>
       </div>
     </div>
   );
