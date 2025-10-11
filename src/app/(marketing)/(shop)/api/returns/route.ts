@@ -1,7 +1,6 @@
 import { getAuthUserId } from "@/app/(marketing)/lib/auth";
 import { db } from "@/app/(marketing)/lib/db";
 import { ReturnReason } from "@/generated/prisma/client";
-import { get } from "http";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -78,6 +77,10 @@ export async function GET(req: Request) {
 
     const where = userId ? { userId } : {};
 
+    // Toplam iade sayısını al
+    const totalCount = await db.returnRequest.count({ where });
+    const totalPages = Math.ceil(totalCount / limit);
+
     const returnRequests = await db.returnRequest.findMany({
       where,
       skip: (page - 1) * limit,
@@ -110,7 +113,8 @@ export async function GET(req: Request) {
       })),
     }));
 
-    return NextResponse.json(plainRequests);
+    // API artık hem items hem totalPages döndürüyor
+    return NextResponse.json({ items: plainRequests, totalPages });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

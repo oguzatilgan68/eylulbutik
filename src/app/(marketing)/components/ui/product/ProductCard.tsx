@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Button } from "@/app/(marketing)/components/ui/button";
 import { Heart, X } from "lucide-react";
 import { useState } from "react";
-import { redirect } from "next/navigation";
+import Swal from "sweetalert2"; // sweetalert2 kullanıyoruz
 
 interface ProductCardProps {
   product: {
@@ -14,52 +14,141 @@ interface ProductCardProps {
     slug: string;
     price: string | number;
     images?: { url: string }[];
-    isFavorite?: boolean; // 👈 favori durumu
+    isFavorite?: boolean;
   };
-  onRemove?: (id: string) => void; // wishlist'te X butonu
-  onToggleFavorite?: (id: string) => void; // kalp tıklama
+  onRemove?: (id: string) => Promise<void>; // wishlist'te X butonu async
+  onToggleFavorite?: (id: string) => Promise<void>; // kalp tıklama async
+  onAddToCart?: (id: string) => Promise<void>; // sepete ekle async
 }
 
 export const ProductCard = ({
   product,
   onRemove,
   onToggleFavorite,
+  onAddToCart,
 }: ProductCardProps) => {
   const [favorite, setFavorite] = useState(product.isFavorite ?? false);
+  const [loadingFavorite, setLoadingFavorite] = useState(false);
+  const [loadingRemove, setLoadingRemove] = useState(false);
+  const [loadingCart, setLoadingCart] = useState(false);
 
-  const handleToggleFavorite = () => {
-    setFavorite(!favorite);
-    if (onToggleFavorite) onToggleFavorite(product.id);
+  const handleToggleFavorite = async () => {
+    if (!onToggleFavorite || loadingFavorite) return;
+
+    setLoadingFavorite(true);
+    try {
+      setFavorite(!favorite);
+      await onToggleFavorite(product.id);
+      Swal.fire({
+        icon: "success",
+        title: favorite ? "Favorilerden çıkarıldı" : "Favorilere eklendi",
+        toast: true,
+        position: "top-end",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } catch (err) {
+      setFavorite(favorite); // revert
+      Swal.fire({
+        icon: "error",
+        title: "Hata oluştu",
+        toast: true,
+        position: "top-end",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } finally {
+      setLoadingFavorite(false);
+    }
+  };
+
+  const handleRemove = async () => {
+    if (!onRemove || loadingRemove) return;
+
+    setLoadingRemove(true);
+    try {
+      await onRemove(product.id);
+      Swal.fire({
+        icon: "success",
+        title: "Ürün kaldırıldı",
+        toast: true,
+        position: "top-end",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Hata oluştu",
+        toast: true,
+        position: "top-end",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } finally {
+      setLoadingRemove(false);
+    }
+  };
+
+  const handleAddToCart = async () => {
+    if (!onAddToCart || loadingCart) return;
+
+    setLoadingCart(true);
+    try {
+      await onAddToCart(product.id);
+      Swal.fire({
+        icon: "success",
+        title: "Sepete eklendi",
+        toast: true,
+        position: "top-end",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Sepete eklenemedi",
+        toast: true,
+        position: "top-end",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } finally {
+      setLoadingCart(false);
+    }
   };
 
   return (
     <div className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
-      {/* X butonu (wishlist'ten kaldırma) */}
       {onRemove && (
         <button
-          onClick={() => onRemove(product.id)}
-          className="absolute top-2 right-2 z-10 bg-white dark:bg-gray-700 p-1 rounded-full shadow hover:bg-red-500 hover:text-white transition-colors"
+          onClick={handleRemove}
+          disabled={loadingRemove}
+          className={`absolute top-2 right-2 z-10 p-1 rounded-full transition-colors ${
+            loadingRemove
+              ? "cursor-not-allowed opacity-50"
+              : "bg-white dark:bg-gray-700 hover:bg-red-500 hover:text-white"
+          }`}
         >
           <X className="w-4 h-4" />
         </button>
       )}
 
-      {/* Favori kalp */}
       {onToggleFavorite && (
         <button
           onClick={handleToggleFavorite}
-          className="absolute top-2 left-2 z-10 p-1 rounded-full transition-colors"
+          disabled={loadingFavorite}
+          className={`absolute top-2 left-2 z-10 p-1 rounded-full transition-colors ${
+            loadingFavorite ? "cursor-not-allowed opacity-50" : ""
+          }`}
         >
           <Heart
-            className={`w-5 h-5 ${
-              favorite ? "text-red-500" : "text-white dark:text-gray-300"
-            } drop-shadow-md`}
+            className={`w-5 h-5 ${favorite ? "text-red-500" : "text-white dark:text-gray-300"} drop-shadow-md`}
             fill={favorite ? "currentColor" : "none"}
           />
         </button>
       )}
 
-      {/* Ürün görseli */}
       <Link href={`/product/${product.slug}`} className="block relative">
         {product.images?.[0] ? (
           <Image
@@ -77,7 +166,6 @@ export const ProductCard = ({
         )}
       </Link>
 
-      {/* Ürün bilgisi */}
       <div className="p-4 flex flex-col gap-2">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white hover:text-pink-500 transition-colors">
           {product.name}
@@ -86,12 +174,12 @@ export const ProductCard = ({
           ₺{product.price}
         </p>
 
-        {/* Sepete Ekle butonu */}
         <Button
-          onClick={() => redirect("/product/" + product.slug)}
-          className="mt-2 w-full bg-red-500 hover:bg-red-600 text-white"
+          onClick={handleAddToCart}
+          disabled={loadingCart}
+          className={`mt-2 w-full bg-red-500 hover:bg-red-600 text-white ${loadingCart ? "cursor-not-allowed opacity-50" : ""}`}
         >
-          Sepete Ekle
+          {loadingCart ? "Ekleniyor..." : "Sepete Ekle"}
         </Button>
       </div>
     </div>

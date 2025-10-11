@@ -7,8 +7,8 @@ import {
   PropertyType,
 } from "@/app/(marketing)/components/product/types/types";
 import { supabase } from "@/app/(marketing)/lib/supabase/supabaseClient";
-import { DynamicComponents } from "@/app/utils/dynamic-import";
 import ProductForm from "@/app/(marketing)/components/forms/ProductForm";
+import Swal from "sweetalert2";
 
 export default async function EditProductPage(props: {
   params: Promise<{ id: string }>;
@@ -199,8 +199,19 @@ export default async function EditProductPage(props: {
           });
         }
       });
+      Swal.fire({
+        icon: "success",
+        title: "Ürün başarıyla güncellendi!",
+        showConfirmButton: false,
+        timer: 1800,
+      });
     } catch (error) {
       console.error("Ürün güncelleme hatası:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Bir hata oluştu",
+        text: "Ürün güncellenemedi, lütfen tekrar deneyin.",
+      });
       throw new Error(
         "Ürün güncellenirken bir hata oluştu. Lütfen tekrar deneyin."
       );

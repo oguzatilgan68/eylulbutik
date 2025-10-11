@@ -176,7 +176,7 @@ export default function ReviewManager() {
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Toplam {total} yorum
           </p>
-          <Pagination page={page} totalPages={10} onPageChange={setPage} />
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       )}
     </div>

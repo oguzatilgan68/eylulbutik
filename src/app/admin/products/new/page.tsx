@@ -9,7 +9,6 @@ import {
 } from "@/app/(marketing)/components/product/types/types";
 import { supabase } from "@/app/(marketing)/lib/supabase/supabaseClient";
 import { v4 as uuidv4 } from "uuid";
-import { DynamicComponents } from "@/app/utils/dynamic-import";
 import ProductForm from "@/app/(marketing)/components/forms/ProductForm";
 
 async function generateUniqueSlug(name: string) {
@@ -21,7 +20,6 @@ async function generateUniqueSlug(name: string) {
     slug = `${baseSlug}-${counter}`;
     counter++;
   }
-
   return slug;
 }
 
@@ -49,7 +47,6 @@ export default async function NewProductPage() {
   const handleSubmit = async (data: ProductFormData) => {
     "use server";
     const slug = await generateUniqueSlug(data.name);
-
     // 1. Product kaydı
     const product = await db.product.create({
       data: {

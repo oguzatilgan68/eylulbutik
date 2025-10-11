@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 
 type Address = {
@@ -19,7 +19,6 @@ export default function AddressesClient({
   addresses: Address[];
 }) {
   const [addresses, setAddresses] = useState<Address[]>(initialAddresses || []);
-
   const deleteAddress = async (id: string) => {
     if (!confirm("Bu adresi silmek istediğine emin misin?")) return;
 

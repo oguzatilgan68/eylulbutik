@@ -9,7 +9,7 @@ import {
   FaYoutube,
   FaEnvelope,
   FaPhoneAlt,
-  FaMapMarkerAlt
+  FaMapMarkerAlt,
 } from "react-icons/fa";
 import { useGenericData } from "../../context/GenericDataContext";
 

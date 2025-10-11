@@ -117,7 +117,7 @@ model ModelInfo {
 model ProductVariant {
   id         String                 @id @default(uuid())
   productId  String
-  product    Product                @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   sku        String?                @unique
   price      Decimal?               @db.Decimal(10, 2)
   stockQty   Int                    @default(0)
@@ -164,7 +164,7 @@ model ProductVariantAttribute {
 model ProductImage {
   id        String   @id @default(uuid())
   productId String
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id],onDelete: Cascade)
   url       String
   alt       String?
   order     Int      @default(0)
@@ -444,6 +444,6 @@ model GenericData {
   facebookUrl  String?
   youtubeUrl   String?
   tiktokUrl    String?
-  description  String?   // footer veya meta açıklama için
+  description  String?   
   createdAt    DateTime  @default(now())
 }

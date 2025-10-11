@@ -12,7 +12,6 @@ export async function GET() {
         children: true,
       },
     });
-
     return NextResponse.json(categories);
   } catch (error) {
     console.error("Categories fetch error:", error);

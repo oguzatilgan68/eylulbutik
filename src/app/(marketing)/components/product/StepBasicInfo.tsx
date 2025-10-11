@@ -65,7 +65,7 @@ export default function StepBasicInfo({ categories, brands }: Props) {
           <select
             {...register("status")}
             className={`${inputClass} focus:ring-2 focus:ring-pink-500 focus:border-pink-500`}
-            defaultValue="DRAFT"
+            defaultValue="PUBLISHED"
           >
             <option value="DRAFT">Taslak</option>
             <option value="PUBLISHED">Yayında</option>

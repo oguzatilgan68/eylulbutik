@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import AddressesClient from "./AddressesClient";
 import Breadcrumb from "@/app/(marketing)/components/ui/breadcrumbs";

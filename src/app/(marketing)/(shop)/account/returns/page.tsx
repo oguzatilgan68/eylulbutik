@@ -31,9 +31,9 @@ interface ReturnItem {
 
 export default function ReturnsPage() {
   const [returns, setReturns] = useState<ReturnItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1); // yeni state
 
   const breadcrumbs = [
     { label: "Hesabım", href: "/account" },
@@ -42,28 +42,22 @@ export default function ReturnsPage() {
 
   const fetchReturns = async (pageNumber: number) => {
     try {
-      setLoading(true);
       const res = await fetch(`/api/returns?page=${pageNumber}`);
       if (!res.ok) throw new Error("İade talepleri yüklenemedi");
       const data = await res.json();
-      setReturns(data);
+
+      // API'nın döndürdüğü varsayımsal yapı
+      // { items: ReturnItem[], totalPages: number }
+      setReturns(data.items || []);
+      setTotalPages(data.totalPages || 1);
     } catch (err: any) {
       setError(err.message || "Bir hata oluştu");
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchReturns(page);
   }, [page]);
-
-  if (loading)
-    return (
-      <p className="p-6 text-center text-gray-500 dark:text-gray-400">
-        Yükleniyor...
-      </p>
-    );
 
   if (error)
     return <p className="p-6 text-center text-red-500 font-medium">{error}</p>;
@@ -79,7 +73,11 @@ export default function ReturnsPage() {
       ) : (
         <>
           <ReturnsList returns={returns} />
-          <Pagination page={page} totalPages={10} onPageChange={setPage} />
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
         </>
       )}
     </div>

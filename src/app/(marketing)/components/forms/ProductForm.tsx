@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import {
   AttributeType,
@@ -12,6 +12,7 @@ import StepProperties from "../product/StepProperties";
 import StepVariants from "../product/StepVariants";
 import StepBasicInfo from "../product/StepBasicInfo";
 import StepModelInfo from "../product/StepModelInfo";
+import Swal from "sweetalert2";
 
 interface Props {
   categories: { id: string; name: string }[];
@@ -20,7 +21,7 @@ interface Props {
   propertyTypes: PropertyType[];
   initialData: ProductFormData;
   onSubmit: (data: ProductFormData) => Promise<void>;
-  uploadImage: (file: File) => Promise<string | null>; // Upload fonksiyonu
+  uploadImage: (file: File) => Promise<string | null>;
 }
 
 export default function StepProductForm({
@@ -34,6 +35,7 @@ export default function StepProductForm({
 }: Props) {
   const methods = useForm<ProductFormData>({ defaultValues: initialData });
   const [step, setStep] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   const steps = [
     "Temel Bilgiler",
@@ -42,12 +44,36 @@ export default function StepProductForm({
     "Varyantlar",
     "Model Bilgileri",
   ];
+
   const nextStep = () => setStep((s) => Math.min(s + 1, steps.length - 1));
   const prevStep = () => setStep((s) => Math.max(s - 1, 0));
   const goToStep = (index: number) => setStep(index);
 
   const handleSubmit = methods.handleSubmit(async (data) => {
-    await onSubmit(data);
+    try {
+      setLoading(true);
+      await onSubmit(data);
+      Swal.fire({
+        icon: "success",
+        title: "Ürün başarıyla kaydedildi!",
+        toast: true,
+        timer: 1500,
+        showConfirmButton: false,
+        position: "top-end",
+      });
+    } catch (err) {
+      console.log(err);
+      Swal.fire({
+        icon: "error",
+        title: "Kayıt sırasında bir hata oluştu!",
+        toast: true,
+        timer: 2000,
+        showConfirmButton: false,
+        position: "top-end",
+      });
+    } finally {
+      setLoading(false);
+    }
   });
 
   return (
@@ -60,8 +86,7 @@ export default function StepProductForm({
               key={idx}
               onClick={() => goToStep(idx)}
               className={`
-                cursor-pointer
-                text-sm font-medium px-3 py-1 rounded text-center flex-1
+                cursor-pointer text-sm font-medium px-3 py-1 rounded text-center flex-1
                 transition-colors duration-200
                 ${
                   step === idx
@@ -97,7 +122,12 @@ export default function StepProductForm({
             <button
               type="button"
               onClick={prevStep}
-              className="px-4 py-2 rounded bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-400"
+              disabled={loading}
+              className={`px-4 py-2 rounded ${
+                loading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-400"
+              }`}
             >
               Geri
             </button>
@@ -109,16 +139,26 @@ export default function StepProductForm({
             <button
               type="button"
               onClick={nextStep}
-              className="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-900"
+              disabled={loading}
+              className={`px-4 py-2 rounded ${
+                loading
+                  ? "bg-indigo-400 cursor-not-allowed"
+                  : "bg-indigo-600 text-white hover:bg-indigo-900"
+              }`}
             >
               İleri
             </button>
           ) : (
             <button
               type="submit"
-              className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-800"
+              disabled={loading}
+              className={`px-4 py-2 rounded text-white ${
+                loading
+                  ? "bg-green-400 cursor-not-allowed"
+                  : "bg-green-600 hover:bg-green-800"
+              }`}
             >
-              Kaydet
+              {loading ? "Kaydediliyor..." : "Kaydet"}
             </button>
           )}
         </div>

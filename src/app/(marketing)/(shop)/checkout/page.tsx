@@ -1,14 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import AddressStep from "../../components/checkout/AddressStep";
 import PaymentStep from "../../components/checkout/PaymentStep";
 import SummaryStep from "../../components/checkout/SummaryStep";
 import OrderSummary from "../../components/ui/OrderSummary";
 
 export default function CheckoutPage() {
-  const router = useRouter();
   const [step, setStep] = useState(1); // 1: Adres, 2: Ödeme, 3: Özet
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [orderData, setOrderData] = useState<any>({});
@@ -111,25 +109,26 @@ export default function CheckoutPage() {
       <h1 className="text-2xl font-bold mb-6 dark:text-white">Ödeme</h1>
 
       {/* Adım göstergesi */}
-      <div className="flex items-center mb-8">
-        {[1, 2, 3].map((s) => (
-          <div key={s} className="flex-1">
-            <div
-              className={`w-10 h-10 mx-auto rounded-full flex items-center justify-center text-white ${
-                step === s ? "bg-blue-600" : "bg-gray-400 dark:bg-gray-700"
-              }`}
-            >
-              {s}
-            </div>
-            {s < 3 && (
+      <div className="relative mb-8 h-2 bg-gray-400 dark:bg-gray-700 rounded-full">
+        <div
+          className="absolute top-0 left-0 h-2 bg-blue-600 rounded-full transition-all duration-300"
+          style={{
+            width: `${(step / 3) * 100}%`, // 1.adımda %33, 2.adımda %66, 3.adımda %100
+          }}
+        />
+        <div className="flex justify-between absolute top-0 left-0 w-full -mt-4">
+          {[1, 2, 3].map((s) => (
+            <div key={s} className="flex flex-col items-center w-1/3">
               <div
-                className={`h-1 mt-1 ${
-                  step > s ? "bg-blue-600" : "bg-gray-400 dark:bg-gray-700"
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-white ${
+                  step >= s ? "bg-blue-600" : "bg-gray-400 dark:bg-gray-700"
                 }`}
-              />
-            )}
-          </div>
-        ))}
+              >
+                {s}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">

@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { FaTrashAlt } from "react-icons/fa";
+import Swal from "sweetalert2";
 import OrderSummary from "../../components/ui/OrderSummary";
 
 interface CartItem {
@@ -21,7 +23,7 @@ interface CartItem {
     }[];
   } | null;
   qty: number;
-  unitPrice: number | string; // string gelebilir
+  unitPrice: number | string;
 }
 
 export default function CartPage() {
@@ -81,23 +83,36 @@ export default function CartPage() {
 
   // Ürün sil
   const removeItem = async (itemId: string) => {
-    setLoading(true);
-    try {
-      await fetch("/api/cart/update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cartItemId: itemId, action: "remove" }),
-      });
-      setCartItems((prev) => prev.filter((i) => i.id !== itemId));
-    } finally {
-      setLoading(false);
+    const result = await Swal.fire({
+      title: "Ürünü sepetten kaldırmak istiyor musunuz?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Evet, kaldır",
+      cancelButtonText: "İptal",
+    });
+
+    if (result.isConfirmed) {
+      setLoading(true);
+      try {
+        await fetch("/api/cart/update", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cartItemId: itemId, action: "remove" }),
+        });
+        setCartItems((prev) => prev.filter((i) => i.id !== itemId));
+        Swal.fire("Silindi!", "Ürün sepetten kaldırıldı.", "success");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
   const buttonClass =
     "w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition cursor-pointer";
   const qtyButtonClass =
-    "px-2 py-1 border rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition cursor-pointer";
+    "px-3 py-1 border rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed";
 
   // Yükleniyor ekranı
   if (loading) {
@@ -153,7 +168,7 @@ export default function CartPage() {
           return (
             <div
               key={item.id}
-              className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow min-h-[140px]"
+              className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow hover:shadow-lg transition min-h-[140px]"
             >
               <Link href={`/product/${item.product.slug}`}>
                 <div className="relative w-24 h-24 flex-shrink-0 overflow-hidden rounded-md">
@@ -168,7 +183,7 @@ export default function CartPage() {
               </Link>
 
               <div className="flex-1 w-full sm:w-auto">
-                <p className="font-semibold text-lg dark:text-white">
+                <p className="font-semibold text-lg dark:text-white hover:text-pink-600 transition cursor-pointer">
                   {item.product.name}
                 </p>
                 {item.variant?.attributes?.length ? (
@@ -192,6 +207,7 @@ export default function CartPage() {
                   <button
                     className={qtyButtonClass}
                     onClick={() => updateQty(item.id, item.qty - 1)}
+                    disabled={item.qty <= 1}
                   >
                     -
                   </button>
@@ -207,9 +223,10 @@ export default function CartPage() {
                 </div>
                 <button
                   onClick={() => removeItem(item.id)}
-                  className="text-red-500 text-sm font-medium hover:underline"
+                  className="text-red-500 text-lg hover:text-red-600 transition"
+                  title="Ürünü kaldır"
                 >
-                  Kaldır
+                  <FaTrashAlt />
                 </button>
               </div>
             </div>
@@ -218,7 +235,7 @@ export default function CartPage() {
       </div>
 
       {/* Sağ taraf: Özet */}
-      <div className="w-full lg:w-1/3 bg-white dark:bg-gray-800 p-6 rounded-lg shadow space-y-4">
+      <div className="w-full lg:w-1/3 bg-white dark:bg-gray-800 p-6 rounded-lg shadow sticky top-20 h-max space-y-4">
         <OrderSummary
           subtotal={subtotal}
           showCheckoutButton={true}

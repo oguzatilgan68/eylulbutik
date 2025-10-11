@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { db } from "@/app/(marketing)/lib/db";
+import React, { useState, useEffect, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { supabase } from "../../lib/supabase/supabaseClient";
 import { Category } from "@/generated/prisma";
+import Image from "next/image";
+import Swal from "sweetalert2";
+import { supabase } from "../../lib/supabase/supabaseClient";
 
 interface CategoryFormProps {
   initialData?: Category;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: any) => Promise<void>;
 }
 
 export const CategoryForm = ({ initialData, onSubmit }: CategoryFormProps) => {
@@ -18,20 +19,44 @@ export const CategoryForm = ({ initialData, onSubmit }: CategoryFormProps) => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || "");
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch("/api/admin/categories");
+        const data = await res.json();
+        setCategories(data.categories || []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (imageUrl.startsWith("blob:")) URL.revokeObjectURL(imageUrl);
+
     setImageFile(file);
-    setImageUrl(URL.createObjectURL(file)); // önizleme
+    setImageUrl(URL.createObjectURL(file));
   };
 
   const removeImage = () => {
+    if (imageUrl.startsWith("blob:")) URL.revokeObjectURL(imageUrl);
     setImageFile(null);
     setImageUrl("");
+    setProgress(0);
   };
 
-  const uploadImage = async (file: File): Promise<string | null> => {
+  // ☁️ Supabase upload (abort destekli)
+  const uploadImage = async (
+    file: File,
+    abortSignal?: AbortSignal
+  ): Promise<string | null> => {
     try {
       const fileExt = file.name.split(".").pop();
       const fileName = `${uuidv4()}.${fileExt}`;
@@ -43,7 +68,12 @@ export const CategoryForm = ({ initialData, onSubmit }: CategoryFormProps) => {
 
       if (error) {
         console.error("Supabase upload error:", error);
-        alert("Görsel yüklenemedi");
+        Swal.fire({
+          icon: "error",
+          title: "Yükleme hatası",
+          text: "Görsel yüklenemedi.",
+          confirmButtonColor: "#dc2626",
+        });
         return null;
       }
 
@@ -52,81 +82,119 @@ export const CategoryForm = ({ initialData, onSubmit }: CategoryFormProps) => {
         .getPublicUrl(filePath);
 
       return data.publicUrl;
-    } catch (err) {
+    } catch (err: any) {
+      if (err.name === "AbortError") {
+        Swal.fire({
+          icon: "info",
+          title: "Yükleme iptal edildi",
+          toast: true,
+          timer: 2000,
+          position: "top-end",
+          showConfirmButton: false,
+        });
+        return null;
+      }
       console.error(err);
-      alert("Görsel yüklenemedi");
+      Swal.fire({
+        icon: "error",
+        title: "Görsel yüklenemedi",
+        text: "Bir hata oluştu.",
+        confirmButtonColor: "#dc2626",
+      });
       return null;
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (uploading) return;
+
     setUploading(true);
+    setProgress(0);
 
-    let finalImageUrl = imageUrl;
+    try {
+      let finalImageUrl = imageUrl;
 
-    if (imageFile) {
-      const url = await uploadImage(imageFile);
-      if (!url) {
-        setUploading(false);
-        return; // yükleme başarısızsa submit'i durdur
+      if (imageFile) {
+        const url = await uploadImage(imageFile);
+        if (!url) {
+          setUploading(false);
+          return;
+        }
+        finalImageUrl = url;
       }
-      finalImageUrl = url;
+
+      await onSubmit({
+        name,
+        slug,
+        parentId: parentId || null,
+        imageUrl: finalImageUrl || null,
+      });
+
+      Swal.fire({
+        icon: "success",
+        title: "Başarılı!",
+        text: "Kategori başarıyla kaydedildi.",
+        confirmButtonColor: "#16a34a",
+      });
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        icon: "error",
+        title: "Hata!",
+        text: "Kategori kaydedilirken bir hata oluştu.",
+        confirmButtonColor: "#dc2626",
+      });
+    } finally {
+      setUploading(false);
+      setProgress(0);
     }
-
-    onSubmit({
-      name,
-      slug,
-      parentId: parentId || null,
-      imageUrl: finalImageUrl || null,
-    });
-
-    setUploading(false);
   };
 
-  const [categories, setCategories] = useState<Category[]>([]);
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await fetch("/api/admin/categories");
-        const data = await res.json();
-        setCategories(data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchCategories();
-  }, []);
+  const cancelUpload = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      setUploading(false);
+      setProgress(0);
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 bg-white dark:bg-gray-900 p-4 rounded-lg shadow"
+    >
+      {/* Kategori Adı */}
       <div>
-        <label className="block mb-1">Kategori Adı</label>
+        <label className="block mb-1 font-medium">Kategori Adı</label>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full border px-2 py-1 rounded"
+          className="w-full border px-3 py-2 rounded dark:bg-gray-800 dark:text-gray-100"
           required
         />
       </div>
 
+      {/* Slug */}
       <div>
-        <label className="block mb-1">Slug</label>
+        <label className="block mb-1 font-medium">Slug</label>
         <input
           type="text"
           value={slug}
           onChange={(e) => setSlug(e.target.value)}
-          className="w-full border px-2 py-1 rounded"
+          className="w-full border px-3 py-2 rounded dark:bg-gray-800 dark:text-gray-100"
           required
         />
       </div>
 
+      {/* Üst Kategori */}
       <div>
-        <label className="block mb-1">Üst Kategori</label>
+        <label className="block mb-1 font-medium">Üst Kategori</label>
         <select
           value={parentId}
           onChange={(e) => setParentId(e.target.value)}
-          className="w-full border px-2 py-1 rounded dark:text-gray-100 dark:bg-gray-800"
+          className="w-full border px-3 py-2 rounded dark:bg-gray-800 dark:text-gray-100"
         >
           <option value="">Ana Kategori</option>
           {categories.map((c) => (
@@ -136,15 +204,28 @@ export const CategoryForm = ({ initialData, onSubmit }: CategoryFormProps) => {
           ))}
         </select>
       </div>
+
+      {/* Görsel Yükleme */}
       <div>
-        <label className="block mb-1">Kategori Görseli</label>
+        <label className="block mb-1 font-medium">Kategori Görseli</label>
         {imageUrl && (
           <div className="relative w-40 h-40 mb-2">
-            <img
-              src={imageUrl}
-              alt="Kategori"
-              className="w-full h-full object-cover rounded"
-            />
+            {imageUrl.startsWith("blob:") ? (
+              <img
+                src={imageUrl}
+                alt="Kategori"
+                className="w-full h-full object-cover rounded-lg border"
+              />
+            ) : (
+              <Image
+                src={imageUrl}
+                alt="Kategori"
+                width={160}
+                height={160}
+                unoptimized
+                className="w-full h-full object-cover rounded-lg border"
+              />
+            )}
             <button
               type="button"
               onClick={removeImage}
@@ -157,13 +238,40 @@ export const CategoryForm = ({ initialData, onSubmit }: CategoryFormProps) => {
         <input type="file" accept="image/*" onChange={handleFileChange} />
       </div>
 
-      <button
-        type="submit"
-        disabled={uploading}
-        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-      >
-        {uploading ? "Yükleniyor..." : "Kaydet"}
-      </button>
+      {/* Yükleme Barı */}
+      {uploading && (
+        <div className="w-full bg-gray-200 rounded h-2 mb-2">
+          <div
+            className="bg-blue-600 h-2 rounded"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
+
+      {/* Butonlar */}
+      <div className="flex items-center gap-2">
+        <button
+          type="submit"
+          disabled={uploading}
+          className={`px-4 py-2 rounded text-white ${
+            uploading
+              ? "bg-blue-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
+        >
+          {uploading ? "Yükleniyor..." : "Kaydet"}
+        </button>
+
+        {uploading && (
+          <button
+            type="button"
+            onClick={cancelUpload}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            İptal Et
+          </button>
+        )}
+      </div>
     </form>
   );
 };
