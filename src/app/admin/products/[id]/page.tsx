@@ -19,7 +19,7 @@ export default function EditProductPage() {
   const [initialData, setInitialData] = useState<ProductFormData | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
-  const [attributeTypes, setAttributeTypes] = useState<AttributeType[]>([]);
+  const [attributeTypes, setAttributeTypes] = useState<any[]>([]);
   const [propertyTypes, setPropertyTypes] = useState<PropertyType[]>([]);
 
   // 🔹 Veri yükleme
@@ -62,7 +62,13 @@ export default function EditProductPage() {
       setPropertyTypes(Object.values(propertyMap));
       setCategories(categories);
       setBrands(brands);
-      setAttributeTypes(attributeTypes);
+      // Ensure attributeTypes includes 'values' property
+      setAttributeTypes(
+        attributeTypes.map((attr: any) => ({
+          id: attr.id,
+          name: attr.name,
+        }))
+      );
       setInitialData(product);
     }
 

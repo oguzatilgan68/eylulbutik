@@ -16,7 +16,6 @@ export default function NewProductPageClient({
   propertyTypes,
 }: any) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
 
   const initialData: ProductFormData = {
     name: "",
@@ -55,7 +54,6 @@ export default function NewProductPageClient({
 
   // 🔹 API'ye istek atma
   const handleSubmit = async (data: ProductFormData) => {
-    setLoading(true);
     try {
       const res = await fetch("/api/admin/product", {
         method: "POST",
@@ -88,8 +86,6 @@ export default function NewProductPageClient({
         title: "Sunucu Hatası",
         text: "Bir hata meydana geldi. Lütfen tekrar deneyin.",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
