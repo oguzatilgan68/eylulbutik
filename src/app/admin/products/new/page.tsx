@@ -21,8 +21,11 @@ export default function NewProductPageClient({
     price: "",
     sku: "",
     description: "",
-    categoryId: categories[0]?.id || "",
-    brandId: brands[0]?.id || "",
+    categoryId:
+      Array.isArray(categories) && categories.length > 0
+        ? categories[0].id
+        : "",
+    brandId: Array.isArray(brands) && brands.length > 0 ? brands[0].id : "",
     images: [],
     status: "PUBLISHED",
     inStock: true,
