@@ -42,7 +42,7 @@ export default function GenericDataPage() {
 
   // 🔹 Veriyi çek ve formu doldur
   const fetchData = async () => {
-    const res = await fetch("/api/generic-data");
+    const res = await fetch("/api/admin/generic-data");
     const data = await res.json();
 
     if (data && data.length > 0) {
@@ -69,7 +69,7 @@ export default function GenericDataPage() {
 
     try {
       const method = editId ? "PATCH" : "POST";
-      await fetch("/api/generic-data", {
+      await fetch("/api/admin/generic-data", {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editId ? { id: editId, ...form } : form),

@@ -16,7 +16,7 @@ export default function GlobalPropertiesPage() {
 
   // Listeyi yükle
   useEffect(() => {
-    fetch("/api/global-properties")
+    fetch("/api/admin/global-properties")
       .then((res) => res.json())
       .then(setProps)
       .catch((err) => console.error("Liste yüklenirken hata:", err));
@@ -27,7 +27,7 @@ export default function GlobalPropertiesPage() {
 
     try {
       if (editingId) {
-        const res = await fetch(`/api/global-properties/${editingId}`, {
+        const res = await fetch(`/api/admin/global-properties/${editingId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(form),
@@ -37,7 +37,7 @@ export default function GlobalPropertiesPage() {
         setProps((all) => all.map((p) => (p.id === updated.id ? updated : p)));
         setEditingId(null);
       } else {
-        const res = await fetch("/api/global-properties", {
+        const res = await fetch("/api/admin/global-properties", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(form),
@@ -61,7 +61,7 @@ export default function GlobalPropertiesPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Silmek istediğine emin misin?")) return;
     try {
-      const res = await fetch(`/api/global-properties/${id}`, {
+      const res = await fetch(`/api/admin/global-properties/${id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Silme işlemi başarısız");

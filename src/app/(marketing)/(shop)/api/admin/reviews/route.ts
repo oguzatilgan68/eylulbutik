@@ -1,14 +1,8 @@
-import { getAuthUserId } from "@/app/(marketing)/lib/auth";
 import { db } from "@/app/(marketing)/lib/db";
 import { NextResponse } from "next/server";
 
 // Listeleme (pagination + filtreleme)
 export async function GET(req: Request) {
-  const userId = await getAuthUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const { searchParams } = new URL(req.url);
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "10");

@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import Swal from "sweetalert2";
 
 interface PropertyType {
   id: string;
@@ -23,6 +24,7 @@ export default function PropertyTypesPage() {
   const [values, setValues] = useState<string[]>([]);
   const [newValue, setNewValue] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+
   // 🟢 Listeyi yükle
   useEffect(() => {
     fetch("/api/admin/product-properties")
@@ -30,25 +32,43 @@ export default function PropertyTypesPage() {
       .then(setTypes);
   }, []);
 
-  // Değer ekle
+  // ➕ Değer ekle
   const addValue = () => {
-    if (!newValue.trim()) return;
+    if (!newValue.trim()) {
+      Swal.fire({
+        icon: "warning",
+        title: "Boş değer eklenemez!",
+        confirmButtonColor: "#3b82f6",
+      });
+      return;
+    }
     setValues([...values, newValue.trim()]);
     setNewValue("");
   };
 
+  // ❌ Değer kaldır
   const removeValue = (val: string) => {
     setValues(values.filter((v) => v !== val));
   };
 
-  // Kaydet / Güncelle
+  // 💾 Kaydet / Güncelle
   const handleSubmit = async () => {
     if (!selectedTypeId) {
-      alert("Lütfen bir özellik tipi seçin!");
+      Swal.fire({
+        icon: "warning",
+        title: "Eksik bilgi!",
+        text: "Lütfen bir özellik tipi seçin.",
+        confirmButtonColor: "#3b82f6",
+      });
       return;
     }
     if (!values.length) {
-      alert("En az bir değer girin!");
+      Swal.fire({
+        icon: "warning",
+        title: "Eksik bilgi!",
+        text: "En az bir değer eklemelisiniz.",
+        confirmButtonColor: "#3b82f6",
+      });
       return;
     }
 
@@ -60,7 +80,7 @@ export default function PropertyTypesPage() {
             values,
           }; // POST
 
-      const res = await fetch("/api/product-properties", {
+      const res = await fetch("/api/admin/product-properties", {
         method: editingId ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -69,7 +89,12 @@ export default function PropertyTypesPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || "Bir hata oluştu!");
+        Swal.fire({
+          icon: "error",
+          title: "Hata!",
+          text: data.error || "Bir hata oluştu!",
+          confirmButtonColor: "#ef4444",
+        });
         return;
       }
 
@@ -82,24 +107,76 @@ export default function PropertyTypesPage() {
 
       setSelectedTypeId("");
       setValues([]);
+
+      Swal.fire({
+        icon: "success",
+        title: "Başarılı!",
+        text: editingId
+          ? "Özellik başarıyla güncellendi."
+          : "Yeni özellik başarıyla eklendi.",
+        timer: 1500,
+        showConfirmButton: false,
+      });
     } catch (err) {
       console.error(err);
-      alert("Sunucu hatası oluştu");
+      Swal.fire({
+        icon: "error",
+        title: "Sunucu Hatası!",
+        text: "Bir hata oluştu, lütfen tekrar deneyin.",
+        confirmButtonColor: "#ef4444",
+      });
     }
   };
 
-  // Düzenleme
+  // ✏️ Düzenleme
   const handleEdit = (type: PropertyType) => {
     setEditingId(type.id);
     setSelectedTypeId(type.id);
     setValues(type.values.map((v) => v.value));
+
+    Swal.fire({
+      icon: "info",
+      title: "Düzenleme Modu",
+      text: `"${type.name}" özelliğini düzenliyorsunuz.`,
+      timer: 1200,
+      showConfirmButton: false,
+    });
   };
 
-  // Silme
+  // 🗑️ Silme
   const handleDelete = async (id: string) => {
-    if (!confirm("Silmek istediğine emin misin?")) return;
-    await fetch(`/api/property-types/${id}`, { method: "DELETE" });
-    setTypes((all) => all.filter((t) => t.id !== id));
+    const result = await Swal.fire({
+      title: "Emin misiniz?",
+      text: "Bu özellik kalıcı olarak silinecek!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Evet, sil!",
+      cancelButtonText: "Vazgeç",
+    });
+
+    if (!result.isConfirmed) return;
+
+    const res = await fetch(`/api/property-types/${id}`, { method: "DELETE" });
+
+    if (res.ok) {
+      setTypes((all) => all.filter((t) => t.id !== id));
+      Swal.fire({
+        icon: "success",
+        title: "Silindi!",
+        text: "Özellik başarıyla silindi.",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Hata!",
+        text: "Silme işlemi başarısız oldu.",
+        confirmButtonColor: "#ef4444",
+      });
+    }
   };
 
   return (

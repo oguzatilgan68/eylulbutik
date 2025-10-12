@@ -1,5 +1,7 @@
 import { db } from "@/app/(marketing)/lib/db";
+import { Decimal } from "@/generated/prisma/runtime/library";
 import { NextRequest, NextResponse } from "next/server";
+import { generateUniqueSlug } from "./generate-slug";
 
 export async function GET(req: NextRequest) {
   try {
@@ -90,6 +92,89 @@ export async function DELETE(req: NextRequest) {
     console.error(error);
     return NextResponse.json(
       { error: "Silme işlemi başarısız." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const data = await req.json();
+
+    if (!data.name || !data.categoryId) {
+      return NextResponse.json(
+        { error: "Ürün adı ve kategori zorunludur." },
+        { status: 400 }
+      );
+    }
+
+    const slug = await generateUniqueSlug(data.name);
+
+    // 1️⃣ Ürün oluştur
+    const product = await db.product.create({
+      data: {
+        name: data.name,
+        slug,
+        price: data.price ? new Decimal(data.price) : new Decimal(0),
+        description: data.description || undefined,
+        category: { connect: { id: data.categoryId } },
+        brand: data.brandId ? { connect: { id: data.brandId } } : undefined,
+        status: data.status || "DRAFT",
+        inStock: data.inStock ?? true,
+      },
+    });
+
+    // 2️⃣ Görseller ekle
+    if (data.images && data.images.length > 0) {
+      await db.productImage.createMany({
+        data: data.images.map((img: any, idx: number) => ({
+          productId: product.id,
+          url: img.url,
+          alt: img.alt || "",
+          order: idx,
+        })),
+      });
+    }
+
+    // 3️⃣ Varyantlar ekle
+    if (data.variants && data.variants.length > 0) {
+      for (const v of data.variants) {
+        const variant = await db.productVariant.create({
+          data: {
+            productId: product.id,
+            sku: v.sku || undefined,
+            price: v.price ? new Decimal(v.price) : undefined,
+            stockQty: v.stockQty ? parseInt(v.stockQty) : 0,
+          },
+        });
+
+        if (v.images && v.images.length > 0) {
+          await db.variantImage.createMany({
+            data: v.images.map((img: any, idx: number) => ({
+              variantId: variant.id,
+              url: img.url,
+              alt: img.alt || "",
+              order: idx,
+            })),
+          });
+        }
+
+        if (v.attributeValueIds && v.attributeValueIds.length > 0) {
+          await db.productVariantAttribute.createMany({
+            data: v.attributeValueIds.map((attrId: string) => ({
+              variantId: variant.id,
+              attributeValueId: attrId,
+            })),
+          });
+        }
+      }
+    }
+
+    return NextResponse.json({ success: true, product }, { status: 201 });
+  } catch (error) {
+    console.error("Ürün oluşturma hatası:", error);
+    return NextResponse.json(
+      { error: "Ürün oluşturulurken bir hata oluştu." },
       { status: 500 }
     );
   }

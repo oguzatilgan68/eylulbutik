@@ -34,17 +34,34 @@ export async function middleware(req: NextRequest) {
   );
 
   // 🔐 Sadece /admin altında login kontrolü yap
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   if (pathname.startsWith("/admin")) {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
     const isAuthPage = pathname === "/admin-login";
 
     if (!token && !isAuthPage) {
       return NextResponse.redirect(new URL("/admin-login", req.url));
     }
   }
+  if (pathname.startsWith("/api/admin")) {
+    // Token yoksa direkt 401 döndür
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  return response;
+    // Eğer role alanı varsa buradan admin kontrolü yap
+    // (NextAuth JWT callback içinde role bilgisini payload'a gömmelisin)
+    const isAdmin = token.role === "admin";
+
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: "Forbidden: Admin access only" },
+        { status: 403 }
+      );
+    }
+    return response;
+  }
 }
+
 export const config = {
   matcher: ["/((?!_next|api|.*\\..*).*)"], // sayfa bazlı her yerde header'lar aktif
 };
