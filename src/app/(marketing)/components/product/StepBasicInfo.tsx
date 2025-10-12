@@ -105,7 +105,7 @@ export default function StepBasicInfo({ categories, brands }: Props) {
             defaultValue=""
           >
             <option value="">- Kategori Seç -</option>
-            {categories.length ? (
+            {categories?.length ? (
               categories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -128,7 +128,7 @@ export default function StepBasicInfo({ categories, brands }: Props) {
             defaultValue=""
           >
             <option value="">- Marka Seç -</option>
-            {brands.length ? (
+            {brands?.length ? (
               brands.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}
