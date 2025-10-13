@@ -26,10 +26,8 @@ export interface ProductUpdateBody {
   modelInfoId?: string;
   modelSize?: string;
 }
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const product = await db.product.findUnique({
       where: { id: params.id },
@@ -76,10 +74,8 @@ export async function DELETE(
     );
   }
 }
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const productId = params.id;
     const data = await req.json();

@@ -1,10 +1,11 @@
 import { fetchInitialData } from "@/app/utils/fetchInitialData";
 import EditProductForm from "./EditProductForm";
-export default async function EditProductPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function EditProductPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const { categories, brands, attributeTypes, propertyTypes, product } =
     await fetchInitialData(baseUrl, params.id);
