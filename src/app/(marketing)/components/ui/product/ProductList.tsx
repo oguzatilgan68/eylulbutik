@@ -44,7 +44,6 @@ export const ProductList: React.FC<ProductListProps> = ({
     if (categorySlug) params.set("category", categorySlug);
     if (Object.keys(selectedAttributes).length > 0)
       params.set("attributes", JSON.stringify(selectedAttributes));
-
     const res = await fetch(`/api/products?${params.toString()}`);
     const data = await res.json();
 

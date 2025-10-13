@@ -2,6 +2,8 @@ import { Category } from "@/generated/prisma";
 import { cookies } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
+import SliderComponent from "./components/ui/Slider";
+import NewProductsCarousel from "./components/ui/NewProductsCarousel";
 
 export default async function HomePage() {
   // Üst kategorileri çekiyoruz
@@ -31,13 +33,15 @@ export default async function HomePage() {
   }
 
   return (
-    <div className="py-8">
+    <div className="py-4">
+      <NewProductsCarousel />
+      <SliderComponent />
       {categories.length === 0 ? (
         <p className="text-gray-700 dark:text-gray-300 text-center">
           Henüz kategori yok.
         </p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 mt-6 md:grid-cols-2 lg:grid-cols-2 gap-8">
           {categories.map((category) => (
             <Link
               key={category.id}
@@ -57,7 +61,8 @@ export default async function HomePage() {
                 <div className="w-full h-64 md:h-80 lg:h-[400px] xl:h-[500px] bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                   <span className="text-gray-500 dark:text-gray-300">
                     Resim yok
-                  </span>
+                  </span>{" "}
+                  m
                 </div>
               )}
               {/* Kategori ismi overlay */}

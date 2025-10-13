@@ -36,6 +36,14 @@ const navLinks = [
     ],
   },
   {
+    href: "/admin/sliders",
+    label: "Ana Sayfa Slayt",
+    children: [
+      { href: "/admin/sliders", label: "Slayt Listesi" },
+      { href: "/admin/sliders/new", label: "Yeni Ekle" },
+    ],
+  },
+  {
     href: "/admin/orders",
     label: "Siparişler",
     children: [

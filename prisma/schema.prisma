@@ -101,6 +101,7 @@ model Product {
   modelInfoId String?          
   modelInfo   ModelInfo?       @relation(fields: [modelInfoId], references: [id])
   modelSize   String?
+ sliders  Slider[]  @relation("SliderProducts")
 }
 
 model ModelInfo {
@@ -412,6 +413,25 @@ enum ShippingProvider {
   SURAT
   TRENDYOL_EXPRESS
   HEPSIJET
+}
+model Slider {
+  id          String      @id @default(cuid())
+  title       String?     // Başlık (opsiyonel)
+  subtitle    String?     // Alt başlık (opsiyonel)
+  imageUrl    String      // Slider görseli (Supabase/Cloud storage URL)
+  link        String?     // Slider tıklanınca gidilecek URL
+  type        SliderType  @default(PROMOTION) // Tip: PROMOTION | PRODUCT | CATEGORY
+  products  Product[] @relation("SliderProducts")
+  order       Int         @default(0)  // Sıralama
+  isActive    Boolean     @default(true) // Yayında mı?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+enum SliderType {
+  PROMOTION
+  PRODUCT
+  CATEGORY
 }
 
 model Review {
