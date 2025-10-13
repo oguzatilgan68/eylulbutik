@@ -31,10 +31,8 @@ export async function POST(req: Request) {
 }
 
 // PATCH /api/sliders/:id
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { title, subtitle, imageUrl, link, type, productId, order, isActive } =
     await req.json();
 
@@ -55,10 +53,8 @@ export async function PATCH(
 }
 
 // DELETE /api/sliders/:id
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   await db.slider.delete({ where: { id: params.id } });
   return NextResponse.json({ success: true });
 }

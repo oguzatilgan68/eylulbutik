@@ -3,11 +3,12 @@ import { NextResponse } from "next/server";
 
 // Dinamik ID parametresi al
 interface Params {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 // GET /api/admin/sliders/:id
-export async function GET(req: Request, { params }: Params) {
+export async function GET(req: Request, props: Params) {
+  const params = await props.params;
   try {
     const slider = await db.slider.findUnique({
       where: { id: params.id },
@@ -27,7 +28,8 @@ export async function GET(req: Request, { params }: Params) {
 }
 
 // PUT /api/admin/sliders/:id
-export async function PUT(req: Request, { params }: Params) {
+export async function PUT(req: Request, props: Params) {
+  const params = await props.params;
   try {
     const body = await req.json();
     const {
@@ -72,7 +74,8 @@ export async function PUT(req: Request, { params }: Params) {
 }
 
 // DELETE /api/admin/sliders/:id
-export async function DELETE(req: Request, { params }: Params) {
+export async function DELETE(req: Request, props: Params) {
+  const params = await props.params;
   try {
     await db.slider.delete({
       where: { id: params.id },
