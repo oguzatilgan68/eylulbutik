@@ -7,6 +7,7 @@ export async function GET() {
       select: {
         id: true,
         name: true,
+        slug: true,
         price: true,
         images: {
           select: { url: true }, // tüm görsellerin url'leri

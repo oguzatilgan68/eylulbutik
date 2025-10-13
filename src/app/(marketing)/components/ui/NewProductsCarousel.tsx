@@ -9,7 +9,7 @@ type Product = {
   id: string;
   name: string;
   price: number;
-  slug?: string;
+  slug: string;
   imageUrl: string;
 };
 
@@ -35,7 +35,7 @@ export default function NewProductsCarousel() {
         {products.map((product) => (
           <Link
             key={product.id}
-            href={`/product/${product.slug || product.id}`}
+            href={`/product/${product.slug}`}
             className="flex-shrink-0 w-24 md:w-32"
             title={product.name}
           >
