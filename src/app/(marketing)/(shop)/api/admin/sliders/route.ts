@@ -33,9 +33,9 @@ export async function POST(req: Request) {
 // PATCH /api/sliders/:id
 export async function PATCH(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = (await context.params);
+  const { id } = await params;
 
   const { title, subtitle, imageUrl, link, type, order, isActive } =
     await request.json();
