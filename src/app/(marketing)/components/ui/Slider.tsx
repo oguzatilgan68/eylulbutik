@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import useSWR from "swr";
-import Link from "next/link";
+import { redirect } from "next/navigation";
 
 type SliderType = "PROMOTION" | "PRODUCT" | "CATEGORY";
 
@@ -14,7 +14,7 @@ type Slider = {
   title?: string;
   subtitle?: string;
   imageUrl: string;
-  link?: string;
+  link: string;
   type: SliderType;
   products?: Product[];
 };
@@ -41,7 +41,10 @@ export default function SliderComponent() {
   return (
     <section className="relative w-full max-w-6xl mx-auto overflow-hidden rounded-xl shadow-lg mt-8">
       {/* Slider Görseli */}
-      <div className="relative w-full h-64 md:h-96">
+      <div
+        className="relative w-full h-64 md:h-96"
+        onClick={() => redirect(`${slide.link}`)}
+      >
         <Image
           src={slide.imageUrl}
           alt={slide.title || "Slider Görseli"}
@@ -49,21 +52,13 @@ export default function SliderComponent() {
           className="object-cover"
           priority
         />
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-black/30 dark:bg-black/40 flex flex-col justify-center items-start p-6 md:p-12 text-white">
+
+        <div className="absolute inset-0 bg-black/30 dark:bg-black/40 flex flex-col justify-center items-start p-6 md:p-12 text-white z-20">
           {slide.title && (
             <h2 className="text-xl md:text-3xl font-bold">{slide.title}</h2>
           )}
           {slide.subtitle && (
             <p className="mt-2 text-sm md:text-lg">{slide.subtitle}</p>
-          )}
-          {slide.link && (
-            <Link
-              href={slide.link}
-              className="mt-4 inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition"
-            >
-              İncele
-            </Link>
           )}
         </div>
       </div>

@@ -23,6 +23,7 @@ export async function GET() {
       id: p.id,
       name: p.name,
       price: p.price,
+      slug: p.slug,
       imageUrl: p.images[0]?.url || null, // ilk görsel veya null
     }));
 
