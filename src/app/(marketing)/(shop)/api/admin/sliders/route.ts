@@ -32,13 +32,13 @@ export async function POST(req: Request) {
 
 // PATCH /api/sliders/:id
 export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  req: Request,
+  props: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-
+  const params = await props.params;
+  const { id } = params;
   const { title, subtitle, imageUrl, link, type, order, isActive } =
-    await request.json();
+    await req.json();
 
   const updatedSlider = await db.slider.update({
     where: { id },
