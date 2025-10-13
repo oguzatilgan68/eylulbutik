@@ -51,6 +51,8 @@ export default function SliderComponent() {
           fill
           className="object-cover"
           priority
+          placeholder="blur"
+          blurDataURL="data:image/png;base64,..."
         />
 
         <div className="absolute inset-0 bg-black/30 dark:bg-black/40 flex flex-col justify-center items-start p-6 md:p-12 text-white z-20">

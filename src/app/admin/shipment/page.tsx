@@ -1,14 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { DynamicComponents } from "@/app/utils/dynamic-import";
 
-import { Shipment } from "@/app/(marketing)/components/shipment/shipmentModal";
+import { Shipment, ShipmentModal } from "@/app/(marketing)/components/shipment/shipmentModal";
 import { ShipmentPagination } from "@/app/(marketing)/components/admin/ShipmentsAdmin/Pagination";
 import { Header } from "@/app/(marketing)/components/admin/ShipmentsAdmin/Header";
 import { Table } from "@/app/(marketing)/components/admin/ShipmentsAdmin/Table";
 
-const { ShipmentModal } = DynamicComponents;
 
 export default function ShipmentsAdmin() {
   const [list, setList] = useState<Shipment[]>([]);

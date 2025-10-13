@@ -2,13 +2,12 @@ import { Category } from "@/generated/prisma";
 import { cookies } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
-import SliderComponent from "./components/ui/Slider";
-import NewProductsCarousel from "./components/ui/NewProductsCarousel";
 
 export default async function HomePage() {
   // Üst kategorileri çekiyoruz
   const cookieStore = await cookies(); // tüm cookie'leri al
   let categories: Category[];
+
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_APP_URL}/api/categories`,
@@ -34,8 +33,6 @@ export default async function HomePage() {
 
   return (
     <div className="py-4">
-      <NewProductsCarousel />
-      <SliderComponent />
       {categories.length === 0 ? (
         <p className="text-gray-700 dark:text-gray-300 text-center">
           Henüz kategori yok.

@@ -31,7 +31,11 @@ export default function NewProductsCarousel() {
 
   return (
     <section className="md:hidden py-4 bg-gray-50 dark:bg-gray-900">
-      <div className="flex overflow-x-auto space-x-4 px-4 scrollbar-hide">
+      <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100 px-4 relative inline-block">
+        Yeni Gelenler
+        <span className="absolute left-4 -bottom-1 w-12 h-0.5 bg-red-500 rounded"></span>
+      </h1>
+      <div className="flex overflow-x-auto space-x-4 px-4 mt-3 scrollbar-hide">
         {products.map((product) => (
           <Link
             key={product.id}
@@ -45,6 +49,8 @@ export default function NewProductsCarousel() {
                   src={product.imageUrl}
                   alt={product.name}
                   width={112}
+                  placeholder="blur"
+                  blurDataURL="data:image/png;base64,..."
                   height={112}
                   className="object-cover w-full h-full"
                   priority
