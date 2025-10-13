@@ -97,10 +97,9 @@ export async function DELETE(req: NextRequest) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
-
     if (!data.name || !data.categoryId) {
       return NextResponse.json(
         { error: "Ürün adı ve kategori zorunludur." },
@@ -110,22 +109,27 @@ export async function POST(req: Request) {
 
     const slug = await generateUniqueSlug(data.name);
 
-    // 1️⃣ Ürün oluştur
     const product = await db.product.create({
       data: {
         name: data.name,
         slug,
-        price: data.price ? new Decimal(data.price) : new Decimal(0),
+        price: data.price
+          ? new Decimal(parseFloat(data.price))
+          : new Decimal(0),
         description: data.description || undefined,
         category: { connect: { id: data.categoryId } },
         brand: data.brandId ? { connect: { id: data.brandId } } : undefined,
         status: data.status || "DRAFT",
         inStock: data.inStock ?? true,
+        modelSize: data.modelSize || undefined,
+        modelInfo: data.modelInfoId
+          ? { connect: { id: data.modelInfoId } }
+          : undefined,
       },
     });
 
-    // 2️⃣ Görseller ekle
-    if (data.images && data.images.length > 0) {
+    // Görseller
+    if (Array.isArray(data.images) && data.images.length > 0) {
       await db.productImage.createMany({
         data: data.images.map((img: any, idx: number) => ({
           productId: product.id,
@@ -136,19 +140,19 @@ export async function POST(req: Request) {
       });
     }
 
-    // 3️⃣ Varyantlar ekle
-    if (data.variants && data.variants.length > 0) {
+    // Varyantlar
+    if (Array.isArray(data.variants) && data.variants.length > 0) {
       for (const v of data.variants) {
         const variant = await db.productVariant.create({
           data: {
             productId: product.id,
             sku: v.sku || undefined,
-            price: v.price ? new Decimal(v.price) : undefined,
+            price: v.price ? new Decimal(parseFloat(v.price)) : undefined,
             stockQty: v.stockQty ? parseInt(v.stockQty) : 0,
           },
         });
 
-        if (v.images && v.images.length > 0) {
+        if (Array.isArray(v.images) && v.images.length > 0) {
           await db.variantImage.createMany({
             data: v.images.map((img: any, idx: number) => ({
               variantId: variant.id,
@@ -159,7 +163,10 @@ export async function POST(req: Request) {
           });
         }
 
-        if (v.attributeValueIds && v.attributeValueIds.length > 0) {
+        if (
+          Array.isArray(v.attributeValueIds) &&
+          v.attributeValueIds.length > 0
+        ) {
           await db.productVariantAttribute.createMany({
             data: v.attributeValueIds.map((attrId: string) => ({
               variantId: variant.id,
@@ -170,11 +177,25 @@ export async function POST(req: Request) {
       }
     }
 
+    // Properties
+    if (Array.isArray(data.properties) && data.properties.length > 0) {
+      await db.productProperty.createMany({
+        data: data.properties.map((p: any) => ({
+          productId: product.id,
+          propertyTypeId: p.propertyTypeId,
+          propertyValueId: p.propertyValueId,
+        })),
+      });
+    }
+
     return NextResponse.json({ success: true, product }, { status: 201 });
   } catch (error) {
     console.error("Ürün oluşturma hatası:", error);
     return NextResponse.json(
-      { error: "Ürün oluşturulurken bir hata oluştu." },
+      {
+        error:
+          (error as Error).message || "Ürün oluşturulurken bir hata oluştu.",
+      },
       { status: 500 }
     );
   }

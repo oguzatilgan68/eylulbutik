@@ -16,7 +16,7 @@ export default function GlobalPropertiesPage() {
 
   // Listeyi yükle
   useEffect(() => {
-    fetch("/api/admin/global-properties")
+    fetch("/api/admin/product-properties")
       .then((res) => res.json())
       .then(setProps)
       .catch((err) => console.error("Liste yüklenirken hata:", err));
@@ -61,7 +61,7 @@ export default function GlobalPropertiesPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Silmek istediğine emin misin?")) return;
     try {
-      const res = await fetch(`/api/admin/global-properties/${id}`, {
+      const res = await fetch(`/api/admin/product-properties/${id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Silme işlemi başarısız");

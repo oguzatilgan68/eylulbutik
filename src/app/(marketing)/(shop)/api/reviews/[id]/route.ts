@@ -1,11 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/app/(marketing)/lib/db";
 
 interface Params {
   id: string;
 }
 
-export async function GET(req: Request, props: { params: Promise<Params> }) {
+export async function GET(
+  req: NextRequest,
+  props: { params: Promise<Params> }
+) {
   const params = await props.params;
 
   try {
@@ -23,7 +26,6 @@ export async function GET(req: Request, props: { params: Promise<Params> }) {
         user: { select: { fullName: true } },
       },
     });
-
     // isim ve soyisim baş harflerini üretelim
     const formattedReviews = reviews.map((review) => {
       const parts =

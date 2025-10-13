@@ -18,11 +18,9 @@ export async function GET() {
 export async function POST(req: Request) {
   const body = await req.json();
   const { name, values } = body; // values: string[]
-
   if (!name || !values || !Array.isArray(values)) {
     return NextResponse.json({ error: "Eksik alanlar" }, { status: 400 });
   }
-
   try {
     const type = await db.propertyType.create({
       data: {

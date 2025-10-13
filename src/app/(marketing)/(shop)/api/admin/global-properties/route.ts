@@ -1,27 +1,65 @@
-import { NextResponse } from "next/server";
+// app/api/admin/global-properties/route.ts
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/app/(marketing)/lib/db";
-import Error from "next/error";
 
-// GET all property types with values
 export async function GET() {
   try {
-    const types = await db.propertyType.findMany({
-      include: { values: true },
-      orderBy: { name: "asc" },
+    const rawPropertyValues = await db.propertyValue.findMany({
+      select: {
+        id: true,
+        value: true,
+        propertyType: { select: { id: true, name: true } },
+      },
     });
-    return NextResponse.json(types);
-  } catch (error: Error | any) {
-    return NextResponse.json(error);
+
+    // 🔹 propertyTypes organize et
+    const propertyTypes = Object.values(
+      rawPropertyValues.reduce(
+        (acc, pv) => {
+          if (!acc[pv.propertyType.id]) {
+            acc[pv.propertyType.id] = {
+              id: pv.propertyType.id,
+              name: pv.propertyType.name,
+              values: [],
+            };
+          }
+          acc[pv.propertyType.id].values.push({
+            id: pv.id,
+            value: pv.value,
+          });
+          return acc;
+        },
+        {} as Record<
+          string,
+          { id: string; name: string; values: { id: string; value: string }[] }
+        >
+      )
+    );
+
+    return NextResponse.json(propertyTypes);
+  } catch (error) {
+    console.error("PropertyValue API hatası:", error);
+    return NextResponse.json(
+      { error: "PropertyValues alınamadı" },
+      { status: 500 }
+    );
   }
 }
-
-// CREATE property type
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const body = await req.json();
-  const type = await db.propertyType.create({
-    data: {
-      name: body.name,
-    },
-  });
-  return NextResponse.json(type);
+  const { name } = body; // values: string[]
+  if (!name) {
+    return NextResponse.json({ error: "Ad bilgisi gerekli" }, { status: 400 });
+  }
+  try {
+    const type = await db.propertyType.create({
+      data: {
+        name,
+      },
+      include: { values: true },
+    });
+    return NextResponse.json(type);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }
