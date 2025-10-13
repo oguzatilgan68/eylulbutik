@@ -29,38 +29,3 @@ export async function POST(req: Request) {
 
   return NextResponse.json(slider);
 }
-
-// PATCH /api/sliders/:id
-export async function PATCH(
-  req: Request,
-  props: { params: Promise<{ id: string }> }
-) {
-  const params = await props.params;
-  const { id } = params;
-  const { title, subtitle, imageUrl, link, type, order, isActive } =
-    await req.json();
-
-  const updatedSlider = await db.slider.update({
-    where: { id },
-    data: {
-      title,
-      subtitle,
-      imageUrl,
-      link,
-      type,
-      order,
-      isActive,
-    },
-  });
-
-  return NextResponse.json(updatedSlider);
-}
-// DELETE /api/sliders/:id
-export async function DELETE(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
-  const params = await props.params;
-  await db.slider.delete({ where: { id: params.id } });
-  return NextResponse.json({ success: true });
-}
