@@ -18,7 +18,6 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
         },
       },
       payment: true,
-      address: true,
       shipment: true,
     },
   });
