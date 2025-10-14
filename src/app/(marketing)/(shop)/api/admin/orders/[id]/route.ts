@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
+import { getAuthUserId } from "@/app/(marketing)/lib/auth";
 import { db } from "@/app/(marketing)/lib/db";
-import { getAuthUserId } from "@/app/(marketing)/lib/auth"; // varsa auth kontrolü için
+import { NextResponse } from "next/server";
 
 export async function GET(
   req: Request,
@@ -41,9 +41,17 @@ export async function GET(
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
-  const address = order.addressId
-    ? await db.address.findUnique({ where: { id: order.addressId } })
-    : null;
+  // 🔹 Artık adres bilgisi Order tablosunun içinde, o yüzden ayrı sorgu yok
+  const address = {
+    title: order.addressTitle,
+    fullName: order.addressFullName,
+    phone: order.addressPhone,
+    city: order.addressCity,
+    district: order.addressDistrict,
+    neighbourhood: order.addressNeighbourhood,
+    address1: order.addressDetail,
+    zip: order.addressZip,
+  };
 
   return NextResponse.json({ order, address });
 }
