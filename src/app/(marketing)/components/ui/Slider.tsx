@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import useSWR from "swr";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 type SliderType = "PROMOTION" | "PRODUCT" | "CATEGORY";
 
@@ -30,38 +31,34 @@ export default function SliderComponent() {
   );
   const [current, setCurrent] = useState(0);
 
-  // Otomatik geçiş
-  useEffect(() => {
-    if (!sliders || sliders.length === 0) return;
-    const interval = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % sliders.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [sliders]);
-
-  // 🔄 Skeleton görünümü (yüklenme sırasında)
   if (isLoading || !sliders)
     return (
       <section className="relative w-full max-w-6xl mx-auto overflow-hidden rounded-xl shadow-lg mt-8 animate-pulse">
         <div className="relative w-full h-64 md:h-96 bg-gray-200 dark:bg-gray-800 rounded-xl" />
-        <div className="absolute inset-0 flex flex-col justify-center items-start p-6 md:p-12">
-          <div className="h-6 w-40 bg-gray-300 dark:bg-gray-700 rounded mb-2" />
-          <div className="h-4 w-64 bg-gray-300 dark:bg-gray-700 rounded" />
-        </div>
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div
-              key={i}
-              className="w-3 h-3 rounded-full bg-gray-300 dark:bg-gray-600"
-            />
-          ))}
-        </div>
       </section>
     );
 
   if (!sliders || sliders.length === 0) return null;
 
   const slide = sliders[current];
+
+  const nextSlide = () => {
+    setCurrent((prev) => (prev + 1) % sliders.length);
+  };
+
+  const prevSlide = () => {
+    setCurrent((prev) => (prev - 1 + sliders.length) % sliders.length);
+  };
+
+  // 🔄 Kaydırma (drag) sonrası yön tayini
+  const handleDragEnd = (
+    _: any,
+    info: { offset: { x: number }; velocity: { x: number } }
+  ) => {
+    const swipePower = Math.abs(info.offset.x) * info.velocity.x;
+    if (swipePower < -1000) nextSlide(); // sola kaydırma → sonraki
+    if (swipePower > 1000) prevSlide(); // sağa kaydırma → önceki
+  };
 
   return (
     <section className="relative w-full max-w-6xl mx-auto overflow-hidden rounded-xl shadow-lg mt-8">
@@ -70,12 +67,15 @@ export default function SliderComponent() {
           key={slide.id}
           className="relative w-full h-64 md:h-96 cursor-pointer"
           onClick={() => router.push(slide.link)}
-          initial={{ opacity: 0, scale: 1.02 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.98 }}
-          transition={{ duration: 0.6, ease: "easeInOut" }}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          onDragEnd={handleDragEnd}
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -50 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
         >
-          {/* Slider Görseli */}
+          {/* Görsel */}
           <Image
             src={slide.imageUrl}
             alt={slide.title || "Slider Görseli"}
@@ -83,8 +83,6 @@ export default function SliderComponent() {
             sizes="(max-width: 768px) 100vw, 1200px"
             className="object-cover"
             priority
-            placeholder="blur"
-            blurDataURL="data:image/png;base64,..."
           />
 
           {/* Metin katmanı */}
@@ -115,18 +113,33 @@ export default function SliderComponent() {
         </motion.div>
       </AnimatePresence>
 
-      {/* Pagination */}
+      {/* Sol/Sağ Butonlar — sadece md ve üstü cihazlarda görünür */}
+      <button
+        onClick={prevSlide}
+        className="hidden md:flex absolute left-1 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full z-30 transition"
+        aria-label="Önceki"
+      >
+        <ChevronLeft size={24} />
+      </button>
+
+      <button
+        onClick={nextSlide}
+        className="hidden md:flex absolute right-1 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full z-30 transition"
+        aria-label="Sonraki"
+      >
+        <ChevronRight size={24} />
+      </button>
+
+      {/* Pagination (sadece gösterim) */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-30">
         {sliders.map((_, idx) => (
-          <button
+          <div
             key={idx}
-            onClick={() => setCurrent(idx)}
             className={`w-3 h-3 rounded-full transition-all ${
               idx === current
                 ? "bg-blue-600 scale-110"
-                : "bg-white/60 dark:bg-gray-400/50 hover:bg-blue-400"
+                : "bg-white/60 dark:bg-gray-400/50"
             }`}
-            aria-label={`Slide ${idx + 1}`}
           />
         ))}
       </div>

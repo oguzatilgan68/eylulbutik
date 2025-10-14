@@ -1,8 +1,6 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
-import { useUser } from "../../context/userContext";
 import {
   FiHeart,
   FiMapPin,
@@ -13,9 +11,9 @@ import {
   FiMessageCircle,
   FiHelpCircle,
   FiPhone,
-  FiLogOut,
 } from "react-icons/fi";
-import LogoutButton from "../../components/ui/LogoutButton";
+import { useUser } from "../(marketing)/context/userContext";
+import LogoutButton from "../(marketing)/components/ui/LogoutButton";
 
 export default function AccountPage() {
   const { user } = useUser();
