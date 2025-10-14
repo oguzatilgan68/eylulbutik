@@ -1,9 +1,9 @@
 "use client";
 
 import Breadcrumb from "@/app/(marketing)/components/ui/breadcrumbs";
-import { useGenericData } from "@/app/(marketing)/context/GenericDataContext";
+import { UserContext } from "@/app/(marketing)/context/userContext";
 import Link from "next/link";
-import React from "react";
+import React, { useContext } from "react";
 import {
   FaFacebookF,
   FaInstagram,
@@ -14,7 +14,7 @@ import {
 } from "react-icons/fa";
 
 const CustomerService: React.FC = () => {
-  const genericData = useGenericData();
+  const genericData = useContext(UserContext)?.genericData;
   if (!genericData) return null; // Veri yüklenmediyse sayfayı render etme
   const breadcrumbs = [
     {

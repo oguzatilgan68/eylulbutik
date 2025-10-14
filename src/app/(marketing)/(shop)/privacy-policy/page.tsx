@@ -1,14 +1,15 @@
 "use client";
 
+import { useContext } from "react";
 import Breadcrumb from "../../components/ui/breadcrumbs";
-import { useGenericData } from "../../context/GenericDataContext";
+import { UserContext } from "../../context/userContext";
 
 const PrivacyPolicy = () => {
   const breadcrumbs = [
     { label: "Ana Sayfa", href: "/" },
     { label: "İade Koşulları", href: "/return-conditions" },
   ];
-  const genericData = useGenericData();
+  const genericData = useContext(UserContext)?.genericData;
   return (
     <main className="max-w-5xl mx-auto px-4 py-10">
       <Breadcrumb items={breadcrumbs} />
