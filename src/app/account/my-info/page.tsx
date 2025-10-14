@@ -17,15 +17,16 @@ export default function AccountPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [emailIsVerified, setEmailIsVerified] = useState("");
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
-  const emailIsVerified = user?.emailVerified;
   useEffect(() => {
     if (user) {
       setFullName(user.fullName);
       setEmail(user.email);
       setPhone(user.phone || "");
+      setEmailIsVerified(user.emailVerified ? "true" : "false");
     }
   }, [user]);
   const breadcrumbs = [

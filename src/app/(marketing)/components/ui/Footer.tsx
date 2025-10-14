@@ -11,12 +11,13 @@ import {
   FaPhoneAlt,
   FaMapMarkerAlt,
 } from "react-icons/fa";
-import { useGenericData } from "../../context/GenericDataContext";
+import { UserContext } from "../../context/userContext";
+import { useContext } from "react";
 
 export const Footer = () => {
   const year = new Date().getFullYear();
 
-  const genericData = useGenericData();
+  const genericData = useContext(UserContext)?.genericData;
 
   const categoryLinks = [
     { name: "Tişört", href: "/category/tisort" },

@@ -37,7 +37,7 @@ export default function GlobalError({
                 className="rounded-md"
               />
               <span className="font-semibold text-lg text-gray-800 dark:text-gray-100">
-                MyApp
+                Eylül Butik
               </span>
             </div>
           </div>
@@ -86,7 +86,7 @@ export default function GlobalError({
 
         {/* Footer (isteğe bağlı) */}
         <footer className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-          © {new Date().getFullYear()} MyApp. Tüm hakları saklıdır.
+          © {new Date().getFullYear()} Eylül Butik. Tüm hakları saklıdır.
         </footer>
       </body>
     </html>

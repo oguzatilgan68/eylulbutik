@@ -32,10 +32,18 @@ export default function AccountLayout({
   const pathname = usePathname();
   const router = useRouter();
 
-  // 📌 Dinamik başlık
-  const title =
-    menuItems.find((item) => pathname.startsWith(item.href))?.label ||
-    "Hesabım";
+  const normalizePath = (path: string) => path.replace(/\/+$/, ""); // sondaki slash'ları temizle
+  const currentPath = normalizePath(pathname);
+  // Menüdeki en uzun eşleşmeyi bul
+  const matchedItem = [...menuItems]
+    .sort((a, b) => b.href.length - a.href.length)
+    .find(
+      (item) =>
+        currentPath === normalizePath(item.href) ||
+        currentPath.startsWith(normalizePath(item.href) + "/")
+    );
+
+  const title = matchedItem?.label || "Hesabım";
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">

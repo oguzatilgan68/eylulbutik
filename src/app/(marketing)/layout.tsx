@@ -2,7 +2,6 @@ import { cookies } from "next/headers";
 import { Footer } from "./components/ui/Footer";
 import { MarketingNavbar } from "./components/ui/MarketingNavbar";
 import { redirect } from "next/navigation";
-import { GenericDataProvider } from "./context/GenericDataContext";
 import { getGenericData } from "./lib/getGenericData";
 
 export default async function MarketingLayout({
@@ -25,27 +24,8 @@ export default async function MarketingLayout({
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
       <MarketingNavbar categories={categories} />
-      <GenericDataProvider
-        value={
-          genericData ?? {
-            id: "",
-            email: null,
-            phone: null,
-            createdAt: new Date(),
-            address: null,
-            brandName: null,
-            logoUrl: null,
-            instagramUrl: null,
-            facebookUrl: null,
-            youtubeUrl: null,
-            tiktokUrl: null,
-            description: null,
-          }
-        }
-      >
-        <main className="flex-1 container mx-auto p-2">{children}</main>
-        <Footer />
-      </GenericDataProvider>
+      <main className="flex-1 container mx-auto p-2">{children}</main>
+      <Footer />
     </div>
   );
 }

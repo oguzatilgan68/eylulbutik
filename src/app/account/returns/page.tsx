@@ -186,7 +186,15 @@ export default function ReturnsPage() {
                             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                               İade Nedeni:{" "}
                               <span className="font-medium text-gray-800 dark:text-gray-200">
-                                {item.reason || "—"}
+                                {item.reason === "PRODUCT_DEFECT"
+                                  ? "Defolu Ürün"
+                                  : item.reason === "WRONG_ITEM_SENT"
+                                    ? "Yanlış Ürün Gönderildi"
+                                    : item.reason === "SHIPPING_DELAY"
+                                      ? "Gönderim Gecikmesi"
+                                      : item.reason === "CUSTOMER_REQUEST"
+                                        ? "Müşteri Talebi"
+                                        : "Diğer"}
                               </span>
                             </p>
 

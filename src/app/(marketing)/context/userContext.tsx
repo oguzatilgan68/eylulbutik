@@ -8,6 +8,7 @@ import React, {
   ReactNode,
 } from "react";
 import { CouponProvider } from "./CouponContext";
+import { GenericData } from "@/generated/prisma"; // 💡 GenericData tipi import edildi
 
 interface User {
   id: string;
@@ -22,6 +23,8 @@ interface UserContextType {
   user: User | null;
   setUser: (user: User | null) => void;
   logout: () => void;
+  genericData: GenericData | null;
+  setGenericData: (data: GenericData | null) => void;
 }
 
 export const UserContext = createContext<UserContextType | undefined>(
@@ -30,19 +33,33 @@ export const UserContext = createContext<UserContextType | undefined>(
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [genericData, setGenericData] = useState<GenericData | null>(null);
+
+  // 🧠 Kullanıcıyı çek
   useEffect(() => {
     fetch("/api/auth/me")
       .then((res) => res.json())
       .then((data) => setUser(data.user))
       .catch(() => setUser(null));
   }, []);
+
+  // 🌐 GenericData’yı çek
+  useEffect(() => {
+    fetch("/api/generic-data", { cache: "no-store", method: "GET" })
+      .then((res) => res.json())
+      .then((data) => setGenericData(data[0]))
+      .catch(() => setGenericData(null));
+  }, []);
+
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
   };
 
   return (
-    <UserContext.Provider value={{ user, setUser, logout }}>
+    <UserContext.Provider
+      value={{ user, setUser, logout, genericData, setGenericData }}
+    >
       <CouponProvider>{children}</CouponProvider>
     </UserContext.Provider>
   );

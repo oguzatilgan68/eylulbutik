@@ -51,7 +51,6 @@ model Address {
   address1      String   // sokak/cadde/bina
   zip           String?
   isDefault     Boolean  @default(false)
-  orders        Order[]  // küçük harf, çoğul (önceden 'Order' idi)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -285,8 +284,14 @@ model Order {
   user          User?       @relation(fields: [userId], references: [id])
   phone         String?
   status        OrderStatus @default(PENDING)
-  addressId     String?
-  address       Address?    @relation(fields: [addressId], references: [id])
+  addressTitle         String?
+  addressFullName      String?
+  addressPhone         String?
+  addressCity          String?
+  addressDistrict      String?
+  addressNeighbourhood String?
+  addressDetail        String?
+  addressZip           String?
   items         OrderItem[]
   subtotal      Decimal     @db.Decimal(10, 2)
   discountTotal Decimal     @default(0) @db.Decimal(10, 2)
