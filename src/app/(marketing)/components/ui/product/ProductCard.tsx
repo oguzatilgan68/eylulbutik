@@ -18,19 +18,16 @@ interface ProductCardProps {
   };
   onRemove?: (id: string) => Promise<void>; // wishlist'te X butonu async
   onToggleFavorite?: (id: string) => Promise<void>; // kalp tıklama async
-  onAddToCart?: (id: string) => Promise<void>; // sepete ekle async
 }
 
 export const ProductCard = ({
   product,
   onRemove,
   onToggleFavorite,
-  onAddToCart,
 }: ProductCardProps) => {
   const [favorite, setFavorite] = useState(product.isFavorite ?? false);
   const [loadingFavorite, setLoadingFavorite] = useState(false);
   const [loadingRemove, setLoadingRemove] = useState(false);
-  const [loadingCart, setLoadingCart] = useState(false);
 
   const handleToggleFavorite = async () => {
     if (!onToggleFavorite || loadingFavorite) return;

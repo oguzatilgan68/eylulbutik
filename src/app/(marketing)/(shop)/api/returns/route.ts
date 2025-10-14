@@ -77,7 +77,6 @@ export async function GET(req: Request) {
 
     const where = userId ? { userId } : {};
 
-    // Toplam iade sayısını al
     const totalCount = await db.returnRequest.count({ where });
     const totalPages = Math.ceil(totalCount / limit);
 
@@ -86,17 +85,52 @@ export async function GET(req: Request) {
       skip: (page - 1) * limit,
       take: limit,
       orderBy: { createdAt: "desc" },
-      include: {
+      select: {
+        id: true,
+        comment: true,
+        status: true,
+        createdAt: true,
+        order: {
+          select: {
+            id: true,
+            orderNo: true,
+            createdAt: true,
+            total: true,
+          },
+        },
         items: {
-          include: {
+          select: {
+            id: true,
+            qty: true,
+            reason: true,
+            status: true,
             orderItem: {
-              include: { product: true, variant: true },
+              select: {
+                id: true,
+                unitPrice: true,
+                product: {
+                  select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    images: {
+                      select: {
+                        url: true,
+                      },
+                      take: 1,
+                    },
+                  },
+                },
+                variant: {
+                  select: {
+                    id: true,
+                    attributes: true,
+                  },
+                },
+              },
             },
           },
         },
-        order: true,
-        user: true,
-        refunds: true, // iade sonrası refund bilgisi
       },
     });
 
@@ -105,7 +139,6 @@ export async function GET(req: Request) {
       ...r,
       items: r.items.map((i) => ({
         ...i,
-        qty: i.qty,
         orderItem: {
           ...i.orderItem,
           unitPrice: Number(i.orderItem.unitPrice),
@@ -113,7 +146,6 @@ export async function GET(req: Request) {
       })),
     }));
 
-    // API artık hem items hem totalPages döndürüyor
     return NextResponse.json({ items: plainRequests, totalPages });
   } catch (err) {
     console.error(err);

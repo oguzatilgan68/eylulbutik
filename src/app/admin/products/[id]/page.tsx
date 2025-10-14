@@ -9,6 +9,7 @@ export default async function EditProductPage(props: {
     await fetchInitialData(baseUrl, params.id);
   if (!product) return <p>Ürün bulunamadı</p>;
   const initialData: any = {
+    id: product.id,
     name: product.name,
     price: product.price?.toString() || "",
     sku: product.sku,
