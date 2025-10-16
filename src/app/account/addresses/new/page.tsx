@@ -14,7 +14,7 @@ export default function AddAddressPage() {
   return (
     <>
       <Breadcrumb items={breadcrumbs} />
-      <AddressForm onSuccess={() => router.push("/account/addresses")} />;
+      <AddressForm onSuccess={() => router.push("/account/addresses")} />
     </>
   );
 }

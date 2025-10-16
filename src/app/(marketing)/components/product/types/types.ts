@@ -39,7 +39,6 @@ export type ProductFormData = {
   name: string;
   price: string;
   sku: string;
-  description: string;
   categoryId: string;
   brandId?: string;
   images: { url: string; alt?: string }[];
@@ -49,4 +48,8 @@ export type ProductFormData = {
   properties?: PropertyValueInput[];
   modelInfoId?: string; // seçilen manken id
   modelSize?: string;
+  // 🔹 Yeni alanlar
+  seoTitle?: string;
+  seoKeywords?: string[]; // Anahtar kelimeler (liste)
+  changeable: boolean; // Ürün değiştirilebilir mi
 };

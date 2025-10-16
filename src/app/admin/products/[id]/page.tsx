@@ -11,13 +11,16 @@ export default async function EditProductPage(props: {
   const initialData: any = {
     id: product.id,
     name: product.name,
+    slug: product.slug,
     price: product.price?.toString() || "",
     sku: product.sku,
-    description: product.description || "",
+    seoTitle: product.seoTitle || "",
+    seoKeywords: product.seoKeywords || [],
     categoryId: product.categoryId,
     brandId: product.brandId || "",
     status: product.status === "ARCHIVED" ? "DRAFT" : product.status,
     inStock: product.inStock,
+    changeable: product.changeable ?? false, // ✅ Yeni alan (boolean)
     images: product.images.map((img: { url: string; alt: string }) => ({
       url: img.url,
       alt: img.alt || "",

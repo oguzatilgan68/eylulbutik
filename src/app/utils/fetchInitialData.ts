@@ -27,31 +27,35 @@ export interface PropertyType {
 }
 
 export async function fetchInitialData(baseUrl: string, productId?: string) {
-  // Promise.all ile 3 fetch aynı anda
+  // Fetch dizisini oluştur
+  const fetchPromises = [
+    fetch(`${baseUrl}/api/categories`, { cache: "no-store" }),
+    fetch(`${baseUrl}/api/brands`, { cache: "no-store" }),
+    fetch(`${baseUrl}/api/attribute-types`, { cache: "no-store" }),
+    fetch(`${baseUrl}/api/admin/global-properties`, { cache: "no-store" }),
+  ];
+
+  // productId varsa product fetch ekle
+  if (productId) {
+    fetchPromises.push(
+      fetch(`${baseUrl}/api/admin/products/${productId}`, { cache: "no-store" })
+    );
+  }
+
   const [categoriesRes, brandsRes, attrTypesRes, propertyTypesRes, productRes] =
-    await Promise.all([
-      fetch(`${baseUrl}/api/categories`, { cache: "no-store" }),
-      fetch(`${baseUrl}/api/brands`, { cache: "no-store" }),
-      fetch(`${baseUrl}/api/attribute-types`, { cache: "no-store" }),
-      fetch(`${baseUrl}/api/admin/global-properties`, { cache: "no-store" }),
-      fetch(`${baseUrl}/api/admin/products/${productId}`, {
-        cache: "no-store",
-      }),
-    ]);
+    await Promise.all(fetchPromises);
+
   if (!categoriesRes.ok) throw new Error("Kategori verisi alınamadı");
   if (!brandsRes.ok) throw new Error("Marka verisi alınamadı");
   if (!attrTypesRes.ok) throw new Error("Attribute tipi verisi alınamadı");
   if (!propertyTypesRes.ok) throw new Error("Özellik tipi verisi alınamadı");
-  if (!productRes.ok) throw new Error("Ürün verisi alınamadı");
+  if (productId && !productRes.ok) throw new Error("Ürün verisi alınamadı");
 
-  const [categories, brands, attributeTypes, propertyTypes, product] =
-    await Promise.all([
-      categoriesRes.json(),
-      brandsRes.json(),
-      attrTypesRes.json(),
-      propertyTypesRes.json(),
-      productRes.json(),
-    ]);
+  const categories = await categoriesRes.json();
+  const brands = await brandsRes.json();
+  const attributeTypes = await attrTypesRes.json();
+  const propertyTypes = await propertyTypesRes.json();
+  const product = productId ? await productRes.json() : undefined;
 
   return {
     categories,
@@ -64,6 +68,6 @@ export async function fetchInitialData(baseUrl: string, productId?: string) {
     brands: Brand[];
     attributeTypes: AttributeType[];
     propertyTypes: PropertyType[];
-    product: any;
+    product?: any;
   };
 }

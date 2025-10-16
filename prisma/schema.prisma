@@ -74,34 +74,37 @@ model Category {
 }
 
 model Product {
-  id          String           @id @default(uuid())
-  name        String
-  slug        String           @unique
-  description String?
-  brandId     String?
-  brand       Brand?           @relation(fields: [brandId], references: [id])
-  categoryId  String
-  category    Category         @relation(fields: [categoryId], references: [id])
-  images      ProductImage[]   
-  variants    ProductVariant[] 
-  price       Decimal?         @db.Decimal(10, 2)
-  currency    String           @default("TRY")
-  status      ProductStatus    @default(DRAFT)
-  inStock     Boolean          @default(true)
-  ratingAvg   Float            @default(0)
-  ratingCount Int              @default(0)
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  cartItems   CartItem[]       // daha açıklayıcı isim
-  orderItems  OrderItem[]
-  reviews     Review[]
-  wishlists   Wishlist[]       @relation("WishlistProducts")
-  properties  ProductProperty[]
-  modelInfoId String?          
-  modelInfo   ModelInfo?       @relation(fields: [modelInfoId], references: [id])
-  modelSize   String?
- sliders  Slider[]  @relation("SliderProducts")
+  id           String           @id @default(uuid())
+  name         String
+  slug         String           @unique
+  seoTitle     String?          
+  seoKeywords  String[]         @default([]) // 🔹 SEO anahtar kelimeleri (liste olarak)
+  brandId      String?
+  brand        Brand?           @relation(fields: [brandId], references: [id])
+  categoryId   String
+  category     Category         @relation(fields: [categoryId], references: [id])
+  images       ProductImage[]   
+  variants     ProductVariant[] 
+  price        Decimal?         @db.Decimal(10, 2)
+  currency     String           @default("TRY")
+  status       ProductStatus    @default(DRAFT)
+  inStock      Boolean          @default(true)
+  ratingAvg    Float            @default(0)
+  ratingCount  Int              @default(0)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  cartItems    CartItem[]
+  orderItems   OrderItem[]
+  reviews      Review[]
+  wishlists    Wishlist[]       @relation("WishlistProducts")
+  properties   ProductProperty[]
+  modelInfoId  String?          
+  modelInfo    ModelInfo?       @relation(fields: [modelInfoId], references: [id])
+  modelSize    String?
+  sliders      Slider[]         @relation("SliderProducts")
+  changeable   Boolean          @default(true) 
 }
+
 
 model ModelInfo {
   id      String   @id @default(cuid())

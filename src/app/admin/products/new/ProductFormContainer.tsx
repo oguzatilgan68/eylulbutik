@@ -11,7 +11,7 @@ interface Props {
   brands: any[];
   attributeTypes: any[];
   propertyTypes: any[];
-  initialData: ProductFormData;
+  initialData?: ProductFormData;
 }
 
 export default function ProductFormContainer({

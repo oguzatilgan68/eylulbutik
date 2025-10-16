@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/app/(marketing)/lib/db";
-import { Decimal } from "@/generated/prisma/runtime/library";
+import { Decimal } from "@prisma/client/runtime/library";
+
 export interface ProductUpdateBody {
   name?: string;
   price?: string;
   sku?: string;
-  description?: string;
   categoryId?: string;
   brandId?: string;
   status?: string;
@@ -25,8 +25,18 @@ export interface ProductUpdateBody {
   }[];
   modelInfoId?: string;
   modelSize?: string;
+
+  // 🔹 Yeni alanlar
+  seoTitle?: string;
+  seoKeywords?: string[] | string;
+  changeable?: boolean;
 }
-export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+
+/* -------------------- GET -------------------- */
+export async function GET(
+  req: NextRequest,
+  props: { params: Promise<{ id: string }> }
+) {
   const params = await props.params;
   try {
     const product = await db.product.findUnique({
@@ -55,16 +65,15 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
     return NextResponse.json({ error: "Ürün alınamadı" }, { status: 500 });
   }
 }
+
+/* -------------------- DELETE -------------------- */
 export async function DELETE(
   req: Request,
   props: { params: Promise<{ id: string }> }
 ) {
   const params = await props.params;
   try {
-    await db.product.delete({
-      where: { id: params.id },
-    });
-
+    await db.product.delete({ where: { id: params.id } });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("DELETE /api/admin/products/[id] error:", error);
@@ -74,11 +83,16 @@ export async function DELETE(
     );
   }
 }
-export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+
+/* -------------------- PATCH -------------------- */
+export async function PATCH(
+  req: NextRequest,
+  props: { params: Promise<{ id: string }> }
+) {
   const params = await props.params;
   try {
     const productId = params.id;
-    const data = await req.json();
+    const data: ProductUpdateBody = await req.json();
 
     if (!data) {
       return NextResponse.json(
@@ -88,28 +102,35 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     }
 
     await db.$transaction(async (tx) => {
-      // 1. Product update
+      /* 1️⃣ Ürün güncelleme */
       await tx.product.update({
         where: { id: productId },
         data: {
           name: data.name,
-          slug: data.sku,
-          price: new Decimal(data.price || 0),
-          description: data.description,
+          price: data.price ? new Decimal(parseFloat(data.price)) : undefined,
           categoryId: data.categoryId,
           brandId: data.brandId || undefined,
-          status: data.status,
+          status: data.status ? (data.status as any) : undefined,
           inStock: data.inStock,
           modelInfoId: data.modelInfoId || undefined,
           modelSize: data.modelSize || undefined,
+
+          // 🔹 Yeni alanlar
+          seoTitle: data.seoTitle || undefined,
+          seoKeywords: Array.isArray(data.seoKeywords)
+            ? data.seoKeywords
+            : data.seoKeywords
+              ? data.seoKeywords.split(",").map((k) => k.trim())
+              : [],
+          changeable: data.changeable ?? true,
         },
       });
 
-      // 2. Images reset
+      /* 2️⃣ Görseller sıfırla ve yeniden ekle */
       await tx.productImage.deleteMany({ where: { productId } });
       if (data.images?.length) {
         await tx.productImage.createMany({
-          data: data.images.map((img: any, idx: number) => ({
+          data: data.images.map((img, idx) => ({
             productId,
             url: img.url,
             alt: img.alt || "",
@@ -118,11 +139,11 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
         });
       }
 
-      // 3. Properties reset
+      /* 3️⃣ Özellikler sıfırla ve yeniden ekle */
       await tx.productProperty.deleteMany({ where: { productId } });
       if (data.properties?.length) {
         await tx.productProperty.createMany({
-          data: data.properties.map((p: any) => ({
+          data: data.properties.map((p) => ({
             productId,
             propertyTypeId: p.propertyTypeId,
             propertyValueId: p.propertyValueId,
@@ -130,7 +151,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
         });
       }
 
-      // 4. Variants reset
+      /* 4️⃣ Variantları sıfırla ve yeniden ekle */
       await tx.productVariantAttribute.deleteMany({
         where: { variant: { productId } },
       });
@@ -143,14 +164,14 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
             data: {
               productId,
               sku: v.sku || undefined,
-              price: v.price ? new Decimal(v.price) : undefined,
+              price: v.price ? new Decimal(parseFloat(v.price)) : undefined,
               stockQty: v.stockQty ? parseInt(v.stockQty) : 0,
             },
           });
 
           if (v.images?.length) {
             await tx.variantImage.createMany({
-              data: v.images.map((img: any, idx: number) => ({
+              data: v.images.map((img, idx) => ({
                 variantId: variant.id,
                 url: img.url,
                 alt: img.alt || "",
@@ -161,7 +182,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
 
           if (v.attributeValueIds?.length) {
             await tx.productVariantAttribute.createMany({
-              data: v.attributeValueIds.map((attrId: string) => ({
+              data: v.attributeValueIds.map((attrId) => ({
                 variantId: variant.id,
                 attributeValueId: attrId,
               })),

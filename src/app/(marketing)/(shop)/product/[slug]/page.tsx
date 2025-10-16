@@ -1,50 +1,65 @@
 import ProductClient from "./ProductClient";
-
-interface Attribute {
-  id: string;
-  key: string;
-  value: string;
-}
-
-interface Variant {
-  id: string;
-  price: number;
-  stockQty: number;
-  images: { id: string; url: string; alt: string | null; order: number }[];
-  attributes: Attribute[];
-}
-
-interface Property {
-  id: string;
-  key: string;
-  value: string;
-}
-
-interface SafeProduct {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  price: number;
-  currency: string;
-  inStock: boolean;
-  status: string;
-  createdAt: Date;
-  updatedAt: Date;
-  images: { id: string; url: string; alt: string | null; order: number }[];
-  category: {
-    id: string;
-    name: string;
-    slug: string;
-    parentId: string | null;
-  } | null;
-  brand: { id: string; name: string } | null;
-  variants: Variant[];
-  properties: Property[];
-}
+import { db } from "@/app/(marketing)/lib/db";
+import type { Metadata } from "next";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
+}
+
+// 🧠 Dinamik Metadata
+export async function generateMetadata({
+  params,
+}: ProductPageProps): Promise<Metadata> {
+  const { slug } = await params;
+
+  try {
+    const product = await db.product.findUnique({
+      where: { slug },
+      select: {
+        name: true,
+        seoTitle: true,
+        seoKeywords: true,
+        images: { select: { url: true } },
+      },
+    });
+
+    if (!product) {
+      return {
+        title: "Ürün Bulunamadı",
+        description: "Aradığınız ürün mevcut değil.",
+      };
+    }
+
+    return {
+      title: product.seoTitle || product.name,
+      description: Array.isArray(product.seoKeywords)
+        ? product.seoKeywords.join(", ")
+        : product.seoKeywords || `${product.name} ürününü hemen inceleyin.`,
+      openGraph: {
+        title: product.seoTitle || product.name,
+        description: Array.isArray(product.seoKeywords)
+          ? product.seoKeywords.join(", ")
+          : product.seoKeywords || "",
+        images: product.images?.[0]?.url
+          ? [{ url: product.images[0].url }]
+          : [],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: product.seoTitle || product.name,
+        description: Array.isArray(product.seoKeywords)
+          ? product.seoKeywords.join(", ")
+          : product.seoKeywords || "",
+        images: product.images?.[0]?.url ? [product.images[0].url] : [],
+      },
+    };
+  } catch (err) {
+    console.error("generateMetadata error:", err);
+    return {
+      title: "Ürün",
+      description: "Ürün bilgileri yüklenemedi.",
+    };
+  }
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
@@ -52,9 +67,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_APP_URL}/api/products/${slug}`,
-    {
-      cache: "no-store", // Her zaman güncel veri gelsin
-    }
+    { cache: "no-store" }
   );
 
   if (!res.ok) {
@@ -63,7 +76,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
     );
   }
 
-  const product: SafeProduct = await res.json();
-
+  const product = await res.json();
   return <ProductClient product={product} />;
 }

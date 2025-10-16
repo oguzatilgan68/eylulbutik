@@ -4,7 +4,7 @@ import ProductAttributes from "@/app/(marketing)/components/product/ProductAttri
 import ProductImages from "@/app/(marketing)/components/product/ProductImages";
 import ProductInfo from "@/app/(marketing)/components/product/ProductInfo";
 import ProductTabs from "@/app/(marketing)/components/product/ProductTabs";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 const TABS = [
   { key: "details", label: "Ürün Özellikleri" },
@@ -65,17 +65,6 @@ export default function ProductClient({ product }: any) {
   const images = selectedVariant?.images?.length
     ? selectedVariant.images
     : product.images;
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>, id: string) => {
-      const { left, top, width, height } =
-        e.currentTarget.getBoundingClientRect();
-      const x = ((e.clientX - left) / width) * 100;
-      const y = ((e.clientY - top) / height) * 100;
-      setZoomPos((prev) => ({ ...prev, [id]: { x, y } }));
-    },
-    []
-  );
 
   return (
     <div className="container mx-auto px-4 py-8">

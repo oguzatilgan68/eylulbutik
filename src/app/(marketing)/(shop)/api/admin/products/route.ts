@@ -116,7 +116,6 @@ export async function POST(req: NextRequest) {
         price: data.price
           ? new Decimal(parseFloat(data.price))
           : new Decimal(0),
-        description: data.description || undefined,
         category: { connect: { id: data.categoryId } },
         brand: data.brandId ? { connect: { id: data.brandId } } : undefined,
         status: data.status || "DRAFT",
@@ -125,6 +124,15 @@ export async function POST(req: NextRequest) {
         modelInfo: data.modelInfoId
           ? { connect: { id: data.modelInfoId } }
           : undefined,
+
+        // 🔹 Yeni alanlar
+        seoTitle: data.seoTitle || undefined,
+        seoKeywords: Array.isArray(data.seoKeywords)
+          ? data.seoKeywords
+          : data.seoKeywords
+            ? data.seoKeywords.split(",").map((k:string) => k.trim())
+            : [],
+        changeable: data.changeable ?? true,
       },
     });
 

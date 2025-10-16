@@ -12,7 +12,14 @@ export async function GET() {
     orderBy: { createdAt: "desc" },
     include: {
       items: {
-        include: { product: true },
+        include: {
+          product: {
+            include: {
+              images: true,
+              variants: true,
+            },
+          },
+        },
       },
     },
   });

@@ -16,8 +16,8 @@ interface ProductCardProps {
     isFavorite?: boolean;
     variants?: { id: string; name: string; price: number; value: string }[]; // opsiyonel varyantlar
   };
-  onRemove?: (id: string) => Promise<void>; // wishlist'te X butonu async
-  onToggleFavorite?: (id: string) => Promise<void>; // kalp tıklama async
+  onRemove?: (id: string) => Promise<void>;
+  onToggleFavorite?: (id: string) => Promise<void>;
 }
 
 export const ProductCard = ({

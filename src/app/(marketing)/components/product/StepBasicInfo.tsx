@@ -42,17 +42,31 @@ export default function StepBasicInfo({ categories, brands }: Props) {
         />
       </div>
 
-      {/* Açıklama */}
+      {/* SEO Başlığı */}
       <div>
         <label className="block mb-1 text-sm text-gray-700 dark:text-gray-300">
-          Açıklama
+          SEO Başlığı
         </label>
-        <textarea
-          {...register("description")}
-          placeholder="Ürün hakkında kısa bir açıklama yazın"
-          rows={4}
+        <input
+          {...register("seoTitle")}
+          placeholder="SEO başlığını girin (örnek: Şık Kışlık Kadın Mont)"
           className={inputClass}
         />
+      </div>
+
+      {/* SEO Anahtar Kelimeler */}
+      <div>
+        <label className="block mb-1 text-sm text-gray-700 dark:text-gray-300">
+          SEO Anahtar Kelimeler
+        </label>
+        <input
+          {...register("seoKeywords")}
+          placeholder="Anahtar kelimeleri virgülle ayırarak girin (örnek: mont, kışlık, kadın giyim)"
+          className={inputClass}
+        />
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          Birden fazla kelimeyi virgülle ayırabilirsiniz.
+        </p>
       </div>
 
       {/* Grid: Yayın, Kategori, Marka */}
@@ -64,7 +78,7 @@ export default function StepBasicInfo({ categories, brands }: Props) {
           </label>
           <select
             {...register("status")}
-            className={`${inputClass} focus:ring-2 focus:ring-pink-500 focus:border-pink-500`}
+            className={inputClass}
             defaultValue="PUBLISHED"
           >
             <option value="DRAFT">Taslak</option>
@@ -94,6 +108,28 @@ export default function StepBasicInfo({ categories, brands }: Props) {
           </div>
         </div>
 
+        {/* Değiştirilebilir mi */}
+        <div className="flex flex-col">
+          <label className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+            Değiştirilebilir mi
+          </label>
+          <div className="flex items-center space-x-3 rounded-md border border-gray-300 dark:border-gray-600 p-2.5 bg-white dark:bg-gray-800">
+            <input
+              type="checkbox"
+              id="changeable"
+              {...register("changeable")}
+              defaultChecked={true}
+              className="w-5 h-5 text-pink-600 bg-gray-100 border-gray-300 rounded cursor-pointer focus:ring-pink-500 dark:bg-gray-700 dark:border-gray-600"
+            />
+            <label
+              htmlFor="changeable"
+              className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none"
+            >
+              Ürün değiştirilebilir
+            </label>
+          </div>
+        </div>
+
         {/* Kategori */}
         <div className="flex flex-col">
           <label className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -101,7 +137,7 @@ export default function StepBasicInfo({ categories, brands }: Props) {
           </label>
           <select
             {...register("categoryId")}
-            className={`${inputClass} focus:ring-2 focus:ring-pink-500 focus:border-pink-500`}
+            className={inputClass}
             defaultValue=""
           >
             <option value="">- Kategori Seç -</option>
@@ -124,7 +160,7 @@ export default function StepBasicInfo({ categories, brands }: Props) {
           </label>
           <select
             {...register("brandId")}
-            className={`${inputClass} focus:ring-2 focus:ring-pink-500 focus:border-pink-500`}
+            className={inputClass}
             defaultValue=""
           >
             <option value="">- Marka Seç -</option>

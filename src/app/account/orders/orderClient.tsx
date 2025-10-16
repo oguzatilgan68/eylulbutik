@@ -1,4 +1,3 @@
-// client component
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -7,9 +6,12 @@ import ReturnRequestModal from "@/app/(marketing)/components/ui/returnRequestMod
 export default function OrdersListClient({ orders }: { orders: any[] }) {
   const [loading, setLoading] = useState(!orders);
   const [openModalOrderId, setOpenModalOrderId] = useState<string | null>(null);
+
   useEffect(() => {
     if (orders) setLoading(false);
+    console.log(orders, "orders");
   }, [orders]);
+
   if (loading) {
     return (
       <div className="p-8 flex justify-center items-center">
@@ -17,6 +19,7 @@ export default function OrdersListClient({ orders }: { orders: any[] }) {
       </div>
     );
   }
+
   if (!orders || orders.length === 0) {
     return <p className="p-4 text-gray-600">Henüz siparişiniz bulunmuyor.</p>;
   }
@@ -38,8 +41,9 @@ export default function OrdersListClient({ orders }: { orders: any[] }) {
           <ul className="space-y-1">
             {order.items?.map((item: any) => (
               <li key={item.id}>
-                {item.product.name} x {item.qty} ={" "}
-                {(item.unitPrice * item.qty).toFixed(2)} TL
+                {item.product.name}{" "}
+                {item.variant?.name ? `(${item.variant.name})` : ""} x{" "}
+                {item.qty} = {(item.unitPrice * item.qty).toFixed(2)} TL
               </li>
             ))}
           </ul>
@@ -65,8 +69,13 @@ export default function OrdersListClient({ orders }: { orders: any[] }) {
                     orderId={order.id}
                     orderItems={order.items.map((i: any) => ({
                       id: i.id,
-                      name: i.name,
+                      name: i.product.name,
                       qty: i.qty,
+                      changeable: i.product.changeable, // ürün değiştirilebilir mi
+                      thumbnail:
+                        i.variant?.images?.[0]?.url ||
+                        i.product.images?.[0]?.url ||
+                        undefined,
                     }))}
                     onClose={() => setOpenModalOrderId(null)}
                   />

@@ -1,16 +1,22 @@
+// components/returns/ReturnRequestModal.tsx
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react"; // Kapatma ikonu
+import { X } from "lucide-react";
+import ReturnItemRow from "./ReturnItemRow";
 
-interface ModalClientProps {
+interface ReturnRequestModalProps {
   orderId: string;
-  orderItems: { id: string; name: string; qty: number }[];
+  orderItems: {
+    id: string;
+    name: string;
+    qty: number;
+    changeable: boolean;
+  }[];
   onClose: () => void;
 }
 
-// Enum değerleri client tarafında array olarak
 const RETURN_REASONS = [
   { label: "Ürün Defolu / Hasarlı", value: "PRODUCT_DEFECT" },
   { label: "Yanlış Ürün Gönderildi", value: "WRONG_ITEM_SENT" },
@@ -23,7 +29,7 @@ export default function ReturnRequestModal({
   orderId,
   orderItems,
   onClose,
-}: ModalClientProps) {
+}: ReturnRequestModalProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [selectedItems, setSelectedItems] = useState(
@@ -31,8 +37,19 @@ export default function ReturnRequestModal({
   );
   const [comment, setComment] = useState("");
 
+  const handleChangeQty = (id: string, value: number) => {
+    setSelectedItems((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, returnQty: value } : i))
+    );
+  };
+
+  const handleChangeReason = (id: string, value: string) => {
+    setSelectedItems((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, reason: value } : i))
+    );
+  };
+
   const handleSubmit = async () => {
-    // Ürün bazlı reason kontrolü
     for (const item of selectedItems.filter((i) => i.returnQty > 0)) {
       if (!item.reason) {
         alert(`Lütfen "${item.name}" için bir iade sebebi seçin.`);
@@ -49,20 +66,20 @@ export default function ReturnRequestModal({
           orderId,
           comment,
           items: selectedItems
-            .filter((item) => item.returnQty > 0)
-            .map((item) => ({
-              orderItemId: item.id,
-              qty: item.returnQty,
-              reason: item.reason,
+            .filter((i) => i.returnQty > 0)
+            .map((i) => ({
+              orderItemId: i.id,
+              qty: i.returnQty,
+              reason: i.reason,
             })),
         }),
       });
 
       if (!res.ok) throw new Error("Iade oluşturulamadı");
       onClose();
-      router.push("/account/returns"); // Başarılıysa yönlendir
-    } catch (error) {
-      console.error(error);
+      router.push("/account/returns");
+    } catch (err) {
+      console.error(err);
       alert("Bir hata oluştu.");
     } finally {
       setLoading(false);
@@ -72,7 +89,6 @@ export default function ReturnRequestModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-gray-800 p-6 rounded shadow-lg w-[500px] max-w-full relative">
-        {/* Kapatma ikonu */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -84,46 +100,14 @@ export default function ReturnRequestModal({
           İade Talebi Oluştur
         </h2>
 
-        {selectedItems.map((item, idx) => (
-          <div key={item.id} className="mb-2">
-            <p className="text-gray-800 dark:text-gray-200">
-              {item.name} (Mevcut: {item.qty})
-            </p>
-            <div className="flex gap-2 mt-1">
-              <input
-                type="number"
-                min={0}
-                max={item.qty}
-                value={item.returnQty}
-                onChange={(e) =>
-                  setSelectedItems((prev) => {
-                    const copy = [...prev];
-                    copy[idx].returnQty = parseInt(e.target.value) || 0;
-                    return copy;
-                  })
-                }
-                className="border border-gray-300 dark:border-gray-600 p-1 w-20 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              />
-              <select
-                value={item.reason}
-                onChange={(e) =>
-                  setSelectedItems((prev) => {
-                    const copy = [...prev];
-                    copy[idx].reason = e.target.value;
-                    return copy;
-                  })
-                }
-                className="border border-gray-300 dark:border-gray-600 p-1 w-[250px] rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              >
-                <option value="">-- Sebep Seçin --</option>
-                {RETURN_REASONS.map((r) => (
-                  <option key={r.value} value={r.value}>
-                    {r.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+        {selectedItems.map((item) => (
+          <ReturnItemRow
+            key={item.id}
+            item={item}
+            onChangeQty={handleChangeQty}
+            onChangeReason={handleChangeReason}
+            returnReasons={RETURN_REASONS}
+          />
         ))}
 
         <textarea

@@ -9,7 +9,9 @@ interface Props {
 
 export default function StepImages({ uploadImage }: Props) {
   const { watch, setValue } = useFormContext<ProductFormData>();
-  const images = watch("images");
+
+  // 👇 images undefined ise boş array olarak başlat
+  const images = watch("images") || [];
 
   const handleAddImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;

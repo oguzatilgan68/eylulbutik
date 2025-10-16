@@ -19,7 +19,7 @@ interface Props {
   brands: { id: string; name: string }[];
   attributeTypes: AttributeType[];
   propertyTypes: PropertyType[];
-  initialData: ProductFormData;
+  initialData?: ProductFormData;
   onSubmit: (data: ProductFormData) => Promise<void>;
   uploadImage: (file: File) => Promise<string | null>;
 }
