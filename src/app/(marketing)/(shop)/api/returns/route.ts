@@ -38,7 +38,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    // Tek bir string için kontrol
+    if (!order.deliveredAt) {
+      return NextResponse.json(
+        { error: "Sipariş henüz teslim edilmedi." },
+        { status: 400 }
+      );
+    }
+
+    const now = new Date();
+    const deliveredDate = new Date(order.deliveredAt);
+    const diffDays =
+      (now.getTime() - deliveredDate.getTime()) / (1000 * 60 * 60 * 24);
+
+    if (diffDays > 15) {
+      return NextResponse.json(
+        {
+          error:
+            "İade talebi oluşturmak için teslim tarihinden itibaren 15 günden fazla geçmemeli.",
+        },
+        { status: 400 }
+      );
+    }
 
     const returnRequest = await db.returnRequest.create({
       data: {

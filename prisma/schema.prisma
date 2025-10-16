@@ -306,6 +306,7 @@ model Order {
   shipment      Shipment?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+  deliveredAt   DateTime?   // ✅ Teslim tarihi
   returnRequests ReturnRequest[]
 }
 
