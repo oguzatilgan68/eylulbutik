@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loading } from "../components/ui/loading";
+import { log } from "../lib/logger";
 
 // ✅ Zod şema
 const registerSchema = z.object({
@@ -40,11 +41,15 @@ export default function RegisterPage() {
     });
 
     const result = await res.json();
-
     if (res.ok) {
+      await log(`User registered: ${data.email}`, "info", {
+        email: data.email,
+      });
       router.push("/login");
     } else {
-      // Backend’den gelen email/telefon çakışma hatasını göster
+      await log(`Registration failed for email: ${data.email}`, "warn", {
+        email: data.email,
+      });
       setBackendError(result.error || "Kayıt sırasında hata oluştu");
     }
   };

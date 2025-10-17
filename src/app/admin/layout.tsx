@@ -7,6 +7,11 @@ import clsx from "clsx";
 
 const navLinks = [
   {
+    href: "/",
+    label: "Anasayfa",
+    children: [{ href: "/", label: "Anasayfa" }],
+  },
+  {
     href: "/admin/products",
     label: "Ürünler",
     children: [
@@ -66,6 +71,11 @@ const navLinks = [
     href: "/admin/generic-data",
     label: "Site Ayarları",
     children: [{ href: "/admin/generic-data", label: "Site Ayarları" }],
+  },
+  {
+    href: "/admin/logs",
+    label: "Loglar",
+    children: [{ href: "/admin/logs", label: "Loglar" }],
   },
 ];
 

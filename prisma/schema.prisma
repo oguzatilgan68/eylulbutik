@@ -476,3 +476,12 @@ model GenericData {
   description  String?   
   createdAt    DateTime  @default(now())
 }
+model Log {
+  id        String   @id @default(cuid())
+  message   String
+  level     String   // info | warn | error
+  status    Int?     // HTTP status kodu, opsiyonel
+  stack     String?  // Hata stack trace, opsiyonel
+  meta      Json?    // Ek bilgiler (page, ip, userAgent vs.)
+  createdAt DateTime @default(now())
+}

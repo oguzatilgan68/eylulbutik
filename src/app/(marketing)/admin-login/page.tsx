@@ -3,6 +3,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FaEye, FaRegEyeSlash } from "react-icons/fa6";
+import { log } from "../lib/logger";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,6 +17,7 @@ export default function Login() {
       password,
     });
     if (result?.error) {
+      await log(`Admin login failed for email: ${email}`, "warn", { email });
       alert("Hatalı kullanıcı adı veya şifre!"); // Hata durumunu kontrol edin
     } else if (result?.ok) {
       router.push("/admin");

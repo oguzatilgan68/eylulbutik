@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "../context/userContext";
 import Link from "next/link";
@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loading } from "../components/ui/loading";
+import { log } from "../lib/logger";
 
 const schema = z.object({
   email: z.string().email("Geçerli bir email giriniz"),
@@ -37,10 +38,18 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-
       const result = await res.json();
-      if (!res.ok) throw new Error(result.message || "Giriş başarısız");
-
+      if (res.ok) {
+        await log(`Login successful for email: ${data.email}`, "info", {
+          email: data.email,
+        });
+      }
+      if (!res.ok) {
+        await log(`Login failed for email: ${data.email}`, "warn", {
+          email: data.email,
+        });
+        throw new Error(result.message || "Giriş başarısız");
+      }
       const meRes = await fetch("/api/auth/me");
       const meData = await meRes.json();
       setUser(meData.user);
