@@ -8,7 +8,8 @@ import {
   ReactNode,
 } from "react";
 import { CouponProvider } from "./CouponContext";
-import { GenericData } from "@/generated/prisma"; // 💡 GenericData tipi import edildi
+import { GenericData } from "@/generated/prisma";
+import { useRouter } from "next/navigation";
 
 interface User {
   id: string;
@@ -34,33 +35,57 @@ export const UserContext = createContext<UserContextType | undefined>(
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [genericData, setGenericData] = useState<GenericData | null>(null);
+  const router = useRouter();
 
-  // 🧠 Kullanıcıyı çek
+  // 🧠 Kullanıcıyı çek (accessToken veya refreshToken ile)
   useEffect(() => {
-    fetch("/api/auth/me", {
-      cache: "no-store",
-      method: "GET",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => setUser(data.user))
-      .catch(() => setUser(null));
-  }, []);
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/auth/me", {
+          method: "GET",
+          cache: "no-store",
+          credentials: "include", // cookie'leri gönder
+        });
+        const data = await res.json();
+
+        if (res.status === 200 && data.user) {
+          setUser(data.user);
+        } else {
+          // Kullanıcı yok veya yetkisiz → login sayfasına yönlendir
+          setUser(null);
+          router.push("/login");
+        }
+      } catch (err) {
+        setUser(null);
+        router.push("/login");
+      }
+    };
+
+    fetchUser();
+  }, [router]);
 
   // 🌐 GenericData’yı çek
   useEffect(() => {
-    fetch("/api/generic-data", { cache: "no-store", method: "GET" })
-      .then((res) => res.json())
-      .then((data) => setGenericData(data[0]))
-      .catch(() => setGenericData(null));
+    const fetchGenericData = async () => {
+      try {
+        const res = await fetch("/api/generic-data", {
+          method: "GET",
+          cache: "no-store",
+        });
+        const data = await res.json();
+        setGenericData(data[0] || null);
+      } catch {
+        setGenericData(null);
+      }
+    };
+
+    fetchGenericData();
   }, []);
 
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
+    router.push("/login"); // logout sonrası login sayfasına yönlendir
   };
 
   return (

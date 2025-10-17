@@ -2,6 +2,8 @@ import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import getRateLimitMiddlewares from "next-rate-limit";
 import { log } from "./app/(marketing)/lib/logger";
+import jwt from "jsonwebtoken";
+import { db } from "./app/(marketing)/lib/db";
 
 const { checkNext } = getRateLimitMiddlewares({
   interval: 60 * 1000, // 1 dakika
@@ -13,7 +15,9 @@ export async function middleware(req: NextRequest) {
   const pathname = url.pathname;
   const response = NextResponse.next();
 
-  // 🌐 Güvenlik header'ları
+  // ------------------------
+  // 🔐 Security headers
+  // ------------------------
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set(
@@ -39,23 +43,106 @@ export async function middleware(req: NextRequest) {
     "max-age=63072000; includeSubDomains; preload"
   );
 
-  // 🔐 NextAuth Token
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  // ------------------------
+  // 🍪 Token yönetimi
+  // ------------------------
+  const nextAuthToken = await getToken({
+    req,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+  if (pathname.startsWith("account")) {
+    const accessToken = req.cookies.get("accessToken")?.value;
+    const refreshToken = req.cookies.get("refreshToken")?.value;
 
-  // /admin login kontrolü
-  if (pathname.startsWith("/admin")) {
-    const isAuthPage = pathname === "/admin-login";
-    if (!token && !isAuthPage) {
-      return NextResponse.redirect(new URL("/admin-login", req.url));
+    let userId: string | null = null;
+
+    // 1️⃣ Access Token geçerli mi kontrol et
+    if (accessToken) {
+      try {
+        const decoded = jwt.verify(accessToken, process.env.JWT_SECRET!) as {
+          userId: string;
+        };
+        userId = decoded.userId;
+      } catch {
+        // Token süresi dolmuş olabilir, refresh token ile yenilemeye geç
+      }
+    }
+
+    // 2️⃣ Refresh Token varsa ve accessToken geçerli değilse yenile
+    if (!userId && refreshToken) {
+      try {
+        const user = await db.user.findFirst({
+          where: {
+            refreshToken,
+            refreshTokenExpiry: { gt: new Date() },
+          },
+        });
+
+        if (user) {
+          const newAccessToken = jwt.sign(
+            { userId: user.id },
+            process.env.JWT_SECRET!,
+            {
+              expiresIn: "15m",
+            }
+          );
+
+          response.cookies.set({
+            name: "accessToken",
+            value: newAccessToken,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            path: "/",
+            sameSite: "lax",
+            maxAge: 15 * 60,
+          });
+
+          userId = user.id;
+        } else {
+          // Refresh token geçersizse cookie temizle ve login yönlendir
+          const res = NextResponse.redirect(new URL("/login", req.url));
+          res.cookies.delete({ name: "accessToken", path: "/" });
+          res.cookies.delete({ name: "refreshToken", path: "/" });
+          return res;
+        }
+      } catch {
+        const res = NextResponse.redirect(new URL("/login", req.url));
+        res.cookies.delete({ name: "accessToken", path: "/" });
+        res.cookies.delete({ name: "refreshToken", path: "/" });
+        return res;
+      }
+    }
+
+    // 3️⃣ Eğer token yok ve admin değilse login sayfasına yönlendir
+    if (
+      !userId &&
+      !pathname.startsWith("/admin") &&
+      !pathname.startsWith("/api/admin")
+    ) {
+      const res = NextResponse.redirect(new URL("/login", req.url));
+      res.cookies.delete({ name: "accessToken", path: "/" });
+      res.cookies.delete({ name: "refreshToken", path: "/" });
+      return res;
+    }
+  }
+  // /admin ve /api/admin kontrolü (NextAuth)
+  // ------------------------
+  if (pathname.startsWith("/admin") && pathname !== "/admin-login") {
+    if (!nextAuthToken) {
+      const res = NextResponse.redirect(new URL("/admin-login", req.url));
+      res.cookies.delete({ name: "next-auth.session-token", path: "/" });
+      return res;
     }
   }
 
-  // /api/admin erişim kontrolü
   if (pathname.startsWith("/api/admin")) {
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!nextAuthToken) {
+      const res = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      res.cookies.delete({ name: "next-auth.session-token", path: "/" });
+      return res;
     }
-    if (token.role !== "ADMIN") {
+
+    if (nextAuthToken.role !== "ADMIN") {
       return NextResponse.json(
         { error: "Forbidden: Admin access only" },
         { status: 403 }
@@ -63,21 +150,19 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // ⚡ Gelişmiş Rate Limit
+  // ------------------------
+  // ⚡ Rate limit
+  // ------------------------
   if (pathname.startsWith("/api/")) {
     try {
-      // Her IP’ye özel limit
       const headers = checkNext(req, 30); // dakikada 30 istek
       headers.forEach((value, key) => response.headers.set(key, value));
     } catch (err: any) {
       if (err?.message?.includes("Rate limit exceeded")) {
-        // Kalan süreyi hesapla (milisaniyeden saniyeye)
-        const resetTime = 60; // 60 saniyelik interval
-        const now = Date.now();
-        const remainingMs =
-          (err?.resetTime ? err.resetTime - now : resetTime * 1000) ||
-          resetTime * 1000;
-        const remainingSeconds = Math.max(Math.ceil(remainingMs / 1000), 1);
+        const remainingSeconds = Math.max(
+          Math.ceil((err?.resetTime ?? 60 * 1000) / 1000),
+          1
+        );
         await log(
           err.message,
           "error",
@@ -88,7 +173,7 @@ export async function middleware(req: NextRequest) {
 
         return NextResponse.json(
           {
-            error: `Çok fazla istek.Lütfen ${remainingSeconds} saniye sonra tekrar deneyiniz.`,
+            error: `Çok fazla istek. Lütfen ${remainingSeconds} saniye sonra tekrar deneyiniz.`,
             retryAfterSeconds: remainingSeconds,
           },
           {
@@ -100,11 +185,9 @@ export async function middleware(req: NextRequest) {
           }
         );
       }
-
       if (process.env.NODE_ENV === "development") {
         console.error("Rate limit middleware error:", err);
       }
-
       return NextResponse.json({ error: "Unexpected error" }, { status: 500 });
     }
   }

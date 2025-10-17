@@ -4,25 +4,20 @@ import { db } from "@/app/(marketing)/lib/db";
 
 export async function GET(req: NextRequest) {
   try {
-    // 1️⃣ Access Token'ı header'dan al
-    const authHeader = req.headers.get("authorization");
-    const accessToken = authHeader?.startsWith("Bearer ")
-      ? authHeader.split(" ")[1]
-      : null;
+    const cookieStore = req.cookies;
 
-    // 2️⃣ Refresh Token'ı cookie'den al
-    const refreshToken = req.cookies.get("refreshToken")?.value;
+    // 1️⃣ Access Token ve Refresh Token
+    const accessToken = cookieStore.get("accessToken")?.value;
+    const refreshToken = cookieStore.get("refreshToken")?.value;
 
-    // Kullanıcı nesnesi başlangıçta null
     let user = null;
 
-    // 3️⃣ Eğer accessToken varsa — doğrula
+    // 2️⃣ Access Token varsa doğrula
     if (accessToken) {
       try {
         const decoded = jwt.verify(accessToken, process.env.JWT_SECRET!) as {
           userId: string;
         };
-
         user = await db.user.findUnique({
           where: { id: decoded.userId },
           select: {
@@ -34,24 +29,18 @@ export async function GET(req: NextRequest) {
             emailVerified: true,
           },
         });
-
         if (user) {
-          return NextResponse.json({ user });
+          return NextResponse.json({ user, refreshed: false });
         }
       } catch {
-        // Token süresi dolmuş olabilir → refresh token kontrolüne geç
+        // Token süresi dolmuş olabilir → refresh token kontrolü
       }
     }
 
-    // 4️⃣ Access Token geçersizse veya yoksa → refresh token ile yenile
+    // 3️⃣ Access Token yok veya süresi dolmuş → refresh token ile yenile
     if (refreshToken) {
       const existingUser = await db.user.findFirst({
-        where: {
-          refreshToken,
-          refreshTokenExpiry: {
-            gt: new Date(), // süresi geçmemiş olmalı
-          },
-        },
+        where: { refreshToken, refreshTokenExpiry: { gt: new Date() } },
         select: {
           id: true,
           fullName: true,
@@ -71,14 +60,25 @@ export async function GET(req: NextRequest) {
         );
 
         const res = NextResponse.json({ user: existingUser, refreshed: true });
-        res.headers.set("Authorization", `Bearer ${newAccessToken}`);
+
+        // 🍪 Yeni access token cookie'ye yaz
+        res.cookies.set({
+          name: "accessToken",
+          value: newAccessToken,
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          path: "/",
+          maxAge: 15 * 60, // 15 dk
+        });
+
         return res;
       }
     }
 
-    // 5️⃣ Eğer hiçbir token geçerli değilse
+    // 4️⃣ Hiçbir token geçerli değilse
     return NextResponse.json({ user: null }, { status: 401 });
-  } catch (err: any) {
+  } catch (err) {
     console.error("Auth check error:", err);
     return NextResponse.json(
       { error: "Internal server error" },

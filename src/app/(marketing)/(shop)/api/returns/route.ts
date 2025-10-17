@@ -4,10 +4,13 @@ import { ReturnReason } from "@/generated/prisma/client";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
+  const userId = await getAuthUserId();
+  if (!userId) {
+    return NextResponse.json({ error: "Yetkisiz Erişim" }, { status: 401 });
+  }
   try {
     const body = await req.json();
-    const { orderId, reason, comment, items } = body;
-
+    const { orderId, comment, items } = body;
     if (!orderId) {
       return NextResponse.json(
         { error: "orderId is required" },
@@ -92,16 +95,21 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const userId = await getAuthUserId();
+
+    if (!userId) {
+      return NextResponse.json({ error: "Yetkisiz erişim" }, { status: 401 });
+    }
+
     const page = Number(url.searchParams.get("page") || 1);
     const limit = 20;
 
-    const where = userId ? { userId } : {};
-
-    const totalCount = await db.returnRequest.count({ where });
+    const totalCount = await db.returnRequest.count({
+      where: { userId },
+    });
     const totalPages = Math.ceil(totalCount / limit);
 
     const returnRequests = await db.returnRequest.findMany({
-      where,
+      where: { userId },
       skip: (page - 1) * limit,
       take: limit,
       orderBy: { createdAt: "desc" },
@@ -134,18 +142,13 @@ export async function GET(req: Request) {
                     name: true,
                     slug: true,
                     images: {
-                      select: {
-                        url: true,
-                      },
+                      select: { url: true },
                       take: 1,
                     },
                   },
                 },
                 variant: {
-                  select: {
-                    id: true,
-                    attributes: true,
-                  },
+                  select: { id: true, attributes: true },
                 },
               },
             },
@@ -154,7 +157,6 @@ export async function GET(req: Request) {
       },
     });
 
-    // Decimal -> number dönüşümü
     const plainRequests = returnRequests.map((r) => ({
       ...r,
       items: r.items.map((i) => ({
