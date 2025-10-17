@@ -9,7 +9,6 @@ export default function OrdersListClient({ orders }: { orders: any[] }) {
 
   useEffect(() => {
     if (orders) setLoading(false);
-    console.log(orders, "orders");
   }, [orders]);
 
   if (loading) {

@@ -27,6 +27,11 @@ model User {
   emailVerificationTokenExpires DateTime?
   passwordResetToken           String?
   passwordResetTokenExpires    DateTime?
+  lastLogin     DateTime?
+  failedLoginAttempts Int @default(0)
+  isLocked      Boolean  @default(false)
+  refreshToken  String?  // Tek refresh token burada tutulacak
+  refreshTokenExpiry DateTime? // Token geçerlilik süresi
   createdAt                  DateTime        @default(now())
   updatedAt                  DateTime        @updatedAt
 }
@@ -476,6 +481,7 @@ model GenericData {
   description  String?   
   createdAt    DateTime  @default(now())
 }
+
 model Log {
   id        String   @id @default(cuid())
   message   String

@@ -1,6 +1,6 @@
 "use client";
 
-import React, {
+import {
   createContext,
   useContext,
   useEffect,
@@ -37,7 +37,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   // 🧠 Kullanıcıyı çek
   useEffect(() => {
-    fetch("/api/auth/me")
+    fetch("/api/auth/me", {
+      cache: "no-store",
+      method: "GET",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
       .then((res) => res.json())
       .then((data) => setUser(data.user))
       .catch(() => setUser(null));

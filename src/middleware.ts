@@ -55,7 +55,7 @@ export async function middleware(req: NextRequest) {
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (token.role !== "admin") {
+    if (token.role !== "ADMIN") {
       return NextResponse.json(
         { error: "Forbidden: Admin access only" },
         { status: 403 }
