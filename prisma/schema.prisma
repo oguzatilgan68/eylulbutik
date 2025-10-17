@@ -30,6 +30,7 @@ model User {
   lastLogin     DateTime?
   failedLoginAttempts Int @default(0)
   isLocked      Boolean  @default(false)
+  lockedUntil DateTime?
   refreshToken  String?  // Tek refresh token burada tutulacak
   refreshTokenExpiry DateTime? // Token geçerlilik süresi
   createdAt                  DateTime        @default(now())

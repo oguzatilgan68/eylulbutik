@@ -9,6 +9,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loading } from "../components/ui/loading";
 import { log } from "../lib/logger";
+import { Eye, EyeOff } from "lucide-react";
 
 const schema = z.object({
   email: z.string().email("Geçerli bir email giriniz"),
@@ -21,6 +22,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { setUser } = useUser();
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -48,14 +50,14 @@ export default function LoginPage() {
         await log(`Login failed for email: ${data.email}`, "warn", {
           email: data.email,
         });
-        throw new Error(result.message || "Giriş başarısız");
+        throw new Error(result.error || "Giriş başarısız");
       }
       const meRes = await fetch("/api/auth/me");
       const meData = await meRes.json();
       setUser(meData.user);
       router.push("/");
     } catch (err) {
-      setError("Giriş başarısız, lütfen bilgilerinizi kontrol edin.");
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
       console.error(err);
     }
   };
@@ -83,13 +85,23 @@ export default function LoginPage() {
           )}
         </label>
 
-        <label className="block mb-4">
+        <label className="block mb-4 relative">
           <span className="text-gray-700 dark:text-gray-200">Şifre</span>
-          <input
-            type="password"
-            {...register("password")}
-            className={inputClass}
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"} // 👈 Şifre görünür/gizli
+              {...register("password")}
+              className={`${inputClass} pr-10`} // ikon için sağ boşluk
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 dark:text-gray-300"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
+
           {errors.password && (
             <p className="text-red-500 text-sm mt-1">
               {errors.password.message}

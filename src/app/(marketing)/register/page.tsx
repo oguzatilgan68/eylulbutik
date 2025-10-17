@@ -8,6 +8,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loading } from "../components/ui/loading";
 import { log } from "../lib/logger";
+import { Eye, EyeOff } from "lucide-react";
 
 // ✅ Zod şema
 const registerSchema = z.object({
@@ -22,6 +23,7 @@ type RegisterForm = z.infer<typeof registerSchema>;
 export default function RegisterPage() {
   const router = useRouter();
   const [backendError, setBackendError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -89,17 +91,21 @@ export default function RegisterPage() {
           <p className="text-red-500 text-sm mb-2">{errors.email.message}</p>
         )}
 
-        {/* Password */}
-        <input
-          type="password"
-          placeholder="Şifre"
-          {...register("password")}
-          className="w-full p-3 mb-2 rounded border dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100 focus:outline-none"
-        />
-        {errors.password && (
-          <p className="text-red-500 text-sm mb-2">{errors.password.message}</p>
-        )}
-
+        <div className="relative w-full mb-2">
+          <input
+            type={showPassword ? "text" : "password"} // 👈 şifre görünür/gizli
+            placeholder="Şifre"
+            {...register("password")}
+            className="w-full p-3 rounded border dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100 focus:outline-none pr-10" // ikon için padding
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 dark:text-gray-300"
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
         {/* Phone */}
         <input
           type="text"
