@@ -1,12 +1,19 @@
 import { fetchInitialData } from "@/app/utils/fetchInitialData";
 import EditProductForm from "./EditProductForm";
+import { cookies } from "next/headers";
 export default async function EditProductPage(props: {
   params: Promise<{ id: string }>;
 }) {
   const params = await props.params;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const cookieStore = cookies();
+  const cookieHeader = (await cookieStore)
+    .getAll()
+    .map((c) => `${c.name}=${c.value}`)
+    .join("; ");
+
   const { categories, brands, attributeTypes, propertyTypes, product } =
-    await fetchInitialData(baseUrl, params.id);
+    await fetchInitialData(baseUrl, params.id, cookieHeader);
   if (!product) return <p>Ürün bulunamadı</p>;
   const initialData: any = {
     id: product.id,

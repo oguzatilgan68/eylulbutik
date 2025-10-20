@@ -155,7 +155,7 @@ export async function middleware(req: NextRequest) {
   // ------------------------
   if (pathname.startsWith("/api/")) {
     try {
-      const headers = checkNext(req, 30); // dakikada 30 istek
+      const headers = checkNext(req, 60); // dakikada 30 istek
       headers.forEach((value, key) => response.headers.set(key, value));
     } catch (err: any) {
       if (err?.message?.includes("Rate limit exceeded")) {

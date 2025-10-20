@@ -3,59 +3,105 @@ export interface Category {
   id: string;
   name: string;
 }
-
 export interface Brand {
   id: string;
   name: string;
 }
-
 export interface AttributeValue {
   id: string;
   value: string;
 }
-
 export interface AttributeType {
   id: string;
   name: string;
   values: AttributeValue[];
 }
-
 export interface PropertyType {
   id: string;
   name: string;
   values: { id: string; value: string }[];
 }
 
-export async function fetchInitialData(baseUrl: string, productId?: string) {
-  // Fetch dizisini oluştur
-  const fetchPromises = [
-    fetch(`${baseUrl}/api/categories`, { cache: "no-store" }),
-    fetch(`${baseUrl}/api/brands`, { cache: "no-store" }),
-    fetch(`${baseUrl}/api/attribute-types`, { cache: "no-store" }),
-    fetch(`${baseUrl}/api/admin/global-properties`, { cache: "no-store" }),
+// safeFetch: hem client hem server için çalışır
+async function safeFetch(
+  url: string,
+  label: string,
+  revalidate = 60,
+  cookieHeader?: string // SSR'da gelen cookie string'i buraya verilecek
+) {
+  try {
+    const isClient = typeof window !== "undefined";
+
+    const fetchOptions: RequestInit = {
+      next: { revalidate },
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+        // SSR tarafında cookie varsa burada iletilir:
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      },
+      // Client'ta credentials: 'include' ile tarayıcı cookie'leri gönderilir
+      ...(isClient ? { credentials: "include" } : {}),
+    };
+
+    const res = await fetch(url, fetchOptions);
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "<non-text response>");
+      console.error(`❌ [${label}] Fetch hatası (${res.status}):`, text);
+      throw new Error(`${label} verisi alınamadı (${res.status})`);
+    }
+
+    const data = await res.json();
+    console.log(`✅ [${label}] Verisi başarıyla alındı`);
+    return data;
+  } catch (err: any) {
+    console.error(`🔥 [${label}] Hata:`, err?.message ?? err);
+    throw err; // çağırana hata fırlat (üst katmanda yakalanır)
+  }
+}
+
+/**
+ * fetchInitialData
+ * @param baseUrl - ör. process.env.NEXT_PUBLIC_BASE_URL
+ * @param productId - opsiyonel ürün id
+ * @param cookieHeader - (SSR) gelen request'ten oluşturulmuş cookie string (örn: "a=1; b=2")
+ */
+export async function fetchInitialData(
+  baseUrl: string,
+  productId?: string,
+  cookieHeader?: string
+) {
+  const fetchPromises: Promise<any>[] = [
+    safeFetch(`${baseUrl}/api/categories`, "Kategori", 300, cookieHeader),
+    safeFetch(`${baseUrl}/api/brands`, "Marka", 300, cookieHeader),
+    safeFetch(
+      `${baseUrl}/api/attribute-types`,
+      "Attribute Tipi",
+      120,
+      cookieHeader
+    ),
+    safeFetch(
+      `${baseUrl}/api/admin/global-properties`,
+      "Özellik Tipi",
+      120,
+      cookieHeader
+    ),
   ];
 
-  // productId varsa product fetch ekle
   if (productId) {
     fetchPromises.push(
-      fetch(`${baseUrl}/api/admin/products/${productId}`, { cache: "no-store" })
+      safeFetch(
+        `${baseUrl}/api/admin/products/${productId}`,
+        "Ürün",
+        0,
+        cookieHeader
+      )
     );
   }
 
-  const [categoriesRes, brandsRes, attrTypesRes, propertyTypesRes, productRes] =
+  const [categories, brands, attributeTypes, propertyTypes, product] =
     await Promise.all(fetchPromises);
-
-  if (!categoriesRes.ok) throw new Error("Kategori verisi alınamadı");
-  if (!brandsRes.ok) throw new Error("Marka verisi alınamadı");
-  if (!attrTypesRes.ok) throw new Error("Attribute tipi verisi alınamadı");
-  if (!propertyTypesRes.ok) throw new Error("Özellik tipi verisi alınamadı");
-  if (productId && !productRes.ok) throw new Error("Ürün verisi alınamadı");
-
-  const categories = await categoriesRes.json();
-  const brands = await brandsRes.json();
-  const attributeTypes = await attrTypesRes.json();
-  const propertyTypes = await propertyTypesRes.json();
-  const product = productId ? await productRes.json() : undefined;
 
   return {
     categories,
