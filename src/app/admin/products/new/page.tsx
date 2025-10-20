@@ -7,7 +7,7 @@ export default async function NewProductPage() {
 
   // SSR cookie string
   const cookieStore = cookies();
-  const cookieHeader = cookieStore
+  const cookieHeader = (await cookieStore)
     .getAll()
     .map((c) => `${c.name}=${c.value}`)
     .join("; ");
