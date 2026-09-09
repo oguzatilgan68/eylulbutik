@@ -11,11 +11,48 @@ interface Props {
 export default function StepVariants({ attributeTypes, uploadImage }: Props) {
   const { watch, setValue } = useFormContext<ProductFormData>();
   const variants = watch("variants") || [];
+  const basePrice = watch("price") || "";
+  const baseSku = watch("sku") || "";
+
+  // Benzersiz 4 haneli rastgele bir ek üreten fonksiyon
+  const generateRandomSuffix = () => 
+    Math.random().toString(36).substring(2, 6).toUpperCase();
+
+  // Seçilen özelliklere ve benzersiz koda göre SKU üreten fonksiyon
+  const generateSku = (attributeValueIds: string[], currentVariant: any) => {
+    const parts = attributeTypes
+      .map((at, ai) => {
+        const valId = attributeValueIds[ai];
+        const val = at.values.find((item) => item.id === valId);
+        return val ? val.value.replace(/\s+/g, "").toUpperCase() : "";
+      })
+      .filter(Boolean);
+
+    // Varyant için daha önce oluşturulmuş benzersiz bir ek var mı kontrol et, yoksa üret
+    let suffix = currentVariant?.uniqueSuffix;
+    if (!suffix) {
+      suffix = generateRandomSuffix();
+      currentVariant.uniqueSuffix = suffix;
+    }
+
+    const skuParts = [baseSku, ...parts, suffix].filter(Boolean);
+    return skuParts.join("-");
+  };
 
   const handleAddVariant = () => {
+    const newSuffix = generateRandomSuffix();
+    const initialSku = baseSku ? `${baseSku}-${newSuffix}` : newSuffix;
+
     setValue("variants", [
       ...variants,
-      { sku: "", price: "", stockQty: "0", attributeValueIds: [], images: [] },
+      {
+        sku: initialSku,
+        price: basePrice,
+        stockQty: "0",
+        attributeValueIds: [],
+        images: [],
+        uniqueSuffix: newSuffix,
+      },
     ]);
   };
 
@@ -43,7 +80,7 @@ export default function StepVariants({ attributeTypes, uploadImage }: Props) {
             Ürün Varyantları
           </h3>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Farklı beden, renk veya özellik kombinasyonlarını ekleyin.
+            Farklı kombinasyonlar için stok kodları çakışmayacak şekilde otomatik ve benzersiz oluşturulur.
           </p>
         </div>
         <button
@@ -85,9 +122,9 @@ export default function StepVariants({ attributeTypes, uploadImage }: Props) {
               {/* SKU / Fiyat / Stok Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">SKU (Stok Kodu)</label>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">SKU (Stok Kodu - Benzersiz)</label>
                   <input
-                    placeholder="Örn: MNT-001-KRM"
+                    placeholder="Örn: MNT-001-KRM-A1B2"
                     value={v.sku}
                     onChange={(e) => updateVariant(idx, { sku: e.target.value })}
                     className={inputClass}
@@ -127,7 +164,8 @@ export default function StepVariants({ attributeTypes, uploadImage }: Props) {
                       onChange={(e) => {
                         const arr = [...(v.attributeValueIds || [])];
                         arr[ai] = e.target.value;
-                        updateVariant(idx, { attributeValueIds: arr });
+                        const newSku = generateSku(arr, v);
+                        updateVariant(idx, { attributeValueIds: arr, sku: newSku });
                       }}
                       className={inputClass}
                     >

@@ -33,6 +33,7 @@ export type VariantInput = {
   stockQty: string;
   attributeValueIds: string[]; // Ordered list of selected attribute value IDs
   images: { url: string; alt?: string }[];
+  uniqueSuffix: string; 
 };
 export type ProductFormData = {
   id?: string;
