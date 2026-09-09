@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useTheme } from "next-themes";
 import { ShoppingCart, User, Heart } from "lucide-react";
 import { useUser } from "@/app/(marketing)/context/userContext";
+import { useState, useEffect } from "react";
 
 interface NavItem {
   href: string;
@@ -12,8 +13,14 @@ interface NavItem {
 }
 
 export const NavbarLinks = () => {
+  const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
   const { user } = useUser();
+
+  // Bileşenin sadece tarayıcıda çalıştığından emin oluyoruz
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const navItems: NavItem[] = [
     {
@@ -56,15 +63,20 @@ export const NavbarLinks = () => {
         </Link>
       ))}
 
-      <button
-        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-        className={btnClass}
-        aria-label={
-          theme === "dark" ? "Aydınlık moda geç" : "Karanlık moda geç"
-        }
-      >
-        {theme === "dark" ? "🌞" : "🌙"}
-      </button>
+      {/* Tema butonu sadece tarayıcıda render edilir, böylece hydration çakışması yaşanmaz */}
+      {mounted ? (
+        <button
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className={btnClass}
+          aria-label={
+            theme === "dark" ? "Aydınlık moda geç" : "Karanlık moda geç"
+          }
+        >
+          {theme === "dark" ? "🌞" : "🌙"}
+        </button>
+      ) : (
+        <div className="w-8 h-8" /> // Kayma olmaması için boş bir yer tutucu
+      )}
     </div>
   );
 };

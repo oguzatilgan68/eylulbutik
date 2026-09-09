@@ -10,7 +10,6 @@ interface Props {
 export default function StepImages({ uploadImage }: Props) {
   const { watch, setValue } = useFormContext<ProductFormData>();
 
-  // 👇 images undefined ise boş array olarak başlat
   const images = watch("images") || [];
 
   const handleAddImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,30 +35,50 @@ export default function StepImages({ uploadImage }: Props) {
   };
 
   return (
-    <div className="p-4 border rounded dark:bg-gray-900">
-      <label className="block text-sm font-medium mb-2">Ürün Görselleri</label>
-      <div className="flex flex-wrap gap-2">
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1">
+          Ürün Görselleri
+        </label>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Ürününüzü en iyi yansıtan fotoğrafları yükleyin (Birden fazla seçebilirsiniz).
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4">
         {images.map((img, idx) => (
-          <div key={idx} className="relative w-24 h-24">
+          <div
+            key={idx}
+            className="group relative aspect-square rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 shadow-sm"
+          >
             <img
               src={img.url}
               alt={img.alt || `Image ${idx + 1}`}
-              className="w-full h-full object-cover rounded border"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
             <button
               type="button"
               onClick={() => handleRemove(idx)}
-              className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+              className="absolute top-2 right-2 bg-rose-600 hover:bg-rose-700 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shadow-md transition-colors"
+              aria-label="Görseli sil"
             >
-              ×
+              ✕
             </button>
           </div>
         ))}
-        <label className="w-24 h-24 flex items-center justify-center border rounded cursor-pointer bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700">
-          +
+
+        {/* Dosya Seçme / Yükleme Kutusu */}
+        <label className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl cursor-pointer bg-gray-50/50 dark:bg-gray-800/50 hover:bg-pink-50/40 dark:hover:bg-gray-800 hover:border-pink-500 transition-all group">
+          <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-700 shadow-sm flex items-center justify-center text-gray-400 group-hover:text-pink-600 group-hover:scale-110 transition-all mb-1">
+            +
+          </div>
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 group-hover:text-pink-600">
+            Görsel Ekle
+          </span>
           <input
             type="file"
             multiple
+            accept="image/*"
             className="hidden"
             onChange={handleAddImage}
           />

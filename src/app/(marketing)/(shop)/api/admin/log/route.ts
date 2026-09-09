@@ -1,5 +1,6 @@
 import { db } from "@/app/(marketing)/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -41,6 +42,7 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
 export async function POST(req: NextRequest) {
   try {
     const { message, level, status, stack, meta, createdAt } = await req.json();
@@ -67,6 +69,34 @@ export async function POST(req: NextRequest) {
     console.error("🛑 Log API hatası:", err);
     return NextResponse.json(
       { ok: false, error: "Log kaydedilemedi" },
+      { status: 500 }
+    );
+  }
+}
+
+// 🗑️ Tekli veya çoklu log silme fonksiyonu
+export async function DELETE(req: NextRequest) {
+  try {
+    const { ids } = await req.json();
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json(
+        { ok: false, error: "Silinecek log ID'leri belirtilmedi" },
+        { status: 400 }
+      );
+    }
+
+    await db.log.deleteMany({
+      where: {
+        id: { in: ids },
+      },
+    });
+
+    return NextResponse.json({ ok: true, message: "Loglar başarıyla silindi" });
+  } catch (err) {
+    console.error("🛑 Log silme API hatası:", err);
+    return NextResponse.json(
+      { ok: false, error: "Loglar silinemedi" },
       { status: 500 }
     );
   }

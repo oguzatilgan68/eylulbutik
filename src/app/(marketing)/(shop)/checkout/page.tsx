@@ -156,6 +156,7 @@ export default function CheckoutPage() {
           {step === 2 && (
             <PaymentStep
               orderData={orderData}
+              setOrderData={setOrderData}
               prevStep={prevStep}
               nextStep={nextStep} // sadece step’i ilerletiyoruz
             />

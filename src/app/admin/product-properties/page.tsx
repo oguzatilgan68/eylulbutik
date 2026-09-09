@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Swal from "sweetalert2";
+import { FiLayers, FiPlus, FiEdit2, FiTrash2, FiCheck, FiX } from "react-icons/fi";
 
 interface PropertyType {
   id: string;
@@ -24,21 +25,31 @@ export default function PropertyTypesPage() {
   const [values, setValues] = useState<string[]>([]);
   const [newValue, setNewValue] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // 🟢 Listeyi yükle
+  // Listeyi yükle
   useEffect(() => {
     fetch("/api/admin/product-properties")
       .then((res) => res.json())
-      .then(setTypes);
+      .then(setTypes)
+      .catch((err) => console.error(err));
   }, []);
 
-  // ➕ Değer ekle
+  // Değer ekle
   const addValue = () => {
     if (!newValue.trim()) {
       Swal.fire({
         icon: "warning",
         title: "Boş değer eklenemez!",
-        confirmButtonColor: "#3b82f6",
+        confirmButtonColor: "#db2777",
+      });
+      return;
+    }
+    if (values.includes(newValue.trim())) {
+      Swal.fire({
+        icon: "info",
+        title: "Bu değer zaten ekli!",
+        confirmButtonColor: "#db2777",
       });
       return;
     }
@@ -46,19 +57,19 @@ export default function PropertyTypesPage() {
     setNewValue("");
   };
 
-  // ❌ Değer kaldır
+  // Değer kaldır
   const removeValue = (val: string) => {
     setValues(values.filter((v) => v !== val));
   };
 
-  // 💾 Kaydet / Güncelle
+  // Kaydet / Güncelle
   const handleSubmit = async () => {
     if (!selectedTypeId) {
       Swal.fire({
         icon: "warning",
         title: "Eksik bilgi!",
         text: "Lütfen bir özellik tipi seçin.",
-        confirmButtonColor: "#3b82f6",
+        confirmButtonColor: "#db2777",
       });
       return;
     }
@@ -67,18 +78,19 @@ export default function PropertyTypesPage() {
         icon: "warning",
         title: "Eksik bilgi!",
         text: "En az bir değer eklemelisiniz.",
-        confirmButtonColor: "#3b82f6",
+        confirmButtonColor: "#db2777",
       });
       return;
     }
 
     try {
+      setLoading(true);
       const payload = editingId
-        ? { id: selectedTypeId, values } // PATCH
+        ? { id: selectedTypeId, values }
         : {
             name: types.find((t) => t.id === selectedTypeId)?.name || "",
             values,
-          }; // POST
+          };
 
       const res = await fetch("/api/admin/product-properties", {
         method: editingId ? "PATCH" : "POST",
@@ -102,7 +114,9 @@ export default function PropertyTypesPage() {
         setTypes((all) => all.map((t) => (t.id === data.id ? data : t)));
         setEditingId(null);
       } else {
-        setTypes((all) => [...all, data]);
+        setTypes((all) => all.map((t) => (t.id === data.id ? data : t)));
+        // Eğer API yeni eklenen nesneyi dönüyorsa veya listeyi yenilemek gerekiyorsa:
+        fetch("/api/admin/product-properties").then(res => res.json()).then(setTypes);
       }
 
       setSelectedTypeId("");
@@ -112,8 +126,8 @@ export default function PropertyTypesPage() {
         icon: "success",
         title: "Başarılı!",
         text: editingId
-          ? "Özellik başarıyla güncellendi."
-          : "Yeni özellik başarıyla eklendi.",
+          ? "Özellik değerleri başarıyla güncellendi."
+          : "Yeni özellik değerleri başarıyla eklendi.",
         timer: 1500,
         showConfirmButton: false,
       });
@@ -125,10 +139,12 @@ export default function PropertyTypesPage() {
         text: "Bir hata oluştu, lütfen tekrar deneyin.",
         confirmButtonColor: "#ef4444",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  // ✏️ Düzenleme
+  // Düzenleme
   const handleEdit = (type: PropertyType) => {
     setEditingId(type.id);
     setSelectedTypeId(type.id);
@@ -143,11 +159,11 @@ export default function PropertyTypesPage() {
     });
   };
 
-  // 🗑️ Silme
+  // Silme
   const handleDelete = async (id: string) => {
     const result = await Swal.fire({
       title: "Emin misiniz?",
-      text: "Bu özellik kalıcı olarak silinecek!",
+      text: "Bu özellik değerleri kalıcı olarak silinecek!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#ef4444",
@@ -158,40 +174,56 @@ export default function PropertyTypesPage() {
 
     if (!result.isConfirmed) return;
 
-    const res = await fetch(`/api/property-types/${id}`, { method: "DELETE" });
+    try {
+      const res = await fetch(`/api/property-types/${id}`, { method: "DELETE" });
 
-    if (res.ok) {
-      setTypes((all) => all.filter((t) => t.id !== id));
-      Swal.fire({
-        icon: "success",
-        title: "Silindi!",
-        text: "Özellik başarıyla silindi.",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-    } else {
-      Swal.fire({
-        icon: "error",
-        title: "Hata!",
-        text: "Silme işlemi başarısız oldu.",
-        confirmButtonColor: "#ef4444",
-      });
+      if (res.ok) {
+        setTypes((all) => all.filter((t) => t.id !== id));
+        Swal.fire({
+          icon: "success",
+          title: "Silindi!",
+          text: "Özellik başarıyla silindi.",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Hata!",
+          text: "Silme işlemi başarısız oldu.",
+          confirmButtonColor: "#ef4444",
+        });
+      }
+    } catch (error) {
+      console.error(error);
     }
   };
 
   return (
-    <div className="p-6 dark:bg-gray-900 dark:text-white min-h-screen">
-      <h1 className="text-2xl font-bold mb-4">Ürün Özellikler</h1>
+    <div className="space-y-6">
+      {/* Üst Başlık */}
+      <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <FiLayers className="text-pink-600" /> Ürün Özellik Değerleri Yönetimi
+        </h1>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+          Global özelliklere ait seçenekleri (Örn: Renk için Kırmızı, Mavi; Beden için S, M, L) tanımlayın.
+        </p>
+      </div>
 
-      {/* Form */}
-      <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-xl mb-6 space-y-4">
+      {/* Form Alanı */}
+      <div className="bg-white dark:bg-gray-900 p-6 sm:p-8 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+          {editingId ? "Özellik Değerlerini Düzenle" : "Yeni Değer Grubu Tanımla"}
+        </h2>
+
         {/* Özellik tipi seçme */}
         <Select
           value={selectedTypeId}
           onValueChange={(val) => setSelectedTypeId(val)}
         >
-          <SelectTrigger>
-            <SelectValue placeholder="Özellik Tipi Seçin" />
+          <SelectTrigger className="rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm">
+            <SelectValue placeholder="Özellik Tipi Seçin (Örn: Renk)" />
           </SelectTrigger>
           <SelectContent>
             {types.map((t) => (
@@ -205,68 +237,104 @@ export default function PropertyTypesPage() {
         {/* Yeni değer ekleme */}
         <div className="flex gap-2">
           <Input
-            placeholder="Yeni değer (örn: Kırmızı)"
+            placeholder="Yeni değer yazın (örn: Kırmızı, S, 38)"
             value={newValue}
             onChange={(e) => setNewValue(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addValue(); } }}
+            className="rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm"
           />
-          <Button className="cursor-pointer" onClick={addValue}>
-            Ekle
+          <Button 
+            type="button" 
+            onClick={addValue}
+            className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-200 rounded-xl px-5 text-sm font-medium"
+          >
+            <FiPlus size={16} className="mr-1" /> Ekle
           </Button>
         </div>
 
-        {/* Eklenmiş değerler */}
-        <div className="flex flex-wrap gap-2">
-          {values.map((val) => (
-            <div
-              key={val}
-              className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center gap-2"
-            >
-              {val}
-              <button
-                onClick={() => removeValue(val)}
-                className="text-red-500 font-bold"
+        {/* Eklenmiş değerler (Badge Listesi) */}
+        {values.length > 0 && (
+          <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800">
+            {values.map((val) => (
+              <div
+                key={val}
+                className="px-3 py-1 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-lg text-xs font-medium flex items-center gap-2 shadow-sm"
               >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
+                <span>{val}</span>
+                <button
+                  type="button"
+                  onClick={() => removeValue(val)}
+                  className="text-rose-500 hover:text-rose-700 font-bold"
+                >
+                  <FiX size={13} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
-        <Button
-          onClick={handleSubmit}
-          className="bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
-        >
-          {editingId ? "Güncelle" : "Kaydet"}
-        </Button>
+        <div className="flex justify-end pt-2">
+          <Button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="bg-pink-600 hover:bg-pink-700 text-white rounded-xl px-6 text-sm font-medium shadow-md shadow-pink-500/20"
+          >
+            <FiCheck size={16} className="mr-1.5" /> {editingId ? "Değişiklikleri Güncelle" : "Değerleri Kaydet"}
+          </Button>
+        </div>
       </div>
 
       {/* Liste */}
       <div className="space-y-4">
-        {types.map((t) => (
-          <div
-            key={t.id}
-            className="p-4 border rounded-lg dark:border-gray-700 flex justify-between"
-          >
-            <div>
-              <h2 className="font-medium">{t.name}</h2>
-              <p className="text-sm text-gray-500">
-                {t.values.map((v) => v.value).join(", ")}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => handleEdit(t)}>
-                Düzenle
-              </Button>
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => handleDelete(t.id)}
+        <h2 className="text-base font-bold text-gray-900 dark:text-white px-1">
+          Mevcut Özellik Değerleri
+        </h2>
+
+        {types.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {types.map((t) => (
+              <div
+                key={t.id}
+                className="p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm flex flex-col justify-between space-y-3"
               >
-                Sil
-              </Button>
-            </div>
+                <div>
+                  <h3 className="font-bold text-base text-gray-900 dark:text-white mb-1">
+                    {t.name}
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 break-words">
+                    {t.values.length > 0 
+                      ? t.values.map((v) => v.value).join(", ") 
+                      : "Henüz değer eklenmemiş."}
+                  </p>
+                </div>
+                <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-800 justify-end">
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    onClick={() => handleEdit(t)}
+                    className="h-8 px-3 text-xs rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200"
+                  >
+                    <FiEdit2 size={13} className="mr-1" /> Düzenle
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleDelete(t.id)}
+                    className="h-8 px-3 text-xs rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 hover:bg-rose-100"
+                  >
+                    <FiTrash2 size={13} className="mr-1" /> Sil
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+        ) : (
+          <div className="p-12 text-center bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Kayıtlı özellik türü bulunmuyor.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

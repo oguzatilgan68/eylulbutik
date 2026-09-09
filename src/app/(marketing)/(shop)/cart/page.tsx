@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FaTrashAlt } from "react-icons/fa";
+import { FiTrash2, FiShoppingBag, FiPlus, FiMinus, FiArrowRight } from "react-icons/fi";
 import Swal from "sweetalert2";
 import OrderSummary from "../../components/ui/OrderSummary";
 
@@ -87,7 +87,7 @@ export default function CartPage() {
       title: "Ürünü sepetten kaldırmak istiyor musunuz?",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#dc2626",
+      confirmButtonColor: "#e11d48",
       cancelButtonColor: "#6b7280",
       confirmButtonText: "Evet, kaldır",
       cancelButtonText: "İptal",
@@ -102,23 +102,28 @@ export default function CartPage() {
           body: JSON.stringify({ cartItemId: itemId, action: "remove" }),
         });
         setCartItems((prev) => prev.filter((i) => i.id !== itemId));
-        Swal.fire("Silindi!", "Ürün sepetten kaldırıldı.", "success");
+        Swal.fire({
+          icon: "success",
+          title: "Ürün kaldırıldı",
+          toast: true,
+          position: "top-end",
+          timer: 1500,
+          showConfirmButton: false,
+        });
       } finally {
         setLoading(false);
       }
     }
   };
 
-  const buttonClass =
-    "w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition cursor-pointer";
-  const qtyButtonClass =
-    "px-3 py-1 border rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed";
-
   // Yükleniyor ekranı
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <div className="w-12 h-12 border-4 border-t-pink-500 border-gray-300 rounded-full animate-spin"></div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex items-center gap-2 text-gray-400 text-sm">
+          <div className="w-6 h-6 border-2 border-pink-600 border-t-transparent rounded-full animate-spin" />
+          <span>Sepetiniz yükleniyor...</span>
+        </div>
       </div>
     );
   }
@@ -126,31 +131,23 @@ export default function CartPage() {
   // Sepet boş ekranı
   if (cartItems.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center xl:h-[30vh] xl:w-[400px] mx-auto sm:h-[60vh] text-center space-y-4 px-4">
-        <svg
-          className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 text-gray-300 dark:text-gray-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.6 8H19M7 13l-2-8m5 8v8m4-8v8"
-          />
-        </svg>
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold dark:text-white">
-          Sepetiniz Boş
-        </h2>
-        <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base md:text-lg">
-          Henüz sepetinize ürün eklemediniz.
-        </p>
+      <div className="max-w-md mx-auto my-16 text-center p-8 bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
+        <div className="w-16 h-16 rounded-full bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 flex items-center justify-center mx-auto shadow-inner">
+          <FiShoppingBag size={28} />
+        </div>
+        <div className="space-y-1">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+            Sepetiniz Boş
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Henüz sepetinize herhangi bir ürün eklemediniz.
+          </p>
+        </div>
         <Link
           href="/"
-          className={`mt-2 px-4 sm:px-6 py-2 text-sm sm:text-base ${buttonClass}`}
+          className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-medium text-sm shadow-md shadow-pink-500/20 transition-all mt-2"
         >
-          Alışverişe Başla
+          Alışverişe Başla <FiArrowRight size={16} />
         </Link>
       </div>
     );
@@ -158,90 +155,110 @@ export default function CartPage() {
 
   // Normal sepet ekranı
   return (
-    <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto px-4 py-8">
-      {/* Sol taraf: Ürünler */}
-      <div className="flex-1 space-y-4">
-        {cartItems.map((item) => {
-          const price = Number(item.unitPrice) || 0;
-          const lineTotal = (price * item.qty).toFixed(2);
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+      <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <FiShoppingBag className="text-pink-600" /> Alışveriş Sepeti
+          </h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            Sepetinizdeki ürünleri inceleyin ve siparişinizi tamamlayın.
+          </p>
+        </div>
+        <span className="text-xs font-semibold px-3 py-1 bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 rounded-xl">
+          {cartItems.length} Çeşit Ürün
+        </span>
+      </div>
 
-          return (
-            <div
-              key={item.id}
-              className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow hover:shadow-lg transition min-h-[140px]"
-            >
-              <Link href={`/product/${item.product.slug}`}>
-                <div className="relative w-24 h-24 flex-shrink-0 overflow-hidden rounded-md">
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Sol taraf: Ürünler Listesi */}
+        <div className="flex-1 space-y-4">
+          {cartItems.map((item) => {
+            const price = Number(item.unitPrice) || 0;
+            const lineTotal = (price * item.qty).toFixed(2);
+
+            return (
+              <div
+                key={item.id}
+                className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm transition-all hover:border-pink-500/40"
+              >
+                {/* Ürün Görseli */}
+                <Link href={`/product/${item.product.slug}`} className="relative w-20 h-20 sm:w-24 sm:h-24 shrink-0 overflow-hidden rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800">
                   <Image
                     src={item.product.images[0]?.url || "/placeholder.png"}
                     alt={item.product.name}
                     fill
                     priority
-                    className="object-contain"
+                    className="object-cover"
                   />
-                </div>
-              </Link>
+                </Link>
 
-              <div className="flex-1 w-full sm:w-auto">
-                <p className="font-semibold text-lg dark:text-white hover:text-pink-600 transition cursor-pointer">
-                  {item.product.name}
-                </p>
-                {item.variant?.attributes?.length ? (
-                  <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-                    {item.variant.attributes.map((attr, i) => (
-                      <span key={attr.id}>
-                        <strong>{attr.attributeType?.name}:</strong>{" "}
-                        {attr.value}
-                        {i < item.variant!.attributes.length - 1 && " / "}
-                      </span>
-                    ))}
+                {/* Ürün Bilgileri */}
+                <div className="flex-1 w-full sm:w-auto space-y-1">
+                  <Link href={`/product/${item.product.slug}`}>
+                    <h3 className="font-semibold text-base text-gray-900 dark:text-white hover:text-pink-600 transition-colors line-clamp-2">
+                      {item.product.name}
+                    </h3>
+                  </Link>
+
+                  {item.variant?.attributes?.length ? (
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {item.variant.attributes.map((attr, i) => (
+                        <span key={attr.id} className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
+                          <strong>{attr.attributeType?.name}:</strong> {attr.value}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <p className="font-bold text-pink-600 dark:text-pink-400 text-base pt-1">
+                    {lineTotal} ₺
                   </p>
-                ) : null}
-                <p className="text-red-500 font-bold text-lg mt-2">
-                  {lineTotal} TL
-                </p>
-              </div>
+                </div>
 
-              <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto mt-2 sm:mt-0">
-                <div className="flex items-center gap-2">
+                {/* Adet Kontrolü & Silme */}
+                <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-100 dark:border-gray-800">
+                  <div className="flex items-center gap-1 bg-gray-50 dark:bg-gray-800 p-1 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <button
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition disabled:opacity-40 cursor-pointer shadow-sm"
+                      onClick={() => updateQty(item.id, item.qty - 1)}
+                      disabled={item.qty <= 1}
+                    >
+                      <FiMinus size={14} />
+                    </button>
+                    <span className="w-8 text-center font-semibold text-sm dark:text-white">
+                      {item.qty}
+                    </span>
+                    <button
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition cursor-pointer shadow-sm"
+                      onClick={() => updateQty(item.id, item.qty + 1)}
+                    >
+                      <FiPlus size={14} />
+                    </button>
+                  </div>
+
                   <button
-                    className={qtyButtonClass}
-                    onClick={() => updateQty(item.id, item.qty - 1)}
-                    disabled={item.qty <= 1}
+                    onClick={() => removeItem(item.id)}
+                    className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 transition cursor-pointer"
+                    title="Ürünü kaldır"
                   >
-                    -
-                  </button>
-                  <span className="font-medium dark:text-white">
-                    {item.qty}
-                  </span>
-                  <button
-                    className={qtyButtonClass}
-                    onClick={() => updateQty(item.id, item.qty + 1)}
-                  >
-                    +
+                    <FiTrash2 size={16} />
                   </button>
                 </div>
-                <button
-                  onClick={() => removeItem(item.id)}
-                  className="text-red-500 text-lg hover:text-red-600 transition"
-                  title="Ürünü kaldır"
-                >
-                  <FaTrashAlt />
-                </button>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
 
-      {/* Sağ taraf: Özet */}
-      <div className="w-full lg:w-1/3 bg-white dark:bg-gray-800 p-6 rounded-lg shadow sticky top-20 h-max space-y-4">
-        <OrderSummary
-          subtotal={subtotal}
-          showCheckoutButton={true}
-          onApply={(d) => setDiscount(d)}
-          onCheckout={() => router.push("/checkout")}
-        />
+        {/* Sağ taraf: Sipariş Özeti */}
+        <div className="w-full lg:w-96 shrink-0 sticky top-20 h-max">
+          <OrderSummary
+            subtotal={subtotal}
+            showCheckoutButton={true}
+            onApply={(d) => setDiscount(d)}
+            onCheckout={() => router.push("/checkout")}
+          />
+        </div>
       </div>
     </div>
   );

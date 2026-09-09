@@ -1,7 +1,9 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import ReturnRequestModal from "@/app/(marketing)/components/ui/returnRequestModal";
+import { FiShoppingBag, FiClock, FiChevronRight, FiRotateCcw } from "react-icons/fi";
 
 export default function OrdersListClient({ orders }: { orders: any[] }) {
   const [loading, setLoading] = useState(!orders);
@@ -13,21 +15,28 @@ export default function OrdersListClient({ orders }: { orders: any[] }) {
 
   if (loading) {
     return (
-      <div className="p-8 flex justify-center items-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-600"></div>
+      <div className="p-12 flex justify-center items-center">
+        <div className="w-6 h-6 border-2 border-pink-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (!orders || orders.length === 0) {
     return (
-      <p className="p-4 text-gray-600 dark:text-gray-400">
-        Henüz siparişiniz bulunmuyor.
-      </p>
+      <div className="p-12 text-center bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-2">
+        <div className="w-12 h-12 rounded-full bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 flex items-center justify-center mx-auto mb-2">
+          <FiShoppingBag size={22} />
+        </div>
+        <h3 className="font-bold text-gray-900 dark:text-white">Henüz siparişiniz yok</h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Koleksiyonumuzu keşfedin ve ilk alışverişinizi hemen gerçekleştirin.
+        </p>
+      </div>
     );
   }
 
   const canCreateReturn = (deliveredAt: string) => {
+    if (!deliveredAt) return false;
     const orderDate = new Date(deliveredAt);
     const now = new Date();
     const diffDays =
@@ -35,61 +44,92 @@ export default function OrdersListClient({ orders }: { orders: any[] }) {
     return diffDays <= 15;
   };
 
+  const getOrderStatusBadge = (status: string) => {
+    const statusMap: Record<string, { label: string; class: string }> = {
+      PAID: { label: "Sipariş Alındı", class: "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400" },
+      FULFILLED: { label: "Tamamlandı", class: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400" },
+      SHIPPED: { label: "Kargoda", class: "bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400" },
+      CANCELLED: { label: "İptal Edildi", class: "bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400" },
+    };
+
+    const current = statusMap[status] || { label: status, class: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300" };
+
+    return (
+      <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold ${current.class}`}>
+        {current.label}
+      </span>
+    );
+  };
+
   return (
     <div className="space-y-4">
       {orders.map((order) => (
         <div
           key={order.id}
-          className="border rounded-lg p-4 bg-white dark:bg-slate-800 shadow-sm"
+          className="border border-gray-100 dark:border-gray-800 rounded-2xl p-5 sm:p-6 bg-white dark:bg-gray-900 shadow-sm space-y-4 transition-all hover:border-pink-500/30"
         >
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between mb-2 gap-1 sm:gap-0">
-            <span className="font-medium text-sm text-gray-800 dark:text-gray-200">
-              Sipariş No: {order.orderNo}
-            </span>
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              {new Date(order.createdAt).toLocaleString("tr-TR", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </span>
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {order.status === "PAID" ? "Sipariş Verildi" : "Tamamlandı"}
-            </span>
+          {/* Header / Üst Bilgi */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800 gap-2">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm text-gray-900 dark:text-white">
+                Sipariş #{order.orderNo}
+              </span>
+              <span className="text-gray-300 dark:text-gray-700">•</span>
+              <span className="text-xs text-gray-400 flex items-center gap-1">
+                <FiClock size={12} />
+                {new Date(order.createdAt).toLocaleString("tr-TR", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            </div>
+            <div>
+              {getOrderStatusBadge(order.status)}
+            </div>
           </div>
 
-          {/* Ürünler */}
-          <ul className="mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300">
+          {/* Ürünler Listesi */}
+          <ul className="space-y-2 text-sm">
             {order.items?.map((item: any) => (
-              <li key={item.id}>
-                {item.product.name}{" "}
-                {item.variant?.name ? `(${item.variant.name})` : ""} x{" "}
-                {item.qty} = {(item.unitPrice * item.qty).toFixed(2)} TL
+              <li key={item.id} className="flex items-center justify-between text-gray-700 dark:text-gray-300 text-xs sm:text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-pink-500" />
+                  <span>
+                    <strong className="text-gray-900 dark:text-white font-medium">{item.product.name}</strong>{" "}
+                    {item.variant?.name ? `(${item.variant.name})` : ""}
+                    <span className="text-gray-400 ml-1">x {item.qty}</span>
+                  </span>
+                </div>
+                <span className="font-semibold text-gray-900 dark:text-white">
+                  {(Number(item.unitPrice) * item.qty).toFixed(2)} ₺
+                </span>
               </li>
             ))}
           </ul>
 
-          {/* Footer / Actions */}
-          <div className="flex flex-wrap gap-3 mt-3 text-sm">
+          {/* Footer / Aksiyonlar */}
+          <div className="flex flex-wrap items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800 gap-3">
             <Link
               href={`/account/orders/${order.id}`}
-              className="text-blue-600 hover:underline"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-pink-600 dark:text-pink-400 hover:underline"
             >
-              Detayları Gör
+              Sipariş Detaylarını Gör <FiChevronRight size={14} />
             </Link>
 
             {order.status === "FULFILLED" &&
               canCreateReturn(order.deliveredAt) && (
                 <>
                   <button
+                    type="button"
                     onClick={() => setOpenModalOrderId(order.id)}
-                    className="text-red-600 hover:underline"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 text-xs font-semibold transition-colors cursor-pointer"
                   >
-                    İade Talebi Oluştur
+                    <FiRotateCcw size={13} /> İade Talebi Oluştur
                   </button>
+
                   {openModalOrderId === order.id && (
                     <ReturnRequestModal
                       orderId={order.id}

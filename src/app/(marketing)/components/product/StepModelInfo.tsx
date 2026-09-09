@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormContext } from "react-hook-form";
-import { ProductFormData } from "../product/types/types";
+import { ProductFormData } from "./types/types";
 import { useEffect, useState } from "react";
 
 interface Model {
@@ -12,10 +12,6 @@ interface Model {
   chest?: number;
   waist?: number;
   hip?: number;
-}
-
-interface StepModelInfoProps {
-  onSelectModel: (id: string) => void;
 }
 
 export default function StepModelInfo() {
@@ -43,41 +39,68 @@ export default function StepModelInfo() {
   };
 
   return (
-    <div>
-      <h2 className="mb-2 font-semibold text-lg">Manken Seçimi</h2>
-
-      <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-2">
-        {models.map((m) => (
-          <button
-            key={m.id}
-            type="button"
-            onClick={() => handleSelect(m)}
-            className={`p-2 border rounded text-left ${
-              currentModelId === m.id
-                ? "border-blue-500 bg-blue-100 dark:bg-blue-900"
-                : "border-gray-300 dark:border-gray-700"
-            }`}
-          >
-            <p className="font-medium">{m.name}</p>
-            <p>Boy: {m.height ?? "-"}</p>
-            <p>Kilo: {m.weight ?? "-"}</p>
-            <p>Göğüs: {m.chest ?? "-"}</p>
-            <p>Bel: {m.waist ?? "-"}</p>
-            <p>Kalça: {m.hip ?? "-"}</p>
-          </button>
-        ))}
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+          Manken Bilgileri
+        </h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Ürün çekimlerinde kullanılan mankeni ve üzerindeki bedeni seçin.
+        </p>
       </div>
 
-      {/* 🔹 Deneme bedeni inputu */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium mb-1">
-          Mankenin Giydiği Beden
+      {models.length === 0 ? (
+        <div className="text-center py-8 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
+          <p className="text-sm text-gray-400">Kayıtlı manken bulunamadı.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {models.map((m) => {
+            const isSelected = currentModelId === m.id;
+            return (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => handleSelect(m)}
+                className={`p-4 rounded-2xl border text-left transition-all relative ${
+                  isSelected
+                    ? "border-pink-600 bg-pink-50/60 dark:bg-pink-950/30 shadow-md ring-2 ring-pink-500/20"
+                    : "border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 hover:border-gray-300"
+                }`}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <span className="font-bold text-sm text-gray-900 dark:text-white">
+                    {m.name}
+                  </span>
+                  {isSelected && (
+                    <span className="w-5 h-5 rounded-full bg-pink-600 text-white flex items-center justify-center text-[10px]">
+                      ✓
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-1 text-xs text-gray-500 dark:text-gray-400">
+                  <span>Boy: <strong className="text-gray-700 dark:text-gray-200">{m.height ?? "-"}</strong></span>
+                  <span>Kilo: <strong className="text-gray-700 dark:text-gray-200">{m.weight ?? "-"}</strong></span>
+                  <span>Göğüs: <strong className="text-gray-700 dark:text-gray-200">{m.chest ?? "-"}</strong></span>
+                  <span>Bel: <strong className="text-gray-700 dark:text-gray-200">{m.waist ?? "-"}</strong></span>
+                  <span>Kalça: <strong className="text-gray-700 dark:text-gray-200">{m.hip ?? "-"}</strong></span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Mankenin Giydiği Beden */}
+      <div className="max-w-md pt-2">
+        <label className="block mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+          Mankenin Üzerindeki Beden
         </label>
         <input
           type="text"
           {...register("modelSize")}
           placeholder="Örn: S, M, L, 36, 38..."
-          className="w-full border rounded px-2 py-1 dark:bg-gray-800 dark:border-gray-700"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all shadow-sm"
         />
       </div>
     </div>

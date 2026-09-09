@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma";
-
-const db = new PrismaClient();
+import { db } from "@/app/(marketing)/lib/db"; 
 
 export async function GET() {
   try {

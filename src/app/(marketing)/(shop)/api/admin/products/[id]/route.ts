@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/app/(marketing)/lib/db";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal } from "@/generated/prisma/runtime/library";
 
 export interface ProductUpdateBody {
   name?: string;

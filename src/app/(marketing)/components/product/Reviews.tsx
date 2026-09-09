@@ -23,6 +23,7 @@ export default function Reviews({ productId }: { productId: string }) {
 
   // form state
   const [myRating, setMyRating] = useState(5);
+  const [hoverRating, setHoverRating] = useState(0);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -54,6 +55,11 @@ export default function Reviews({ productId }: { productId: string }) {
   );
 
   async function submitReview() {
+    if (!content.trim()) {
+      alert("Lütfen deneyiminizi birkaç kelime ile paylaşın.");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const r = await fetch("/api/reviews/create", {
@@ -67,7 +73,6 @@ export default function Reviews({ productId }: { productId: string }) {
       }
       const j = await r.json();
       if (j?.ok) {
-        // Moderasyon bekleniyor
         setTitle("");
         setContent("");
         setMyRating(5);
@@ -80,117 +85,173 @@ export default function Reviews({ productId }: { productId: string }) {
     }
   }
 
+  const inputClass =
+    "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all shadow-sm";
+
   return (
-    <div className="mt-12">
-      <div className="flex items-center gap-3">
-        <div className="flex">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Star
-              key={i}
-              className={`h-5 w-5 ${
-                i < Math.round(stats?.ratingAvg ?? 0)
-                  ? "fill-yellow-400 stroke-yellow-400"
-                  : "stroke-gray-400 dark:stroke-gray-500"
-              }`}
-            />
-          ))}
+    <div className="mt-16 pt-8 border-t border-gray-100 dark:border-gray-800 space-y-8">
+      {/* Üst Özet Bilgi */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-900/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+            Müşteri Değerlendirmeleri
+          </h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Bu ürünü satın alan müşterilerimizin gerçek deneyimleri.
+          </p>
         </div>
-        <p className="text-gray-700 dark:text-gray-300">
-          {stats
-            ? `${rounded}/5 (${stats.ratingCount} değerlendirme)`
-            : "Değerlendirme yok"}
-        </p>
+
+        <div className="flex items-center gap-3">
+          <div className="flex">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star
+                key={i}
+                className={`h-5 w-5 ${
+                  i < Math.round(stats?.ratingAvg ?? 0)
+                    ? "fill-yellow-400 stroke-yellow-400"
+                    : "stroke-gray-300 dark:stroke-gray-700"
+                }`}
+              />
+            ))}
+          </div>
+          <div className="text-right">
+            <span className="text-lg font-bold text-gray-900 dark:text-white">
+              {stats ? rounded : "0.0"}
+            </span>
+            <span className="text-xs text-gray-400 block">
+              {stats ? `(${stats.ratingCount} değerlendirme)` : "Henüz değerlendirme yok"}
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Yorum listesi */}
-      <div className="mt-6 grid gap-4">
+      {/* Yorum Listesi */}
+      <div className="grid gap-4">
         {loading ? (
-          <div className="text-gray-500 dark:text-gray-400">Yükleniyor...</div>
+          <div className="flex items-center justify-center py-12 text-gray-400 gap-2">
+            <div className="w-5 h-5 border-2 border-pink-600 border-t-transparent rounded-full animate-spin" />
+            <span>Yorumlar yükleniyor...</span>
+          </div>
         ) : reviews.length === 0 ? (
-          <div className="text-gray-500 dark:text-gray-400">
-            Henüz yorum yok.
+          <div className="text-center py-10 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 text-gray-500 dark:text-gray-400 text-sm">
+            Bu ürün için henüz yorum yapılmamış. İlk yorumu sen yaz! ✨
           </div>
         ) : (
           reviews.map((r) => (
             <div
               key={r.id}
-              className="rounded-2xl border p-4 bg-white dark:bg-gray-900 dark:border-gray-700"
+              className="rounded-2xl border border-gray-100 dark:border-gray-800 p-5 bg-white dark:bg-gray-900 shadow-sm space-y-2"
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {Array.from({ length: r.rating }).map((_, i) => (
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
-                      className="h-4 w-4 fill-yellow-400 stroke-yellow-400"
+                      className={`h-4 w-4 ${
+                        i < r.rating
+                          ? "fill-yellow-400 stroke-yellow-400"
+                          : "stroke-gray-200 dark:stroke-gray-700"
+                      }`}
                     />
                   ))}
                 </div>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {new Date(r.createdAt).toLocaleDateString()}
+                <span className="text-xs text-gray-400">
+                  {new Date(r.createdAt).toLocaleDateString("tr-TR")}
                 </span>
               </div>
+
               {r.title && (
-                <h4 className="mt-2 font-semibold dark:text-gray-100">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-base">
                   {r.title}
                 </h4>
               )}
+
               {r.content && (
-                <p className="mt-1 text-gray-700 dark:text-gray-300">
+                <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
                   {r.content}
                 </p>
               )}
-              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                {r.user?.fullName ?? "Anonim"}
-              </p>
+
+              <div className="pt-2 flex items-center justify-between text-xs text-gray-400 border-t border-gray-50 dark:border-gray-800/60 mt-3">
+                <span className="font-medium text-gray-700 dark:text-gray-300">
+                  {r.user?.fullName ?? "Anonim Müşteri"}
+                </span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md">
+                  Doğrulanmış Alışveriş ✓
+                </span>
+              </div>
             </div>
           ))
         )}
       </div>
 
-      {/* Yorum formu */}
-      <div className="mt-10 rounded-2xl border p-4 bg-white dark:bg-gray-900 dark:border-gray-700">
-        <h3 className="text-lg font-semibold dark:text-gray-100">Yorum Yaz</h3>
-        <div className="mt-3 flex items-center gap-2">
-          <label className="text-sm text-gray-600 dark:text-gray-300">
-            Puan:
-          </label>
-          <select
-            value={myRating}
-            onChange={(e) => setMyRating(Number(e.target.value))}
-            className="rounded-lg border px-2 py-1 bg-white dark:bg-gray-950 dark:text-gray-200 dark:border-gray-700"
-          >
-            {[5, 4, 3, 2, 1].map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
+      {/* Yorum Yazma Formu */}
+      <div className="rounded-2xl border border-gray-200 dark:border-gray-800 p-6 sm:p-8 bg-white dark:bg-gray-900 shadow-sm space-y-5">
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+            Ürünü Değerlendir
+          </h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            Deneyimlerinizi diğer müşterilerimizle paylaşın.
+          </p>
         </div>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Başlık (opsiyonel)"
-          className="mt-3 w-full rounded-lg border px-3 py-2 bg-white dark:bg-gray-950 dark:text-gray-200 dark:border-gray-700"
-        />
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Deneyimini paylaş..."
-          className="mt-3 w-full rounded-lg border px-3 py-2 min-h-[100px] bg-white dark:bg-gray-950 dark:text-gray-200 dark:border-gray-700"
-        />
-        <div className="mt-3">
+
+        {/* İnteraktif Yıldız Puanlama */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Puanınız:
+          </span>
+          <div className="flex gap-1">
+            {Array.from({ length: 5 }).map((_, i) => {
+              const ratingValue = i + 1;
+              return (
+                <Star
+                  key={i}
+                  className={`h-6 w-6 cursor-pointer transition-transform hover:scale-110 ${
+                    ratingValue <= (hoverRating || myRating)
+                      ? "fill-yellow-400 stroke-yellow-400"
+                      : "stroke-gray-300 dark:stroke-gray-700"
+                  }`}
+                  onMouseEnter={() => setHoverRating(ratingValue)}
+                  onMouseLeave={() => setHoverRating(0)}
+                  onClick={() => setMyRating(ratingValue)}
+                />
+              );
+            })}
+          </div>
+        </div>
+
+        <div>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Yorum Başlığı (Örn: Harika bir ürün, tam beklediğim gibi)"
+            className={inputClass}
+          />
+        </div>
+
+        <div>
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Ürün hakkındaki detaylı deneyiminizi buraya yazabilirsiniz..."
+            className={`${inputClass} min-h-[120px] resize-y`}
+          />
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+          <p className="text-xs text-gray-400">
+            * Yorumlar moderasyon onayından sonra yayınlanır.
+          </p>
           <Button
             onClick={submitReview}
             disabled={submitting}
-            className="bg-pink-500 hover:bg-pink-600 text-white rounded-xl"
+            className="w-full sm:w-auto px-6 py-2.5 bg-pink-600 hover:bg-pink-700 text-white rounded-xl font-medium text-sm shadow-md shadow-pink-500/20 transition-all cursor-pointer"
           >
-            {submitting ? "Gönderiliyor..." : "Gönder"}
+            {submitting ? "Gönderiliyor..." : "Yorumu Gönder"}
           </Button>
         </div>
-        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-          Yorumlar onaylandıktan sonra yayınlanır.
-        </p>
       </div>
     </div>
   );

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { FiKey, FiMail, FiCheck, FiAlertCircle } from "react-icons/fi";
 
 const Page = () => {
   const [email, setEmail] = useState("");
@@ -26,7 +28,7 @@ const Page = () => {
       if (!res.ok) {
         setError(data.error || data.message || "Bir hata oluştu");
       } else {
-        setMessage("Şifre sıfırlama linki e-posta adresinize gönderildi!");
+        setMessage("Şifre sıfırlama bağlantısı e-posta adresinize gönderildi!");
         setEmail("");
       }
     } catch (err) {
@@ -36,42 +38,69 @@ const Page = () => {
     }
   };
 
+  const inputClass =
+    "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all shadow-sm";
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
-      <div className="bg-white dark:bg-gray-800 p-8 rounded shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">
-          Şifre Sıfırlama Talebi
-        </h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+      <div className="bg-white dark:bg-gray-900 shadow-xl rounded-3xl p-8 sm:p-10 w-full max-w-md border border-gray-100 dark:border-gray-800 space-y-6">
+        <div className="text-center space-y-1">
+          <div className="w-12 h-12 rounded-2xl bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 flex items-center justify-center mx-auto mb-3 shadow-inner">
+            <FiKey size={22} />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Şifrenizi mi Unuttunuz?
+          </h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            E-posta adresinizi girin, size şifre sıfırlama bağlantısı gönderelim.
+          </p>
+        </div>
 
         {message && (
-          <p className="mb-4 p-2 bg-green-100 text-green-700 rounded">
-            {message}
-          </p>
+          <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 text-xs font-semibold border border-emerald-200 dark:border-emerald-900 flex items-center gap-2">
+            <FiCheck size={16} /> {message}
+          </div>
         )}
+
         {error && (
-          <p className="mb-4 p-2 bg-red-100 text-red-700 rounded">{error}</p>
+          <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 text-xs font-semibold border border-rose-200 dark:border-rose-900 flex items-center gap-2">
+            <FiAlertCircle size={16} /> {error}
+          </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <label className="block">
-            <span className="text-gray-700 dark:text-gray-200">Email</span>
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+              E-posta Adresi *
+            </label>
             <input
               type="email"
               name="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm text-gray-900 dark:text-gray-100"
+              placeholder="ornek@email.com"
+              className={inputClass}
             />
-          </label>
+          </div>
+
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 px-4 bg-pink-500 hover:bg-pink-600 text-white font-semibold rounded-md shadow focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-opacity-75 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-medium text-sm shadow-md shadow-pink-500/20 transition-all cursor-pointer disabled:opacity-50"
           >
-            {loading ? "Gönderiliyor..." : "Şifre Sıfırlama Linki Gönder"}
+            {loading ? "Gönderiliyor..." : "Sıfırlama Bağlantısı Gönder"}
           </button>
         </form>
+
+        <div className="text-center pt-2 border-t border-gray-100 dark:border-gray-800">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Şifrenizi hatırladınız mı?{" "}
+            <Link href="/login" className="text-pink-600 dark:text-pink-400 font-semibold hover:underline">
+              Giriş Yapın
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import Pagination from "@/app/(marketing)/components/ui/Pagination";
 import Breadcrumb from "@/app/(marketing)/components/ui/breadcrumbs";
+import { FiRotateCcw, FiPackage } from "react-icons/fi";
 
 interface ReturnItem {
   id: string;
@@ -34,6 +35,7 @@ export default function ReturnsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const breadcrumbs = [
     { label: "Hesabım", href: "/account" },
@@ -42,6 +44,7 @@ export default function ReturnsPage() {
 
   const fetchReturns = async (pageNumber: number) => {
     try {
+      setLoading(true);
       const res = await fetch(`/api/returns?page=${pageNumber}`);
       if (!res.ok) throw new Error("İade talepleri yüklenemedi");
       const data = await res.json();
@@ -49,6 +52,8 @@ export default function ReturnsPage() {
       setTotalPages(data.totalPages || 1);
     } catch (err: any) {
       setError(err.message || "Bir hata oluştu");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -56,25 +61,51 @@ export default function ReturnsPage() {
     fetchReturns(page);
   }, [page]);
 
+  const getStatusBadge = (status: string) => {
+    const map: Record<string, { label: string; class: string }> = {
+      PENDING: { label: "Onay Bekliyor", class: "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400" },
+      APPROVED: { label: "Onaylandı", class: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400" },
+      REJECTED: { label: "Reddedildi", class: "bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400" },
+    };
+    const current = map[status] || { label: status, class: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300" };
+    return <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${current.class}`}>{current.label}</span>;
+  };
+
   if (error)
-    return <p className="p-6 text-center text-red-500 font-medium">{error}</p>;
+    return <p className="p-6 text-center text-rose-500 font-medium">Hata: {error}</p>;
 
   return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto">
       <Breadcrumb items={breadcrumbs} />
-      <h1 className="text-2xl font-semibold mb-6 dark:text-white">
-        İade Taleplerim
-      </h1>
 
-      {returns.length === 0 ? (
-        <div className="py-20 text-center text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
-          <p className="text-lg font-medium">
+      <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <FiRotateCcw className="text-pink-600" /> İade ve Değişim Taleplerim
+        </h1>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+          Oluşturduğunuz iade taleplerinin durumunu buradan takip edebilirsiniz.
+        </p>
+      </div>
+
+      {loading ? (
+        <div className="p-12 text-center flex justify-center items-center">
+          <div className="w-6 h-6 border-2 border-pink-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : returns.length === 0 ? (
+        <div className="py-16 text-center bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-2">
+          <div className="w-12 h-12 rounded-full bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 flex items-center justify-center mx-auto mb-2">
+            <FiPackage size={22} />
+          </div>
+          <p className="text-base font-bold text-gray-900 dark:text-white">
             Henüz bir iade talebiniz bulunmamaktadır.
+          </p>
+          <p className="text-xs text-gray-500">
+            Sipariş detaylarınızdan kolayca iade talebi oluşturabilirsiniz.
           </p>
         </div>
       ) : (
-        <>
-          <ul className="space-y-5">
+        <div className="space-y-4">
+          <ul className="space-y-4">
             {returns.map((r) => {
               const orderNo = r.order?.orderNo || "—";
               const date = new Date(r.createdAt).toLocaleDateString("tr-TR");
@@ -88,76 +119,48 @@ export default function ReturnsPage() {
               return (
                 <li
                   key={r.id}
-                  className="p-5 border border-gray-200 dark:border-gray-700 rounded-2xl bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition"
+                  className="border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 shadow-sm overflow-hidden transition-all hover:border-pink-500/30"
                 >
-                  {/* Başlık */}
+                  {/* Başlık / Akordeon Tetikleyici */}
                   <div
-                    className="flex justify-between items-center cursor-pointer"
+                    className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer bg-gray-50/50 dark:bg-gray-800/40 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                     onClick={() => setOpenDropdown(isOpen ? null : r.id)}
                   >
-                    <div>
-                      <p className="text-sm text-gray-500">
-                        Sipariş No:{" "}
-                        <span className="font-medium text-gray-800 dark:text-gray-200">
-                          {orderNo}
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm text-gray-900 dark:text-white">
+                          Sipariş #{orderNo}
                         </span>
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Tarih:{" "}
-                        <span className="font-medium text-gray-800 dark:text-gray-200">
-                          {date}
-                        </span>
-                      </p>
-                      <p
-                        className={`text-sm mt-2 font-medium ${
-                          r.status === "APPROVED"
-                            ? "text-green-600"
-                            : r.status === "REJECTED"
-                              ? "text-red-500"
-                              : "text-yellow-500"
-                        }`}
-                      >
-                        {r.status === "PENDING"
-                          ? "Beklemede"
-                          : r.status === "APPROVED"
-                            ? "Onaylandı"
-                            : r.status === "REJECTED"
-                              ? "Reddedildi"
-                              : r.status}
-                      </p>
+                        <span className="text-gray-300 dark:text-gray-700">•</span>
+                        <span className="text-xs text-gray-400">{date}</span>
+                      </div>
+                      <div>{getStatusBadge(r.status)}</div>
                     </div>
-                    <div className="flex items-center gap-3">
+
+                    <div className="flex items-center justify-between sm:justify-end gap-6">
                       <div className="text-right">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Toplam Ürün:{" "}
-                          <span className="font-medium text-gray-800 dark:text-gray-200">
-                            {totalQty}
-                          </span>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {totalQty} Ürün
                         </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Toplam:{" "}
-                          <span className="font-medium text-gray-800 dark:text-gray-200">
-                            ₺{totalPrice.toFixed(2)}
-                          </span>
+                        <p className="font-bold text-gray-900 dark:text-white text-sm">
+                          ₺{totalPrice.toFixed(2)}
                         </p>
                       </div>
-                      {isOpen ? (
-                        <ChevronUp className="w-5 h-5 text-gray-500" />
-                      ) : (
-                        <ChevronDown className="w-5 h-5 text-gray-500" />
-                      )}
+                      <div className="p-2 rounded-xl bg-white dark:bg-gray-800 text-gray-500 shadow-sm">
+                        {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </div>
                     </div>
                   </div>
 
                   {/* Açılır Ürün Listesi */}
                   {isOpen && (
-                    <div className="mt-4 space-y-3 border-t border-gray-200 dark:border-gray-700 pt-4">
-                      {r.items.map((item) => (
+                    <div className="p-6 space-y-4 border-t border-gray-100 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800">
+                      {r.items.map((item, idx) => (
                         <div
                           key={item.id}
-                          className="flex items-start gap-4 bg-gray-50 dark:bg-gray-900/40 p-3 rounded-xl"
+                          className={`flex items-start gap-4 ${idx > 0 ? "pt-4" : ""}`}
                         >
-                          <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100 dark:border-gray-700">
+                          <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 border border-gray-200 dark:border-gray-700 shadow-sm">
                             <Image
                               src={
                                 item.orderItem.product.images?.[0]?.url ||
@@ -172,20 +175,20 @@ export default function ReturnsPage() {
                             />
                           </div>
 
-                          <div className="flex-1">
-                            <h3 className="font-medium text-gray-900 dark:text-gray-100">
+                          <div className="flex-1 space-y-1">
+                            <h3 className="font-semibold text-sm text-gray-900 dark:text-white">
                               {item.orderItem.product.name}
                             </h3>
 
                             {item.orderItem.variant?.name && (
-                              <p className="text-sm text-gray-500 mt-0.5">
+                              <p className="text-xs text-gray-500">
                                 Varyant: {item.orderItem.variant.name}
                               </p>
                             )}
 
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            <p className="text-xs text-gray-600 dark:text-gray-400">
                               İade Nedeni:{" "}
-                              <span className="font-medium text-gray-800 dark:text-gray-200">
+                              <strong className="text-gray-800 dark:text-gray-200">
                                 {item.reason === "PRODUCT_DEFECT"
                                   ? "Defolu Ürün"
                                   : item.reason === "WRONG_ITEM_SENT"
@@ -195,44 +198,18 @@ export default function ReturnsPage() {
                                       : item.reason === "CUSTOMER_REQUEST"
                                         ? "Müşteri Talebi"
                                         : "Diğer"}
-                              </span>
+                              </strong>
                             </p>
 
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                              Adet:{" "}
-                              <span className="font-medium text-gray-800 dark:text-gray-200">
-                                {item.qty}
+                            <div className="flex items-center justify-between text-xs pt-1">
+                              <span className="text-gray-500">Adet: {item.qty}</span>
+                              <span className="font-bold text-gray-900 dark:text-white">
+                                ₺{(item.orderItem.unitPrice * item.qty).toFixed(2)}
                               </span>
-                            </p>
-
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                              Tutar:{" "}
-                              <span className="font-medium text-gray-800 dark:text-gray-200">
-                                ₺{item.orderItem.unitPrice.toFixed(2)}
-                              </span>
-                            </p>
+                            </div>
                           </div>
                         </div>
                       ))}
-
-                      {/* Genel Bilgiler */}
-                      <div className="mt-3 border-t border-gray-200 dark:border-gray-700 pt-3">
-                        <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                          Genel Bilgiler
-                        </h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Toplam Ürün Adedi:{" "}
-                          <span className="font-medium text-gray-800 dark:text-gray-200">
-                            {totalQty}
-                          </span>
-                        </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Toplam Tutar:{" "}
-                          <span className="font-medium text-gray-800 dark:text-gray-200">
-                            ₺{totalPrice.toFixed(2)}
-                          </span>
-                        </p>
-                      </div>
                     </div>
                   )}
                 </li>
@@ -240,12 +217,16 @@ export default function ReturnsPage() {
             })}
           </ul>
 
-          <Pagination
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-          />
-        </>
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-6">
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+              />
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

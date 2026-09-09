@@ -4,37 +4,36 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
 
 model User {
-  id                         String          @id @default(uuid())
-  email                      String          @unique
+  id                         String               @id @default(uuid())
+  email                      String               @unique
   passwordHash               String?
   fullName                   String
-  phone                      String?         @db.VarChar(32)
-  role                       Role            @default(CUSTOMER)
+  phone                      String?              @db.VarChar(32)
+  role                       Role                 @default(CUSTOMER)
   addresses                  Address[]
   orders                     Order[]
   wishlists                  Wishlist[]
-  carts                       Cart[]
-  reviews                    Review[]        // küçük harf, çoğul
-  returnRequests             ReturnRequest[] // küçük harf, çoğul
-  emailVerified              Boolean         @default(false)
-  emailVerificationToken     String?         
+  carts                      Cart[]
+  reviews                    Review[]
+  returnRequests             ReturnRequest[]
+  bankTransferNotifications  BankTransferNotification[] 
+  emailVerified              Boolean              @default(false)
+  emailVerificationToken     String?              
   emailVerificationTokenExpires DateTime?
-  passwordResetToken           String?
+  passwordResetToken         String?
   passwordResetTokenExpires    DateTime?
-  lastLogin     DateTime?
-  failedLoginAttempts Int @default(0)
-  isLocked      Boolean  @default(false)
-  lockedUntil DateTime?
-  refreshToken  String?  // Tek refresh token burada tutulacak
-  refreshTokenExpiry DateTime? // Token geçerlilik süresi
-  createdAt                  DateTime        @default(now())
-  updatedAt                  DateTime        @updatedAt
+  lastLogin                  DateTime?
+  failedLoginAttempts        Int                  @default(0)
+  isLocked                   Boolean              @default(false)
+  lockedUntil                DateTime?
+  refreshToken               String?
+  refreshTokenExpiry         DateTime?
+  createdAt                  DateTime             @default(now())
+  updatedAt                  DateTime             @updatedAt
 }
 
 
@@ -60,7 +59,29 @@ model Address {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
+model BankTransferNotification {
+  id      String @id @default(uuid())
+  orderId String // Hangi sipariş için yapıldı?
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId  String // Hangi müşteri gönderdi?
+  user    User   @relation(fields: [userId], references: [id])
+  senderName String // Formda girilen Gönderen Ad Soyad
+  bankName   String? // Hangi bankaya gönderildi (Örn: Garanti, Akbank)
+  amount     Decimal @db.Decimal(10, 2) // Gönderilen Tutar
+  note       String? // Müşterinin ek açıklaması
 
+  status    TransferStatus @default(PENDING) // PENDING, APPROVED, REJECTED
+  adminNote String? // Adminin ret/onay açıklaması (Opsiyonel)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum TransferStatus {
+  PENDING 
+  APPROVED
+  REJECTED 
+}
 model Brand {
   id       String    @id @default(uuid())
   name     String    @unique
@@ -314,6 +335,7 @@ model Order {
   updatedAt     DateTime    @updatedAt
   deliveredAt   DateTime?   // ✅ Teslim tarihi
   returnRequests ReturnRequest[]
+  bankTransferNotifications BankTransferNotification[]
 }
 
 

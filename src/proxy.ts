@@ -1,16 +1,14 @@
-import { getToken } from "next-auth/jwt";
+import { getToken } from "next-auth/jwt"
 import { NextRequest, NextResponse } from "next/server";
 import getRateLimitMiddlewares from "next-rate-limit";
 import { log } from "./app/(marketing)/lib/logger";
-import jwt from "jsonwebtoken";
-import { db } from "./app/(marketing)/lib/db";
 
 const { checkNext } = getRateLimitMiddlewares({
   interval: 60 * 1000, // 1 dakika
   uniqueTokenPerInterval: 500,
 });
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const url = req.nextUrl;
   const pathname = url.pathname;
   const response = NextResponse.next();
@@ -20,9 +18,9 @@ export async function middleware(req: NextRequest) {
   // ------------------------
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set(
+response.headers.set(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.google.com https://www.gstatic.com; connect-src 'self' https://www.google.com https://zbqvmfyxhpuihkgvmxhi.supabase.co https://www.gstatic.com; frame-src https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co; font-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self';"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com https://www.gstatic.com; connect-src 'self' https://www.google.com https://zbqvmfyxhpuihkgvmxhi.supabase.co https://www.gstatic.com; frame-src https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co; font-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self';"
   );
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("Access-Control-Allow-Origin", "https://localhost:3000");
@@ -44,88 +42,25 @@ export async function middleware(req: NextRequest) {
   );
 
   // ------------------------
-  // 🍪 Token yönetimi
+  // 🔑 NextAuth Token Alınması
   // ------------------------
   const nextAuthToken = await getToken({
     req,
     secret: process.env.NEXTAUTH_SECRET,
   });
-  if (pathname.startsWith("account")) {
-    const accessToken = req.cookies.get("accessToken")?.value;
-    const refreshToken = req.cookies.get("refreshToken")?.value;
 
-    let userId: string | null = null;
-
-    // 1️⃣ Access Token geçerli mi kontrol et
-    if (accessToken) {
-      try {
-        const decoded = jwt.verify(accessToken, process.env.JWT_SECRET!) as {
-          userId: string;
-        };
-        userId = decoded.userId;
-      } catch {
-        // Token süresi dolmuş olabilir, refresh token ile yenilemeye geç
-      }
-    }
-
-    // 2️⃣ Refresh Token varsa ve accessToken geçerli değilse yenile
-    if (!userId && refreshToken) {
-      try {
-        const user = await db.user.findFirst({
-          where: {
-            refreshToken,
-            refreshTokenExpiry: { gt: new Date() },
-          },
-        });
-
-        if (user) {
-          const newAccessToken = jwt.sign(
-            { userId: user.id },
-            process.env.JWT_SECRET!,
-            {
-              expiresIn: "15m",
-            }
-          );
-
-          response.cookies.set({
-            name: "accessToken",
-            value: newAccessToken,
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            path: "/",
-            sameSite: "lax",
-            maxAge: 15 * 60,
-          });
-
-          userId = user.id;
-        } else {
-          // Refresh token geçersizse cookie temizle ve login yönlendir
-          const res = NextResponse.redirect(new URL("/login", req.url));
-          res.cookies.delete({ name: "accessToken", path: "/" });
-          res.cookies.delete({ name: "refreshToken", path: "/" });
-          return res;
-        }
-      } catch {
-        const res = NextResponse.redirect(new URL("/login", req.url));
-        res.cookies.delete({ name: "accessToken", path: "/" });
-        res.cookies.delete({ name: "refreshToken", path: "/" });
-        return res;
-      }
-    }
-
-    // 3️⃣ Eğer token yok ve admin değilse login sayfasına yönlendir
-    if (
-      !userId &&
-      !pathname.startsWith("/admin") &&
-      !pathname.startsWith("/api/admin")
-    ) {
+  // ------------------------
+  // 👤 /account Yönlendirme Kontrolü (NextAuth ile)
+  // ------------------------
+  if (pathname.startsWith("/account")) {
+    if (!nextAuthToken) {
       const res = NextResponse.redirect(new URL("/login", req.url));
-      res.cookies.delete({ name: "accessToken", path: "/" });
-      res.cookies.delete({ name: "refreshToken", path: "/" });
       return res;
     }
   }
-  // /admin ve /api/admin kontrolü (NextAuth)
+
+  // ------------------------
+  // 🛡️ /admin ve /api/admin kontrolü (NextAuth)
   // ------------------------
   if (pathname.startsWith("/admin") && pathname !== "/admin-login") {
     if (!nextAuthToken) {

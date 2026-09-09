@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import clsx from "clsx";
+import { FiTag, FiPlus, FiEdit2, FiTrash2, FiCheck, FiX, FiPercent, FiDollarSign } from "react-icons/fi";
 
 interface Coupon {
   id: string;
@@ -13,11 +14,6 @@ interface Coupon {
   maxUses?: number;
   usedCount: number;
   isActive: boolean;
-}
-
-interface CouponResponse {
-  data: Coupon[];
-  meta: { total: number };
 }
 
 export default function CouponsAdmin() {
@@ -37,14 +33,16 @@ export default function CouponsAdmin() {
     maxUses: "",
     isActive: true,
   });
+
   const fetchCoupons = async () => {
     try {
+      setLoading(true);
       const res = await fetch("/api/admin/coupons");
       if (!res.ok) throw new Error("Kuponlar yüklenemedi");
       const json = await res.json();
 
-      setCoupons(json.data); // ✅ sadece array olan kısmı al
-      setTotal(json.meta.total); // ✅ toplam sayfa için meta.total
+      setCoupons(json.data || []);
+      setTotal(json.meta?.total || 0);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -103,8 +101,8 @@ export default function CouponsAdmin() {
         code: coupon.code,
         type: coupon.type,
         value: coupon.value.toString(),
-        startsAt: coupon.startsAt || "",
-        endsAt: coupon.endsAt || "",
+        startsAt: coupon.startsAt ? coupon.startsAt.split("T")[0] : "",
+        endsAt: coupon.endsAt ? coupon.endsAt.split("T")[0] : "",
         maxUses: coupon.maxUses?.toString() || "",
         isActive: coupon.isActive,
       });
@@ -123,171 +121,255 @@ export default function CouponsAdmin() {
     setModalOpen(true);
   };
 
-  if (loading) return <p>Yükleniyor...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
+  const inputClass =
+    "w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all shadow-sm";
+
+  if (loading && coupons.length === 0) {
+    return (
+      <div className="bg-white dark:bg-gray-900 p-12 text-center rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+        <div className="flex items-center justify-center gap-2 text-gray-400">
+          <div className="w-5 h-5 border-2 border-pink-600 border-t-transparent rounded-full animate-spin" />
+          <span>Kuponlar yükleniyor...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) return <p className="text-rose-500 font-semibold p-4">Hata: {error}</p>;
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">İndirim Kuponları</h1>
+      {/* Üst Başlık & Yeni Kupon Ekle */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <FiTag className="text-pink-600" /> İndirim Kuponları Yönetimi
+          </h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            Müşterilerinize özel kampanya kuponları oluşturun ve kullanım limitlerini takip edin.
+          </p>
+        </div>
         <button
           onClick={() => openModal()}
-          className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-sm font-medium shadow-md shadow-pink-500/20 transition-all cursor-pointer"
         >
-          Yeni Kupon
+          <FiPlus size={18} /> Yeni Kupon Ekle
         </button>
       </div>
 
-      {/* Kupon Listesi */}
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-300 dark:border-gray-700">
-          <thead className="bg-gray-100 dark:bg-gray-800">
-            <tr>
-              <th className="p-2 border">Kod</th>
-              <th className="p-2 border">Tür</th>
-              <th className="p-2 border">Değer</th>
-              <th className="p-2 border">Geçerlilik</th>
-              <th className="p-2 border">Kullanım</th>
-              <th className="p-2 border">Durum</th>
-              <th className="p-2 border">İşlemler</th>
-            </tr>
-          </thead>
-          <tbody>
-            {coupons.map((c) => (
-              <tr
-                key={c.id}
-                className="hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                <td className="p-2 border font-mono">{c.code}</td>
-                <td className="p-2 border">{c.type}</td>
-                <td className="p-2 border">
-                  {c.type === "PERCENT" ? `%${c.value}` : `${c.value}₺`}
-                </td>
-                <td className="p-2 border">
-                  {c.startsAt ? new Date(c.startsAt).toLocaleDateString() : "-"}{" "}
-                  - {c.endsAt ? new Date(c.endsAt).toLocaleDateString() : "-"}
-                </td>
-                <td className="p-2 border">
-                  {c.usedCount} / {c.maxUses || "∞"}
-                </td>
-                <td className="p-2 border">
-                  <span
-                    className={clsx(
-                      "px-2 py-1 rounded text-xs",
-                      c.isActive
-                        ? "bg-green-600 text-white"
-                        : "bg-gray-400 text-white"
-                    )}
-                  >
-                    {c.isActive ? "Aktif" : "Pasif"}
-                  </span>
-                </td>
-                <td className="p-2 border space-x-2">
-                  <button
-                    onClick={() => openModal(c)}
-                    className="px-2 py-1 text-sm bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                  >
-                    Düzenle
-                  </button>
-                  <button
-                    onClick={() => handleDelete(c.id)}
-                    className="px-2 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
-                  >
-                    Sil
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {coupons.length === 0 && (
+      {/* Tablo Alanı */}
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm border-collapse min-w-[750px]">
+            <thead className="bg-gray-50 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 uppercase text-[11px] font-semibold tracking-wider border-b border-gray-200 dark:border-gray-800">
               <tr>
-                <td colSpan={7} className="p-4 text-center">
-                  Hiç kupon yok
-                </td>
+                <th className="px-6 py-3.5">Kupon Kodu</th>
+                <th className="px-6 py-3.5">Tür</th>
+                <th className="px-6 py-3.5">Değer</th>
+                <th className="px-6 py-3.5">Geçerlilik Tarihi</th>
+                <th className="px-6 py-3.5">Kullanım</th>
+                <th className="px-6 py-3.5">Durum</th>
+                <th className="px-6 py-3.5 text-right">İşlemler</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              {coupons.length > 0 ? (
+                coupons.map((c) => (
+                  <tr
+                    key={c.id}
+                    className="hover:bg-pink-50/30 dark:hover:bg-gray-800/50 transition-colors"
+                  >
+                    <td className="px-6 py-4 font-mono font-bold text-gray-900 dark:text-white uppercase tracking-wider text-xs bg-pink-50/50 dark:bg-gray-800/50 rounded-lg">
+                      {c.code}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-300">
+                        {c.type === "PERCENT" ? <FiPercent size={12} className="text-pink-600" /> : <FiDollarSign size={12} className="text-pink-600" />}
+                        {c.type === "PERCENT" ? "Yüzde İndirim" : "Sabit Tutar"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 font-bold text-gray-900 dark:text-white">
+                      {c.type === "PERCENT" ? `%${c.value}` : `${c.value} ₺`}
+                    </td>
+                    <td className="px-6 py-4 text-xs text-gray-500 dark:text-gray-400">
+                      {c.startsAt ? new Date(c.startsAt).toLocaleDateString("tr-TR") : "-"} 
+                      {" → "} 
+                      {c.endsAt ? new Date(c.endsAt).toLocaleDateString("tr-TR") : "Süresiz"}
+                    </td>
+                    <td className="px-6 py-4 text-xs font-medium text-gray-700 dark:text-gray-300">
+                      <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                        {c.usedCount} / {c.maxUses || "∞"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={clsx(
+                          "px-2.5 py-1 rounded-full text-xs font-semibold",
+                          c.isActive
+                            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400"
+                            : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+                        )}
+                      >
+                        {c.isActive ? "Aktif" : "Pasif"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => openModal(c)}
+                          className="px-3.5 py-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <FiEdit2 size={13} /> Düzenle
+                        </button>
+                        <button
+                          onClick={() => handleDelete(c.id)}
+                          className="px-3.5 py-1.5 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <FiTrash2 size={13} /> Sil
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                    Henüz kupon oluşturulmamış.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Modal */}
+      {/* Modern Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg w-full max-w-lg">
-            <h2 className="text-xl font-bold mb-4">
-              {editing ? "Kupon Düzenle" : "Yeni Kupon"}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <input
-                type="text"
-                placeholder="Kod"
-                value={form.code}
-                onChange={(e) => setForm({ ...form, code: e.target.value })}
-                className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-800"
-                required
-              />
-              <select
-                value={form.type}
-                onChange={(e) => setForm({ ...form, type: e.target.value })}
-                className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-800"
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-gray-900 p-6 sm:p-8 rounded-3xl shadow-2xl w-full max-w-lg border border-gray-100 dark:border-gray-800 space-y-5">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-4">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                {editing ? "Kuponu Düzenle" : "Yeni İndirim Kuponu"}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setModalOpen(false)}
+                className="p-2 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 bg-gray-50 dark:bg-gray-800 transition-colors"
               >
-                <option value="PERCENT">Yüzde</option>
-                <option value="FIXED">Sabit Tutar</option>
-              </select>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="Değer"
-                value={form.value}
-                onChange={(e) => setForm({ ...form, value: e.target.value })}
-                className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-800"
-                required
-              />
-              <div className="flex gap-2">
+                <FiX size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block mb-1 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+                  Kupon Kodu *
+                </label>
                 <input
-                  type="date"
-                  value={form.startsAt}
-                  onChange={(e) =>
-                    setForm({ ...form, startsAt: e.target.value })
-                  }
-                  className="w-1/2 p-2 border rounded bg-gray-50 dark:bg-gray-800"
-                />
-                <input
-                  type="date"
-                  value={form.endsAt}
-                  onChange={(e) => setForm({ ...form, endsAt: e.target.value })}
-                  className="w-1/2 p-2 border rounded bg-gray-50 dark:bg-gray-800"
+                  type="text"
+                  placeholder="Örn: EYLUL2026"
+                  value={form.code}
+                  onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
+                  className={inputClass}
+                  required
                 />
               </div>
-              <input
-                type="number"
-                placeholder="Maksimum Kullanım"
-                value={form.maxUses}
-                onChange={(e) => setForm({ ...form, maxUses: e.target.value })}
-                className="w-full p-2 border rounded bg-gray-50 dark:bg-gray-800"
-              />
-              <label className="flex items-center gap-2">
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block mb-1 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+                    İndirim Türü
+                  </label>
+                  <select
+                    value={form.type}
+                    onChange={(e) => setForm({ ...form, type: e.target.value })}
+                    className={inputClass}
+                  >
+                    <option value="PERCENT">Yüzde (%)</option>
+                    <option value="FIXED">Sabit Tutar (₺)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block mb-1 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+                    Değer *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="0"
+                    value={form.value}
+                    onChange={(e) => setForm({ ...form, value: e.target.value })}
+                    className={inputClass}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block mb-1 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+                    Başlangıç Tarihi
+                  </label>
+                  <input
+                    type="date"
+                    value={form.startsAt}
+                    onChange={(e) => setForm({ ...form, startsAt: e.target.value })}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+                    Bitiş Tarihi
+                  </label>
+                  <input
+                    type="date"
+                    value={form.endsAt}
+                    onChange={(e) => setForm({ ...form, endsAt: e.target.value })}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block mb-1 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+                  Maksimum Kullanım Limiti
+                </label>
                 <input
-                  type="checkbox"
-                  checked={form.isActive}
-                  onChange={(e) =>
-                    setForm({ ...form, isActive: e.target.checked })
-                  }
+                  type="number"
+                  placeholder="Boş bırakılırsa sınırsız olur"
+                  value={form.maxUses}
+                  onChange={(e) => setForm({ ...form, maxUses: e.target.value })}
+                  className={inputClass}
                 />
-                Aktif mi?
-              </label>
-              <div className="flex justify-end gap-2">
+              </div>
+
+              <div className="pt-2">
+                <label className="flex items-center space-x-3 rounded-xl border border-gray-200 dark:border-gray-700 p-3.5 bg-gray-50/50 dark:bg-gray-800/50 cursor-pointer hover:border-pink-500 transition-all">
+                  <input
+                    type="checkbox"
+                    checked={form.isActive}
+                    onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                    className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                    Kupon Aktif (Kullanıma açık)
+                  </span>
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 rounded bg-gray-400 text-white hover:bg-gray-500"
+                  className="px-5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium transition-colors cursor-pointer"
                 >
                   Vazgeç
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+                  className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-medium text-sm shadow-md shadow-pink-500/20 transition-all cursor-pointer"
                 >
-                  Kaydet
+                  <FiCheck size={16} /> Kuponu Kaydet
                 </button>
               </div>
             </form>

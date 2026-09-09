@@ -1,89 +1,57 @@
+import { FiRefreshCw, FiAlertCircle, FiClock, FiCreditCard } from "react-icons/fi";
+
 export default function ReturnTab() {
   return (
-    <div className="space-y-6 p-4 md:p-6 lg:p-8">
-      <h3 className="text-xl font-semibold mb-2">İade Koşulları</h3>
+    <div className="space-y-6 p-6 sm:p-8 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+      <div className="border-b border-gray-100 dark:border-gray-800 pb-4">
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <FiRefreshCw className="text-pink-600" /> İade ve Değişim Koşulları
+        </h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          İncelediğiniz ürün, doğrudan üretici/firma tarafından kargoyla gönderilmektedir.
+        </p>
+      </div>
 
-      <p className="text-sm md:text-base text-gray-700 dark:text-gray-300">
-        İncelediğiniz ürün, doğrudan firma tarafından size kargoyla
-        gönderilecektir.
-      </p>
-
-      <div className="space-y-4">
-        <div>
-          <h4 className="font-semibold">İade Başvurusu</h4>
-          <p className="text-sm md:text-base text-gray-700 dark:text-gray-300">
-            Ürünün adresinize teslim tarihinden itibaren 15 gün içinde
-            "Siparişlerim" sayfasından "Kolay İade Et" başvurusunda bulunarak
-            iade sürecinizi başlatabilirsiniz. İade işlemleri için tarafımıza
-            sağlanan iade kodu tek kullanımlık olarak düzenlenir.
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* İade Başvurusu */}
+        <div className="p-5 rounded-2xl bg-gray-50/50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 space-y-2">
+          <h4 className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-2">
+            <FiClock className="text-pink-600" /> İade Başvurusu (15 Gün)
+          </h4>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+            Ürünün adresinize teslim tarihinden itibaren 15 gün içinde <strong className="text-gray-800 dark:text-gray-200">"Siparişlerim"</strong> sayfasından kolayca iade sürecini başlatabilirsiniz. İade kodu tek kullanımlıktır.
           </p>
         </div>
 
-        <div>
-          <h4 className="font-semibold">Kod Kullanımı</h4>
-          <ul className="list-disc list-inside text-sm md:text-base text-gray-700 dark:text-gray-300 space-y-1">
-            <li>Kod yalnızca belirtilen iade süreci kapsamında geçerlidir.</li>
-            <li>
-              Bir kez kullanıldığında yeniden oluşturulamaz ve tekrar
-              kullanılamaz.
-            </li>
-            <li>
-              Kodun süresinin geçirilmesi veya iptal edilmesi durumunda yeni kod
-              talep edilemez.
-            </li>
+        {/* Ürün Durumu */}
+        <div className="p-5 rounded-2xl bg-gray-50/50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 space-y-2">
+          <h4 className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-2">
+            <FiAlertCircle className="text-pink-600" /> Ürün Durumu & Şartlar
+          </h4>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+            İadenizin kabul edilmesi için ürünün hasar görmemiş, etiketi koparılmamış ve kullanılmamış olması gerekmektedir.
+          </p>
+        </div>
+
+        {/* Bedel İadesi */}
+        <div className="p-5 rounded-2xl bg-gray-50/50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 space-y-2">
+          <h4 className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-2">
+            <FiCreditCard className="text-pink-600" /> Bedel İadesi Süreci
+          </h4>
+          <ul className="list-disc list-inside text-xs sm:text-sm text-gray-600 dark:text-gray-300 space-y-1">
+            <li>İade sonuçlandıktan sonra tutar 24 saat içinde karta yansıtılır.</li>
+            <li>Banka süreçlerine bağlı olarak 1-10 iş günü sürebilir.</li>
+            <li>Kargo ücreti standart hizmet bedeli olduğundan iadeye dahil edilmez.</li>
           </ul>
         </div>
 
-        <div>
-          <h4 className="font-semibold">Ürün Durumu</h4>
-          <p className="text-sm md:text-base text-gray-700 dark:text-gray-300">
-            İadenizin kabul edilmesi için ürünün hasar görmemiş ve kullanılmamış
-            olması gerekmektedir. İade edilen ürün, üretici firmaya
-            ulaştırılacak ve tarafımızdan takip edilecektir.
-          </p>
-        </div>
-
-        <div>
-          <h4 className="font-semibold">Bedel İadesi</h4>
-          <ul className="list-disc list-inside text-sm md:text-base text-gray-700 dark:text-gray-300 space-y-1">
-            <li>
-              İade işlemi sonuçlandıktan sonra ödeme kredi kartınıza/banka
-              hesabınıza 24 saat içinde yapılır.
-            </li>
-            <li>
-              Ödeme yansıma süresi bankanıza göre değişebilir (1-10 iş günü).
-            </li>
-            <li>
-              Kargo ücreti, standart hizmet bedeli olduğundan geri ödemeye dahil
-              edilmez.
-            </li>
-            <li>
-              İptal işlemlerinde ürün tutarı ve kargo ücreti dahil ödemeler
-              eksiksiz iade edilir.
-            </li>
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="font-semibold">Kredi ile Alınan Ürünler</h4>
-          <p className="text-sm md:text-base text-gray-700 dark:text-gray-300">
-            Kredili sipariş iptal/iade alındığında kredi kapanmış sayılmaz.
-            İptal/iade sonrası cayma talebiniz için bankayla bireysel iletişim
-            kurmanız gerekir. Faiz sorumluluğunuz sipariş tarihinizden kredi
-            kapama tarihinize kadar devam eder.
-          </p>
-        </div>
-
-        <div>
-          <h4 className="font-semibold">İade Edilemeyen Ürünler</h4>
-          <p className="text-sm md:text-base text-gray-700 dark:text-gray-300">
-            Sağlık ve hijyen açısından uygun olmayan ürünler iade edilemez.
-            Örnekler:
-            <span className="font-medium">
-              {" "}
-              iç çamaşırı, mayo, deniz giysileri, kozmetik, parfüm, küpe
-            </span>
-            .
+        {/* İade Edilemeyen Ürünler */}
+        <div className="p-5 rounded-2xl bg-rose-50/40 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40 space-y-2">
+          <h4 className="font-bold text-sm text-rose-900 dark:text-rose-300 flex items-center gap-2">
+            <FiAlertCircle className="text-rose-600" /> İade Edilemeyen Ürünler
+          </h4>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+            Sağlık ve hijyen açısından uygun olmayan ürünler (<span className="font-semibold text-rose-700 dark:text-rose-400">iç çamaşırı, mayo, kozmetik, parfüm, küpe vb.</span>) kesinlikle iade edilemez.
           </p>
         </div>
       </div>

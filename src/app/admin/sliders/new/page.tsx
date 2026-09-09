@@ -18,6 +18,8 @@ import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
 import { supabase } from "@/app/(marketing)/lib/supabase/supabaseClient";
 import { ProductMultiSelect } from "@/app/(marketing)/components/admin/ProductMultiSelect";
+import { FiArrowLeft, FiCheck, FiUploadCloud } from "react-icons/fi";
+import Link from "next/link";
 
 type Product = {
   id: string;
@@ -29,7 +31,7 @@ type SliderFormData = {
   subtitle?: string;
   link?: string;
   type: "PROMOTION" | "PRODUCT" | "CATEGORY";
-  productIds?: string[]; // ✅ birden fazla ürün için array
+  productIds?: string[];
   order?: number;
   isActive?: boolean;
   imageUrl?: string;
@@ -50,13 +52,13 @@ export default function NewSliderPage() {
   const selectedType = watch("type");
   const selectedProducts = watch("productIds");
 
-  // 🎁 Ürünleri yükle
+  // Ürünleri yükle
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoadingProducts(true);
         const params = new URLSearchParams();
-        params.set("limit", "100"); // 🔹 Daha fazla ürün için
+        params.set("limit", "100");
         const res = await fetch(`/api/products?${params.toString()}`);
         if (!res.ok) throw new Error("Ürünler alınamadı");
         const data = await res.json();
@@ -70,7 +72,7 @@ export default function NewSliderPage() {
     fetchProducts();
   }, []);
 
-  // 📤 Görsel yükleme
+  // Görsel yükleme
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       const file = e.target.files?.[0];
@@ -94,7 +96,7 @@ export default function NewSliderPage() {
     }
   };
 
-  // 🗑 Görsel silme
+  // Görsel silme
   const handleDeleteImage = async () => {
     if (!filePath) return;
     const { error } = await supabase.storage.from("sliders").remove([filePath]);
@@ -107,7 +109,7 @@ export default function NewSliderPage() {
     }
   };
 
-  // 💾 Slider kaydetme
+  // Slider kaydetme
   const onSubmit = async (data: SliderFormData) => {
     if (!imageUrl) {
       toast.error("Lütfen bir görsel yükleyin");
@@ -129,35 +131,54 @@ export default function NewSliderPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6 bg-white dark:bg-gray-900 shadow-md rounded-2xl mt-8">
-      <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">
-        Yeni Slider Ekle
-      </h1>
+    <div className="max-w-2xl mx-auto space-y-6">
+      {/* Üst Başlık & Geri Dön */}
+      <div className="flex items-center gap-4 bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+        <Link
+          href="/admin/sliders"
+          className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 transition-colors"
+        >
+          <FiArrowLeft size={18} />
+        </Link>
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            Yeni Slider Ekle
+          </h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            Anasayfada gösterilecek kampanya veya ürün görselini tanımlayın.
+          </p>
+        </div>
+      </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="bg-white dark:bg-gray-900 p-6 sm:p-8 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm space-y-5"
+      >
         {/* Görsel yükleme */}
         <div>
-          <Label className="dark:text-gray-200">Slider Görseli</Label>
+          <Label className="block mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+            Slider Görseli *
+          </Label>
           {imageUrl ? (
-            <div className="relative mt-3">
+            <div className="relative mt-2">
               <Image
                 src={imageUrl}
                 alt="Slider image"
                 width={600}
                 height={300}
-                className="rounded-xl border dark:border-gray-700 object-cover w-full h-48"
+                className="rounded-xl border dark:border-gray-700 object-cover w-full h-48 shadow-sm"
               />
               <Button
                 type="button"
                 onClick={handleDeleteImage}
                 variant="destructive"
-                className="absolute top-2 right-2 text-xs"
+                className="absolute top-2 right-2 text-xs rounded-xl"
               >
                 Görseli Sil
               </Button>
             </div>
           ) : (
-            <div className="mt-3 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-700 p-6 rounded-xl">
+            <div className="mt-2 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-700 p-8 rounded-2xl bg-gray-50/50 dark:bg-gray-800/40 hover:border-pink-500 transition-all group">
               <input
                 type="file"
                 accept="image/*"
@@ -168,48 +189,59 @@ export default function NewSliderPage() {
               />
               <Label
                 htmlFor="sliderImage"
-                className="cursor-pointer text-sm text-gray-700 dark:text-gray-300 hover:underline"
+                className="cursor-pointer flex flex-col items-center gap-2 text-sm text-gray-600 dark:text-gray-300 group-hover:text-pink-600 transition-colors"
               >
-                {uploading ? "Yükleniyor..." : "Görsel yükle"}
+                <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-700 shadow-sm flex items-center justify-center text-gray-400 group-hover:text-pink-600">
+                  <FiUploadCloud size={20} />
+                </div>
+                <span>{uploading ? "Yükleniyor..." : "Görsel yüklemek için tıklayın"}</span>
               </Label>
             </div>
           )}
         </div>
 
         <div>
-          <Label className="dark:text-gray-200">Başlık</Label>
+          <Label className="block mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+            Başlık
+          </Label>
           <Input
             {...register("title")}
             placeholder="Kampanya başlığı"
-            className="dark:bg-gray-800"
+            className="rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-800"
           />
         </div>
 
         <div>
-          <Label className="dark:text-gray-200">Alt Başlık</Label>
+          <Label className="block mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+            Alt Başlık
+          </Label>
           <Input
             {...register("subtitle")}
             placeholder="Kısa açıklama"
-            className="dark:bg-gray-800"
+            className="rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-800"
           />
         </div>
 
         <div>
-          <Label className="dark:text-gray-200">Bağlantı (URL)</Label>
+          <Label className="block mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+            Bağlantı (URL)
+          </Label>
           <Input
             {...register("link")}
             placeholder="/urunler"
-            className="dark:bg-gray-800"
+            className="rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-800"
           />
         </div>
 
         <div>
-          <Label className="dark:text-gray-200">Slider Tipi</Label>
+          <Label className="block mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+            Slider Tipi
+          </Label>
           <Select
             defaultValue="PROMOTION"
             onValueChange={(value) => setValue("type", value as any)}
           >
-            <SelectTrigger className="dark:bg-gray-800">
+            <SelectTrigger className="rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-800">
               <SelectValue placeholder="Tip seçin" />
             </SelectTrigger>
             <SelectContent>
@@ -223,7 +255,9 @@ export default function NewSliderPage() {
         {/* Çoklu ürün seçimi */}
         {selectedType === "PRODUCT" && (
           <div>
-            <Label className="dark:text-gray-200">Ürünleri Seç</Label>
+            <Label className="block mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+              Ürünleri Seç
+            </Label>
             <ProductMultiSelect
               products={products}
               value={selectedProducts || []}
@@ -233,18 +267,23 @@ export default function NewSliderPage() {
         )}
 
         <div>
-          <Label className="dark:text-gray-200">Sıralama</Label>
+          <Label className="block mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+            Sıralama
+          </Label>
           <Input
             type="number"
             {...register("order", { valueAsNumber: true })}
             placeholder="0"
-            className="dark:bg-gray-800"
+            className="rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-800"
           />
         </div>
 
-        <div className="flex justify-end">
-          <Button type="submit" className="mt-4">
-            Kaydet
+        <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-800">
+          <Button
+            type="submit"
+            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-medium text-sm shadow-md shadow-pink-500/20 transition-all cursor-pointer"
+          >
+            <FiCheck size={16} /> Kaydet
           </Button>
         </div>
       </form>

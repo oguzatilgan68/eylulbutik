@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { addressSchema } from "@/app/(marketing)/lib/validations/address";
 import { useUser } from "../../context/userContext";
+import { FiCheck, FiMapPin } from "react-icons/fi";
 
 type AddressFormValues = z.infer<typeof addressSchema>;
 
@@ -121,109 +122,163 @@ export default function AddressForm({
     }
   };
 
-  const baseInput =
-    "w-full p-2 rounded border focus:outline-none focus:ring-2 focus:ring-pink-500";
-  const inputClass = `${baseInput} border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100`;
+  const inputClass =
+    "w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all shadow-sm";
   const selectClass = inputClass;
-  const textareaClass = `${inputClass} min-h-[80px]`;
-  const buttonClass =
-    "w-full bg-pink-500 text-white py-2 rounded hover:bg-pink-600 transition disabled:opacity-50";
+  const textareaClass = `${inputClass} min-h-[100px] resize-y`;
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="max-w-lg mx-auto space-y-4 p-6 bg-white dark:bg-gray-800 rounded-xl shadow"
+      className="max-w-xl mx-auto space-y-4 p-6 sm:p-8 bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm"
     >
-      <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-        {defaultValues ? "Adres Düzenle" : "Adres Ekle"}
-      </h2>
+      <div className="border-b border-gray-100 dark:border-gray-800 pb-4 mb-2">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <FiMapPin className="text-pink-600" /> {defaultValues ? "Adresi Düzenle" : "Yeni Adres Ekle"}
+        </h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+          Teslimat bilgilerini eksiksiz olarak doldurun.
+        </p>
+      </div>
 
-      <input
-        {...register("title")}
-        placeholder="Adres Başlığı (Ev, İş...)"
-        className={inputClass}
-      />
-      {errors.title && <p className="text-red-500">{errors.title.message}</p>}
+      <div className="space-y-1.5">
+        <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+          Adres Başlığı *
+        </label>
+        <input
+          {...register("title")}
+          placeholder="Örn: Evim, Ofis"
+          className={inputClass}
+        />
+        {errors.title && <p className="text-rose-500 text-xs mt-1">{errors.title.message}</p>}
+      </div>
 
-      <input
-        {...register("fullName")}
-        placeholder="Ad Soyad"
-        className={inputClass}
-      />
-      {errors.fullName && (
-        <p className="text-red-500">{errors.fullName.message}</p>
-      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+            Ad Soyad *
+          </label>
+          <input
+            {...register("fullName")}
+            placeholder="Adınız Soyadınız"
+            className={inputClass}
+          />
+          {errors.fullName && <p className="text-rose-500 text-xs mt-1">{errors.fullName.message}</p>}
+        </div>
 
-      <input
-        {...register("phone")}
-        placeholder="Telefon"
-        className={inputClass}
-      />
-      {errors.phone && <p className="text-red-500">{errors.phone.message}</p>}
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+            Telefon Numarası *
+          </label>
+          <input
+            {...register("phone")}
+            placeholder="5XXXXXXXXX"
+            className={inputClass}
+          />
+          {errors.phone && <p className="text-rose-500 text-xs mt-1">{errors.phone.message}</p>}
+        </div>
+      </div>
 
-      {/* İl Seçimi */}
-      <select {...register("city")} className={selectClass}>
-        <option value="">İl Seçiniz</option>
-        {cities.map((c) => (
-          <option key={c.value} value={c.value}>
-            {c.text}
-          </option>
-        ))}
-      </select>
-      {errors.city && <p className="text-red-500">{errors.city.message}</p>}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* İl Seçimi */}
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+            İl *
+          </label>
+          <select {...register("city")} className={selectClass}>
+            <option value="">İl Seçiniz</option>
+            {cities.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.text}
+              </option>
+            ))}
+          </select>
+          {errors.city && <p className="text-rose-500 text-xs mt-1">{errors.city.message}</p>}
+        </div>
 
-      {/* İlçe Seçimi */}
-      {districts.length > 0 && (
-        <select {...register("district")} className={selectClass}>
-          <option value="">İlçe Seçiniz</option>
-          {districts.map((d) => (
-            <option key={d.value} value={d.value}>
-              {d.text}
-            </option>
-          ))}
-        </select>
-      )}
-      {errors.district && (
-        <p className="text-red-500">{errors.district.message}</p>
-      )}
+        {/* İlçe Seçimi */}
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+            İlçe *
+          </label>
+          <select {...register("district")} className={selectClass} disabled={districts.length === 0}>
+            <option value="">İlçe Seçiniz</option>
+            {districts.map((d) => (
+              <option key={d.value} value={d.value}>
+                {d.text}
+              </option>
+            ))}
+          </select>
+          {errors.district && <p className="text-rose-500 text-xs mt-1">{errors.district.message}</p>}
+        </div>
+      </div>
 
-      {/* Mahalle Input */}
-      <input
-        {...register("neighbourhood")}
-        placeholder="Mahalle"
-        className={inputClass}
-      />
-      {errors.neighbourhood && (
-        <p className="text-red-500">{errors.neighbourhood.message}</p>
-      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Mahalle Input */}
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+            Mahalle *
+          </label>
+          <input
+            {...register("neighbourhood")}
+            placeholder="Mahalle adı"
+            className={inputClass}
+          />
+          {errors.neighbourhood && <p className="text-rose-500 text-xs mt-1">{errors.neighbourhood.message}</p>}
+        </div>
 
-      <textarea
-        {...register("address1")}
-        placeholder="Adres Detayı (Cadde, Sokak, No, Daire)"
-        className={textareaClass}
-      />
-      {errors.address1 && (
-        <p className="text-red-500">{errors.address1.message}</p>
-      )}
+        {/* Posta Kodu */}
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+            Posta Kodu
+          </label>
+          <input
+            {...register("zip")}
+            placeholder="Posta Kodu (Opsiyonel)"
+            className={inputClass}
+          />
+        </div>
+      </div>
 
-      <input
-        {...register("zip")}
-        placeholder="Posta Kodu (Opsiyonel)"
-        className={inputClass}
-      />
+      <div className="space-y-1.5">
+        <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+          Açık Adres Detayı *
+        </label>
+        <textarea
+          {...register("address1")}
+          placeholder="Cadde, Sokak, Bina No, Daire No"
+          className={textareaClass}
+        />
+        {errors.address1 && <p className="text-rose-500 text-xs mt-1">{errors.address1.message}</p>}
+      </div>
 
-      <label className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-        <input type="checkbox" {...register("isDefault")} />
-        Varsayılan adres olarak ayarla
-      </label>
+      <div className="pt-2">
+        <label className="flex items-center space-x-3 rounded-xl border border-gray-200 dark:border-gray-700 p-3.5 bg-gray-50/50 dark:bg-gray-800/50 cursor-pointer hover:border-pink-500 transition-all">
+          <input
+            type="checkbox"
+            {...register("isDefault")}
+            className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500 dark:bg-gray-700 dark:border-gray-600"
+          />
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+            Varsayılan teslimat adresi olarak ayarla
+          </span>
+        </label>
+      </div>
 
-      <button type="submit" disabled={isSubmitting} className={buttonClass}>
-        {isSubmitting
-          ? "Kaydediliyor..."
-          : defaultValues
-          ? "Güncelle"
-          : "Kaydet"}
-      </button>
+      <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-800">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-medium text-sm shadow-md shadow-pink-500/20 transition-all cursor-pointer disabled:opacity-50"
+        >
+          <FiCheck size={16} />
+          {isSubmitting
+            ? "Kaydediliyor..."
+            : defaultValues
+            ? "Adresi Güncelle"
+            : "Adresi Kaydet"}
+        </button>
+      </div>
     </form>
   );
 }
