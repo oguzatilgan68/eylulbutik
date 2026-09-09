@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/app/(marketing)/lib/db";
-import { Decimal } from "@/generated/prisma/runtime/library";
 
 export interface ProductUpdateBody {
   name?: string;
@@ -107,7 +106,7 @@ export async function PATCH(
         where: { id: productId },
         data: {
           name: data.name,
-          price: data.price ? new Decimal(parseFloat(data.price)) : undefined,
+          price: data.price ? Number(data.price) : undefined,
           categoryId: data.categoryId,
           brandId: data.brandId || undefined,
           status: data.status ? (data.status as any) : undefined,
@@ -164,7 +163,7 @@ export async function PATCH(
             data: {
               productId,
               sku: v.sku || undefined,
-              price: v.price ? new Decimal(parseFloat(v.price)) : undefined,
+              price: v.price ? Number(v.price) : 0,
               stockQty: v.stockQty ? parseInt(v.stockQty) : 0,
             },
           });

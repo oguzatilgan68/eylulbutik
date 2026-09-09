@@ -112,7 +112,7 @@ model Product {
   category     Category         @relation(fields: [categoryId], references: [id])
   images       ProductImage[]   
   variants     ProductVariant[] 
-  price        Decimal?         @db.Decimal(10, 2)
+  price        Float?
   currency     String           @default("TRY")
   status       ProductStatus    @default(DRAFT)
   inStock      Boolean          @default(true)

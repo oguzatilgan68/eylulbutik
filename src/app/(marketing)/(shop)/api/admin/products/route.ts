@@ -1,5 +1,4 @@
 import { db } from "@/app/(marketing)/lib/db";
-import { Decimal } from "@/generated/prisma/runtime/library";
 import { NextRequest, NextResponse } from "next/server";
 import { generateUniqueSlug } from "./generate-slug";
 
@@ -113,9 +112,7 @@ export async function POST(req: NextRequest) {
       data: {
         name: data.name,
         slug,
-        price: data.price
-          ? new Decimal(parseFloat(data.price))
-          : new Decimal(0),
+        price: Number(data.price) || 0,
         category: { connect: { id: data.categoryId } },
         brand: data.brandId ? { connect: { id: data.brandId } } : undefined,
         status: data.status || "DRAFT",
@@ -155,7 +152,7 @@ export async function POST(req: NextRequest) {
           data: {
             productId: product.id,
             sku: v.sku || undefined,
-            price: v.price ? new Decimal(parseFloat(v.price)) : undefined,
+            price: Number(v.price) || 0,
             stockQty: v.stockQty ? parseInt(v.stockQty) : 0,
           },
         });
