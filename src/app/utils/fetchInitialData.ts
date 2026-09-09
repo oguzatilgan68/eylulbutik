@@ -1,5 +1,3 @@
-// utils/fetchInitialData.ts
-import { db } from "@/app/(marketing)/lib/db"; // Kendi Prisma import yoluna göre düzenle
 
 export interface Category {
   id: string;
@@ -24,26 +22,22 @@ export interface PropertyType {
   values: { id: string; value: string }[];
 }
 
-<<<<<<< HEAD
-// safeFetch: hem client hem server için çalışır
 async function safeFetch(
   url: string,
   label: string,
   revalidate = 60,
-  cookieHeader?: string // SSR'da gelen cookie string'i buraya verilecek
+  cookieHeader?: string 
 ) {
   try {
     const isClient = typeof window !== "undefined";
 
     const fetchOptions: RequestInit = {
+      // ⚠️ cache: "no-store" buradan kaldırıldı, revalidate çalışabilsin diye:
       next: { revalidate },
-      cache: "no-store",
       headers: {
         "Content-Type": "application/json",
-        // SSR tarafında cookie varsa burada iletilir:
         ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       },
-      // Client'ta credentials: 'include' ile tarayıcı cookie'leri gönderilir
       ...(isClient ? { credentials: "include" } : {}),
     };
 
@@ -60,7 +54,7 @@ async function safeFetch(
     return data;
   } catch (err: any) {
     console.error(`🔥 [${label}] Hata:`, err?.message ?? err);
-    throw err; // çağırana hata fırlat (üst katmanda yakalanır)
+    throw err;
   }
 }
 
@@ -120,35 +114,3 @@ export async function fetchInitialData(
     product?: any;
   };
 }
-=======
-export async function fetchInitialData(baseUrl?: string, productId?: string) {
-  try {
-    // Doğrudan veritabanından (Prisma ile) paralel olarak verileri çekiyoruz.
-    // Hiçbir HTTP fetch veya URL hatası ile uğraşmazsın, şimşek gibi hızı olur!
-    const [categories, brands, attributeTypes, propertyTypes, product] = await Promise.all([
-      db.category.findMany(),
-      db.brand.findMany(),
-      db.attributeType.findMany({ include: { values: true } }),
-      db.attributeType.findMany({ include: { values: true } }), 
-      productId ? db.product.findUnique({ where: { id: productId } }) : Promise.resolve(null),
-    ]);
-
-    return {
-      categories,
-      brands,
-      attributeTypes,
-      propertyTypes,
-      product,
-    } as {
-      categories: Category[];
-      brands: Brand[];
-      attributeTypes: AttributeType[];
-      propertyTypes: PropertyType[];
-      product?: any;
-    };
-  } catch (error) {
-    console.error("fetchInitialData error:", error);
-    throw new Error("Başlangıç verileri yüklenirken bir hata oluştu.");
-  }
-}
->>>>>>> 7ef8c4f (yeniden)

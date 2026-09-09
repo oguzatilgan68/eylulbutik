@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
 import { db } from "@/app/(marketing)/lib/db";
 import { ShipmentStatus, ShippingProvider } from "@/generated/prisma";
 
