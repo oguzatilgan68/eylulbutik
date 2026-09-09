@@ -25,7 +25,7 @@ export default function LogsTable({}: LogsTableProps) {
   const [loading, setLoading] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleting, setDeleting] = useState(false);
-  const [activeLog, setActiveLog] = useState<Log | null>(null); // Modal için seçilen log
+  const [activeLog, setActiveLog] = useState<Log | null>(null);
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -53,7 +53,7 @@ export default function LogsTable({}: LogsTableProps) {
   }, [search, level, page]);
 
   const handleDelete = async (ids: string[], e?: React.MouseEvent) => {
-    if (e) e.stopPropagation(); // Satır tıklamasıyla modalin açılmasını engelle
+    if (e) e.stopPropagation();
     if (!ids.length) return;
     if (!confirm(`Seçilen ${ids.length} adet log kaydını silmek istediğinize emin misiniz?`)) return;
 
@@ -67,7 +67,7 @@ export default function LogsTable({}: LogsTableProps) {
 
       if (res.ok) {
         setSelectedIds([]);
-        setActiveLog(null); // Eğer detayda açık olan log silindiyse modalı kapat
+        setActiveLog(null);
         fetchLogs();
       } else {
         alert("Loglar silinemedi.");
@@ -89,7 +89,7 @@ export default function LogsTable({}: LogsTableProps) {
   };
 
   const handleSelectOne = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Satır tıklamasıyla modalin açılmasını engelle
+    e.stopPropagation();
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
@@ -103,7 +103,7 @@ export default function LogsTable({}: LogsTableProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full overflow-hidden">
       {/* Üst Başlık */}
       <div className="bg-white dark:bg-gray-900 p-5 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -167,9 +167,9 @@ export default function LogsTable({}: LogsTableProps) {
         </div>
       </div>
 
-      {/* Log Tablosu */}
-      <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+      {/* Log Tablosu - 🛠️ Taşmayı önlemek için kapsayıcı güncellendi */}
+      <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden w-full">
+        <div className="overflow-x-auto w-full">
           <table className="w-full text-left text-sm border-collapse min-w-175">
             <thead className="bg-gray-50 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 uppercase text-[11px] font-semibold tracking-wider border-b border-gray-200 dark:border-gray-800">
               <tr>
@@ -204,7 +204,7 @@ export default function LogsTable({}: LogsTableProps) {
                   return (
                     <tr
                       key={log.id}
-                      onClick={() => setActiveLog(log)} // Satıra tıklanınca detay modalı açılır
+                      onClick={() => setActiveLog(log)}
                       className={`hover:bg-pink-50/20 dark:hover:bg-gray-800/40 transition-colors cursor-pointer ${
                         isSelected ? "bg-pink-50/30 dark:bg-gray-800/60" : ""
                       }`}
@@ -223,10 +223,10 @@ export default function LogsTable({}: LogsTableProps) {
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getLevelBadge(log.level)}
                       </td>
-                      <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                      <td className="px-6 py-4 font-medium text-gray-900 dark:text-white max-w-50 truncate">
                         {log.message}
                       </td>
-                      <td className="px-6 py-4 font-mono text-xs text-gray-500 dark:text-gray-400 max-w-xs truncate">
+                      <td className="px-6 py-4 font-mono text-xs text-gray-500 dark:text-gray-400 max-w-50cate">
                         {typeof log.meta === "string"
                           ? log.meta
                           : log.meta == null
@@ -303,13 +303,13 @@ export default function LogsTable({}: LogsTableProps) {
 
               <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 space-y-1.5">
                 <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Log Mesajı</span>
-                <p className="text-gray-900 dark:text-gray-100 font-medium leading-relaxed">{activeLog.message}</p>
+                <p className="text-gray-900 dark:text-gray-100 font-medium leading-relaxed break-all">{activeLog.message}</p>
               </div>
 
               {activeLog.stack && (
                 <div className="p-4 rounded-2xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40 space-y-1.5">
                   <span className="text-xs font-semibold text-rose-500 uppercase tracking-wider block">Stack Trace</span>
-                  <pre className="text-xs font-mono text-rose-600 dark:text-rose-400 whitespace-pre-wrap overflow-x-auto p-2 bg-white dark:bg-gray-900 rounded-xl border border-rose-200 dark:border-rose-900">
+                  <pre className="text-xs font-mono text-rose-600 dark:text-rose-400 whitespace-pre-wrap overflow-x-auto p-2 bg-white dark:bg-gray-900 rounded-xl border border-rose-200 dark:border-rose-900 max-h-40">
                     {activeLog.stack}
                   </pre>
                 </div>
