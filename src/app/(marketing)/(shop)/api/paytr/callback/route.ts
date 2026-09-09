@@ -1,8 +1,7 @@
-import { PrismaClient } from "@/generated/prisma";
+import { db } from "@/app/(marketing)/lib/db";
 import crypto from "crypto";
 
 export const runtime = "nodejs";
-const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   const raw = await req.text();
@@ -27,12 +26,12 @@ export async function POST(req: Request) {
   }
 
   try {
-    const existing = await prisma.payment.findUnique({
+    const existing = await db.payment.findUnique({
       where: { merchantOid: merchant_oid },
     });
 
     if (!existing) {
-      await prisma.payment.create({
+      await db.payment.create({
         data: {
           merchantOid: merchant_oid,
           amount: Number(total_amount),
@@ -42,7 +41,7 @@ export async function POST(req: Request) {
         },
       });
     } else {
-      await prisma.payment.update({
+      await db.payment.update({
         where: { merchantOid: merchant_oid },
         data: { status },
       });

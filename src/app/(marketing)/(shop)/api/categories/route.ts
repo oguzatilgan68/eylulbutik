@@ -1,6 +1,5 @@
+import { db } from '@/app/(marketing)/lib/db';
 import { NextResponse } from "next/server";
-import { db } from "@/app/(marketing)/lib/db"; 
-
 export async function GET() {
   try {
     const categories = await db.category.findMany({
