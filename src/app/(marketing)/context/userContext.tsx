@@ -44,14 +44,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         const res = await fetch("/api/auth/me", {
           method: "GET",
           cache: "no-store",
-          credentials: "include", // cookie'leri gönder
+          credentials: "include",
         });
         const data = await res.json();
 
         if (res.status === 200 && data.user) {
           setUser(data.user);
         } else {
-          // Kullanıcı yok veya yetkisiz → login sayfasına yönlendir
           setUser(null);
           router.push("/login");
         }
@@ -64,28 +63,33 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     fetchUser();
   }, [router]);
 
-  // 🌐 GenericData’yı çek
-  useEffect(() => {
-    const fetchGenericData = async () => {
+useEffect(() => {
+    const fetchUser = async () => {
       try {
-        const res = await fetch("/api/generic-data", {
+        const res = await fetch("/api/auth/me", {
           method: "GET",
           cache: "no-store",
+          credentials: "include",
         });
         const data = await res.json();
-        setGenericData(data[0] || null);
-      } catch {
-        setGenericData(null);
+
+        if (res.status === 200 && data.user) {
+          setUser(data.user);
+        } else {
+          setUser(null);
+        }
+      } catch (err) {
+        setUser(null);
       }
     };
 
-    fetchGenericData();
-  }, []);
+    fetchUser();
+  }, []); 
 
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
-    router.push("/login"); // logout sonrası login sayfasına yönlendir
+    router.push("/login"); 
   };
 
   return (

@@ -127,9 +127,9 @@ export default function LogsTable({}: LogsTableProps) {
         )}
       </div>
 
-      {/* Filtreler */}
-      <div className="bg-white dark:bg-gray-900 p-4 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col sm:flex-row gap-3 items-center">
-        <div className="relative w-full sm:flex-1">
+      {/* 🛠️ Filtreler - Mobilde tam uyumlu hale getirildi */}
+      <div className="bg-white dark:bg-gray-900 p-4 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col md:flex-row gap-3 items-center">
+        <div className="relative w-full md:flex-1">
           <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
           <Input
             placeholder="Log mesajlarında ara..."
@@ -139,7 +139,7 @@ export default function LogsTable({}: LogsTableProps) {
           />
         </div>
 
-        <div className="flex w-full sm:w-auto gap-3">
+        <div className="flex flex-col sm:flex-row w-full md:w-auto gap-3">
           <Select
             value={level || "all"}
             onValueChange={(val) => setLevel(val === "all" ? undefined : val)}
@@ -160,14 +160,14 @@ export default function LogsTable({}: LogsTableProps) {
               setPage(1);
               fetchLogs();
             }}
-            className="w-full sm:w-auto bg-pink-600 hover:bg-pink-700 text-white rounded-xl px-5 text-sm shadow-md shadow-pink-500/20"
+            className="w-full sm:w-auto bg-pink-600 hover:bg-pink-700 text-white rounded-xl px-5 text-sm shadow-md shadow-pink-500/20 shrink-0"
           >
             <FiFilter size={14} className="mr-1.5" /> Filtrele
           </Button>
         </div>
       </div>
 
-      {/* Log Tablosu - 🛠️ Taşmayı önlemek için kapsayıcı güncellendi */}
+      {/* Log Tablosu */}
       <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden w-full">
         <div className="overflow-x-auto w-full">
           <table className="w-full text-left text-sm border-collapse min-w-175">
@@ -226,7 +226,7 @@ export default function LogsTable({}: LogsTableProps) {
                       <td className="px-6 py-4 font-medium text-gray-900 dark:text-white max-w-50 truncate">
                         {log.message}
                       </td>
-                      <td className="px-6 py-4 font-mono text-xs text-gray-500 dark:text-gray-400 max-w-50cate">
+                      <td className="px-6 py-4 font-mono text-xs text-gray-500 dark:text-gray-400 max-w-50 truncate">
                         {typeof log.meta === "string"
                           ? log.meta
                           : log.meta == null

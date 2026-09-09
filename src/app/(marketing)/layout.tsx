@@ -20,10 +20,6 @@ export default async function MarketingLayout({
       },
     });
 
-    if (res.status === 401) {
-      redirect("/login");
-    }
-
     if (res.ok) {
       const text = await res.text();
       // Yanıt boş değilse JSON'a çevir, boşsa boş dizi ata
