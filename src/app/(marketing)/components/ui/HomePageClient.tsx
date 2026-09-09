@@ -58,7 +58,7 @@ export default function HomePageClient({ categories }: Props) {
                   </div>
                 ) : (
                   <div
-                    className={`${containerSizeClass} bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center`}
+                    className={`${containerSizeClass} bg-linear-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center`}
                   >
                     <span className="text-gray-400 dark:text-gray-500 text-sm font-medium">
                       Görsel Yok
@@ -67,7 +67,7 @@ export default function HomePageClient({ categories }: Props) {
                 )}
 
                 {/* Şık Karartma Katmanı ve Kategori İsmi */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-300" />
 
                 <div className="absolute bottom-0 left-0 w-full p-5 sm:p-6 flex items-end justify-between">
                   <div>

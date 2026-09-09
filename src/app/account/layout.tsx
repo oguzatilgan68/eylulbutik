@@ -7,12 +7,13 @@ import {
   FaHeart,
   FaHome,
   FaMapMarkerAlt,
-  FaSignOutAlt,
   FaUndo,
   FaUser,
 } from "react-icons/fa";
 import { FaMessage } from "react-icons/fa6";
-import { cn } from "@/lib/utils"; // yoksa bu satırı kaldır ve cn yerine className birleştirmesini string olarak yap
+import { FiLogOut } from "react-icons/fi"; // 👈 Çıkış ikonu eklendi
+import { useUser } from "@/app/(marketing)/context/userContext"; // 👈 Context bağlantısı
+import { cn } from "@/lib/utils";
 
 const menuItems = [
   { label: "Ana Sayfa", icon: <FaHome />, href: "/" },
@@ -31,10 +32,16 @@ export default function AccountLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { logout } = useUser(); // 👈 Context'teki logout fonksiyonunu alıyoruz
 
-  const normalizePath = (path: string) => path.replace(/\/+$/, ""); // sondaki slash'ları temizle
+  const handleLogout = async () => {
+    await logout(); // State ve oturumu temizle
+    router.push("/"); // Ana sayfaya yönlendir
+  };
+
+  const normalizePath = (path: string) => path.replace(/\/+$/, "");
   const currentPath = normalizePath(pathname);
-  // Menüdeki en uzun eşleşmeyi bul
+  
   const matchedItem = [...menuItems]
     .sort((a, b) => b.href.length - a.href.length)
     .find(
@@ -78,8 +85,12 @@ export default function AccountLayout({
             </Link>
           ))}
 
-          <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-red-100 dark:hover:bg-red-700/30 transition w-full">
-            <FaSignOutAlt className="text-red-500" />
+          {/* 🚪 Profesyonel Çıkış Butonu Entegrasyonu */}
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition w-full cursor-pointer font-medium"
+          >
+            <FiLogOut className="text-red-500 w-5 h-5" />
             <span>Çıkış Yap</span>
           </button>
         </aside>
@@ -103,8 +114,7 @@ export default function AccountLayout({
               )}
             >
               <div className="text-lg">{item.icon}</div>
-              {item.label.split(" ")[0]}{" "}
-              {/* Kısa label (ör: Siparişlerim → Siparişler) */}
+              {item.label.split(" ")[0]}
             </Link>
           ))}
         </nav>

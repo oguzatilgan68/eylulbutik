@@ -16,10 +16,14 @@ export default function ProductAttributes({
   return (
     <div className="space-y-5">
       {Object.entries(attributeTypes).map(([key, values]) => (
-        <div key={key} className="space-y-2">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-            {key}: <span className="font-bold text-pink-600 dark:text-pink-400">{selectedAttributes[key] || "Seçiniz"}</span>
-          </h4>
+        <div key={key} className="space-y-2.5">
+          <div className="flex items-center justify-between text-xs font-semibold">
+            <span className="text-gray-400 uppercase tracking-wider">{key}</span>
+            <span className="text-pink-600 dark:text-pink-400 font-bold">
+              {selectedAttributes[key] || "Seçiniz"}
+            </span>
+          </div>
+
           <div className="flex gap-2.5 flex-wrap">
             {(values as string[]).map((val) => {
               const isSelected = selectedAttributes[key] === val;
@@ -33,10 +37,10 @@ export default function ProductAttributes({
                       [key]: val,
                     }))
                   }
-                  className={`px-4 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 cursor-pointer ${
+                  className={`px-5 py-2.5 rounded-2xl border text-sm font-semibold transition-all duration-200 cursor-pointer ${
                     isSelected
-                      ? "bg-pink-600 text-white border-pink-600 shadow-md shadow-pink-500/20 scale-105"
-                      : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-pink-300 dark:hover:border-gray-700 hover:bg-pink-50/20 dark:hover:bg-gray-800"
+                      ? "bg-pink-600 text-white border-pink-600 shadow-md shadow-pink-500/20 ring-2 ring-pink-500/20"
+                      : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-pink-300 dark:hover:border-gray-700"
                   }`}
                 >
                   {val}

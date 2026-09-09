@@ -1,88 +1,36 @@
-import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 import { db } from "@/app/(marketing)/lib/db";
+import { authOptions } from "@/app/utils/authOptions";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    const cookieStore = req.cookies;
+    const session = await getServerSession(authOptions);
 
-    // 1️⃣ Access Token ve Refresh Token
-    const accessToken = cookieStore.get("accessToken")?.value;
-    const refreshToken = cookieStore.get("refreshToken")?.value;
-
-    let user = null;
-
-    // 2️⃣ Access Token varsa doğrula
-    if (accessToken) {
-      try {
-        const decoded = jwt.verify(accessToken, process.env.JWT_SECRET!) as {
-          userId: string;
-        };
-        user = await db.user.findUnique({
-          where: { id: decoded.userId },
-          select: {
-            id: true,
-            fullName: true,
-            email: true,
-            phone: true,
-            role: true,
-            emailVerified: true,
-          },
-        });
-        if (user) {
-          return NextResponse.json({ user, refreshed: false });
-        }
-      } catch {
-        // Token süresi dolmuş olabilir → refresh token kontrolü
-      }
+    if (!session?.user?.id) {
+      return NextResponse.json({ user: null }, { status: 401 });
     }
 
-    // 3️⃣ Access Token yok veya süresi dolmuş → refresh token ile yenile
-    if (refreshToken) {
-      const existingUser = await db.user.findFirst({
-        where: { refreshToken, refreshTokenExpiry: { gt: new Date() } },
-        select: {
-          id: true,
-          fullName: true,
-          email: true,
-          phone: true,
-          role: true,
-          emailVerified: true,
-        },
-      });
+    // Veritabanından en güncel kullanıcı bilgilerini çekelim
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        phone: true,
+        role: true,
+        emailVerified: true,
+      },
+    });
 
-      if (existingUser) {
-        // Yeni access token üret
-        const newAccessToken = jwt.sign(
-          { userId: existingUser.id },
-          process.env.JWT_SECRET!,
-          { expiresIn: "15m" }
-        );
-
-        const res = NextResponse.json({ user: existingUser, refreshed: true });
-
-        // 🍪 Yeni access token cookie'ye yaz
-        res.cookies.set({
-          name: "accessToken",
-          value: newAccessToken,
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          path: "/",
-          maxAge: 15 * 60, // 15 dk
-        });
-
-        return res;
-      }
+    if (!user) {
+      return NextResponse.json({ user: null }, { status: 401 });
     }
 
-    // 4️⃣ Hiçbir token geçerli değilse
-    return NextResponse.json({ user: null }, { status: 401 });
+    return NextResponse.json({ user, refreshed: false });
   } catch (err) {
     console.error("Auth check error:", err);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

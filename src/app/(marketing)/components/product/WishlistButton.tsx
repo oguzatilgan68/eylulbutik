@@ -29,7 +29,7 @@ export default function WishlistButton({ productId }: Props) {
     };
   }, [productId]);
 
-  async function toggle() {
+async function toggle() {
     setLoading(true);
     try {
       const r = await fetch("/api/wishlist/toggle", {
@@ -37,9 +37,12 @@ export default function WishlistButton({ productId }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productId }),
       });
+      
       if (r.status === 401) {
         router.push("/login");
+        return;
       }
+      
       const j = await r.json();
       setInWishlist(Boolean(j?.inWishlist));
     } finally {

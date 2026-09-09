@@ -52,17 +52,33 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           setUser(data.user);
         } else {
           setUser(null);
-          router.push("/login");
         }
       } catch (err) {
         setUser(null);
-        router.push("/login");
       }
     };
 
     fetchUser();
   }, [router]);
+// 🌐 GenericData’yı çek
+  useEffect(() => {
+    const fetchGenericData = async () => {
+      try {
+        const res = await fetch("/api/generic-data", {
+          method: "GET",
+          cache: "no-store",
+        });
+        const data = await res.json();
+        // Gelen veri dizi ise ilk elemanı, nesne ise direkt kendisini ata
+        setGenericData(Array.isArray(data) ? data[0] : data);
+      } catch (err) {
+        console.error("Generic data çekilemedi:", err);
+        setGenericData(null);
+      }
+    };
 
+    fetchGenericData();
+  }, []);
 useEffect(() => {
     const fetchUser = async () => {
       try {

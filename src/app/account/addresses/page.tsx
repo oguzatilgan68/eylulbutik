@@ -2,15 +2,37 @@ import Breadcrumb from "@/app/(marketing)/components/ui/breadcrumbs";
 import Link from "next/link";
 import AddressesClient from "./AddressesClient";
 import { FiMapPin, FiPlus } from "react-icons/fi";
+import { cookies } from "next/headers"; // 🍪 Çerezleri almak için eklendi
 
-export default async function AddressesPage({ addresses }: { addresses: any[] }) {
+export default async function AddressesPage() {
+  const cookieStore = await cookies(); 
+
   const breadcrumbs = [
     { label: "Hesabım", href: "/account" },
     { label: "Adreslerim", href: "/account/addresses" },
   ];
 
+  let addresses = [];
+
+  try {
+    const addressesRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/address`, {
+      cache: "no-store",
+      headers: {
+        Cookie: cookieStore.toString(),
+      },
+    });
+
+    if (addressesRes.ok) {
+      const data = await addressesRes.json();
+      // API'den { addresses: [...] } şeklinde geldiği için diziyi alıyoruz
+      addresses = data.addresses || [];
+    }
+  } catch (error) {
+    console.error("Adresler yüklenirken hata oluştu:", error);
+  }
+
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-4 max-w-4xl mx-auto">
       <Breadcrumb items={breadcrumbs} />
       
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">

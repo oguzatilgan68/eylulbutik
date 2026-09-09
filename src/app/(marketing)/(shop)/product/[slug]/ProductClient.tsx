@@ -20,11 +20,7 @@ export default function ProductClient({ product }: any) {
   >({});
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const [activeTab, setActiveTab] = useState("details");
-  const [zoomPos, setZoomPos] = useState<
-    Record<string, { x: number; y: number }>
-  >({});
 
-  // Attribute tiplerini memoize et
   const attributeTypes = useMemo(() => {
     const types: Record<string, string[]> = {};
     product.variants.forEach((variant: any) => {
@@ -37,7 +33,6 @@ export default function ProductClient({ product }: any) {
     return types;
   }, [product.variants]);
 
-  // İlk varyasyonu otomatik seç
   useEffect(() => {
     if (product.variants.length > 0) {
       const firstVariant: Record<string, string> = {};
@@ -49,7 +44,6 @@ export default function ProductClient({ product }: any) {
     }
   }, [product.variants]);
 
-  // Seçili varyant
   const selectedVariant = useMemo(
     () =>
       product.variants.find((v: any) =>
@@ -67,20 +61,27 @@ export default function ProductClient({ product }: any) {
     : product.images;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <ProductImages
-          images={images}
-          selectedImageIdx={selectedImageIdx}
-          setSelectedImageIdx={setSelectedImageIdx}
-        />
-        <div className="flex flex-col gap-6">
+    <div className="max-w-7xl mx-auto px-4 py-8 lg:py-12 space-y-12">
+      {/* Üst Kısım: Görsel ve Bilgiler */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        {/* Sol: Görsel Galerisi (Lüks 7 kolon) */}
+        <div className="lg:col-span-7 lg:sticky lg:top-24 lg:self-start">
+          <ProductImages
+            images={images}
+            selectedImageIdx={selectedImageIdx}
+            setSelectedImageIdx={setSelectedImageIdx}
+          />
+        </div>
+
+        {/* Sağ: Ürün Bilgileri ve Seçenekler (5 kolon) */}
+        <div className="lg:col-span-5 flex flex-col gap-6 bg-white dark:bg-gray-900 p-6 sm:p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
           <ProductInfo
             product={product}
             selectedVariant={selectedVariant}
             displayPrice={displayPrice}
             inStock={inStock}
           />
+          <hr className="border-gray-100 dark:border-gray-800" />
           <ProductAttributes
             attributeTypes={attributeTypes}
             selectedAttributes={selectedAttributes}
@@ -88,6 +89,7 @@ export default function ProductClient({ product }: any) {
           />
         </div>
       </div>
+
       <ProductTabs
         activeTab={activeTab}
         setActiveTab={setActiveTab}

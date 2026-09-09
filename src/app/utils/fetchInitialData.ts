@@ -50,7 +50,6 @@ async function safeFetch(
     }
 
     const data = await res.json();
-    console.log(`✅ [${label}] Verisi başarıyla alındı`);
     return data;
   } catch (err: any) {
     console.error(`🔥 [${label}] Hata:`, err?.message ?? err);

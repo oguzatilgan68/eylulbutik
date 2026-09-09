@@ -113,7 +113,7 @@ export default function StepProductForm({
         </div>
 
         {/* Step Bileşenleri İçerik Alanı */}
-        <div className="min-h-[350px] transition-all">
+        <div className="min-h-87.5 transition-all">
           {step === 0 && (
             <StepBasicInfo categories={categories} brands={brands} />
           )}

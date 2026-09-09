@@ -34,14 +34,17 @@ export default function CartPage() {
   const router = useRouter();
 
   // Sepeti çek
+// Sepeti çek
   useEffect(() => {
     const fetchCart = async () => {
       try {
         const res = await fetch("/api/cart");
+        
         if (res.status === 401) {
-          router.push("/login");
+          setCartItems([]);
           return;
         }
+
         if (!res.ok) throw new Error("Beklenmeyen hata oluştu");
         const data = await res.json();
         setCartItems(data.items || []);
@@ -52,7 +55,7 @@ export default function CartPage() {
       }
     };
     fetchCart();
-  }, [router]);
+  }, []); 
 
   // Ara toplam hesapla
   useEffect(() => {
