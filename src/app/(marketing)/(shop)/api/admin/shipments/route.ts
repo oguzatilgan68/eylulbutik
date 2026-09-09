@@ -1,41 +1,54 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/app/(marketing)/lib/db";
 import { ShipmentStatus, ShippingProvider } from "@/generated/prisma";
+import { requireAdmin, AdminAuthError } from "@/app/(marketing)/lib/adminAuth";
 
 export async function GET(req: NextRequest) {
-  const url = new URL(req.url);
-  const q = url.searchParams.get("q") || undefined;
-  const provider = url.searchParams.get("provider") || undefined;
-  const status = url.searchParams.get("status") || undefined;
-  const page = parseInt(url.searchParams.get("page") || "1", 10);
-  const perPage = parseInt(url.searchParams.get("perPage") || "12", 10);
+  try {
+    await requireAdmin();
 
-  const where: any = {};
-  if (q) {
-    where.OR = [
-      { orderId: { contains: q, mode: "insensitive" } },
-      { trackingNo: { contains: q, mode: "insensitive" } },
-      { raw: { path: ["note"], equals: q } }, // optional, example of JSON search
-    ];
+    const url = new URL(req.url);
+    const q = url.searchParams.get("q") || undefined;
+    const provider = url.searchParams.get("provider") || undefined;
+    const status = url.searchParams.get("status") || undefined;
+    const page = parseInt(url.searchParams.get("page") || "1", 10);
+    const perPage = parseInt(url.searchParams.get("perPage") || "12", 10);
+
+    const where: any = {};
+    if (q) {
+      where.OR = [
+        { orderId: { contains: q, mode: "insensitive" } },
+        { trackingNo: { contains: q, mode: "insensitive" } },
+        { raw: { path: ["note"], equals: q } },
+      ];
+    }
+    if (provider) where.provider = provider;
+    if (status) where.status = status;
+
+    const [data, total] = await Promise.all([
+      db.shipment.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * perPage,
+        take: perPage,
+      }),
+      db.shipment.count({ where }),
+    ]);
+
+    return NextResponse.json({ data, meta: { total } });
+  } catch (err: any) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
+    }
+    console.error(err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
-  if (provider) where.provider = provider;
-  if (status) where.status = status;
-
-  const [data, total] = await Promise.all([
-    db.shipment.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * perPage,
-      take: perPage,
-    }),
-    db.shipment.count({ where }),
-  ]);
-
-  return NextResponse.json({ data, meta: { total } });
 }
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAdmin();
+
     const body = await req.json();
     const { orderId, provider, trackingNo, status, raw } = body;
 
@@ -58,6 +71,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ data: created });
   } catch (err: any) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
+    }
     console.error(err);
     return NextResponse.json(
       { error: err.message || "Server error" },
@@ -68,6 +84,8 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
+    await requireAdmin();
+
     const body = await req.json();
     const { id, ...patch } = body;
     if (!id)
@@ -77,7 +95,6 @@ export async function PATCH(req: NextRequest) {
     if (data.provider) data.provider = data.provider as ShippingProvider;
     if (data.status) data.status = data.status as ShipmentStatus;
 
-    // If raw is provided and is object, keep it
     if (data.raw === undefined) delete data.raw;
 
     const updated = await db.shipment.update({
@@ -87,6 +104,9 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({ data: updated });
   } catch (err: any) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
+    }
     console.error(err);
     return NextResponse.json(
       { error: err.message || "Server error" },
@@ -97,6 +117,8 @@ export async function PATCH(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    await requireAdmin();
+
     const url = new URL(req.url);
     const id = url.searchParams.get("id");
     if (!id)
@@ -105,6 +127,9 @@ export async function DELETE(req: NextRequest) {
     await db.shipment.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (err: any) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
+    }
     console.error(err);
     return NextResponse.json(
       { error: err.message || "Server error" },

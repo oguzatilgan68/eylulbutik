@@ -1,5 +1,6 @@
-import { db } from "@/app/(marketing)/lib/db";
 import { NextResponse } from "next/server";
+import { db } from "@/app/(marketing)/lib/db";
+import { requireAdmin, AdminAuthError } from "@/app/(marketing)/lib/adminAuth";
 
 // Dinamik ID parametresi al
 interface Params {
@@ -8,18 +9,23 @@ interface Params {
 
 // GET /api/admin/sliders/:id
 export async function GET(req: Request, props: Params) {
-  const params = await props.params;
   try {
+    await requireAdmin();
+
+    const params = await props.params;
     const slider = await db.slider.findUnique({
       where: { id: params.id },
-      include: { products: true }, // ilişkili ürünleri getir
+      include: { products: true },
     });
 
     if (!slider)
       return NextResponse.json({ error: "Slider bulunamadı" }, { status: 404 });
 
     return NextResponse.json(slider);
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof AdminAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
     return NextResponse.json(
       { error: "Slider alınırken hata oluştu" },
       { status: 500 }
@@ -29,8 +35,10 @@ export async function GET(req: Request, props: Params) {
 
 // PUT /api/admin/sliders/:id
 export async function PUT(req: Request, props: Params) {
-  const params = await props.params;
   try {
+    await requireAdmin();
+
+    const params = await props.params;
     const body = await req.json();
     const {
       title,
@@ -43,7 +51,6 @@ export async function PUT(req: Request, props: Params) {
       imageUrl,
     } = body;
 
-    // Slider güncelle
     const updatedSlider = await db.slider.update({
       where: { id: params.id },
       data: {
@@ -56,7 +63,7 @@ export async function PUT(req: Request, props: Params) {
         imageUrl,
         products: productIds
           ? {
-              set: productIds.map((id: string) => ({ id })), // many-to-many güncelle
+              set: productIds.map((id: string) => ({ id })),
             }
           : undefined,
       },
@@ -64,7 +71,10 @@ export async function PUT(req: Request, props: Params) {
     });
 
     return NextResponse.json(updatedSlider);
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof AdminAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
     console.error(error);
     return NextResponse.json(
       { error: "Slider güncellenirken hata oluştu" },
@@ -75,13 +85,18 @@ export async function PUT(req: Request, props: Params) {
 
 // DELETE /api/admin/sliders/:id
 export async function DELETE(req: Request, props: Params) {
-  const params = await props.params;
   try {
+    await requireAdmin();
+
+    const params = await props.params;
     await db.slider.delete({
       where: { id: params.id },
     });
     return NextResponse.json({ message: "Slider başarıyla silindi" });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof AdminAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
     console.error(error);
     return NextResponse.json(
       { error: "Slider silinirken hata oluştu" },

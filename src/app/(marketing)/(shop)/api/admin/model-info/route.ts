@@ -1,17 +1,23 @@
 import { db } from "@/app/(marketing)/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin, AdminAuthError } from "@/app/(marketing)/lib/adminAuth";
 
 export async function GET() {
   try {
+    await requireAdmin();
     const models = await db.modelInfo.findMany();
     return NextResponse.json(models);
-  } catch (error) {
+  } catch (err: any) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
+    }
     return NextResponse.json({ error: "Cannot fetch models" }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAdmin();
     const data = await req.json();
     const model = await db.modelInfo.create({
       data: {
@@ -24,7 +30,10 @@ export async function POST(req: NextRequest) {
       },
     });
     return NextResponse.json(model);
-  } catch (error) {
+  } catch (err: any) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
+    }
     return NextResponse.json({ error: "Cannot create model" }, { status: 500 });
   }
 }

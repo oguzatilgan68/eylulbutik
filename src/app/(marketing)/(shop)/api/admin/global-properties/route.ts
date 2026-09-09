@@ -1,9 +1,11 @@
-// app/api/admin/global-properties/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/app/(marketing)/lib/db";
+import { requireAdmin, AdminAuthError } from "@/app/(marketing)/lib/adminAuth";
 
 export async function GET() {
   try {
+    await requireAdmin();
+
     const rawPropertyValues = await db.propertyValue.findMany({
       select: {
         id: true,
@@ -12,7 +14,6 @@ export async function GET() {
       },
     });
 
-    // 🔹 propertyTypes organize et
     const propertyTypes = Object.values(
       rawPropertyValues.reduce(
         (acc, pv) => {
@@ -37,21 +38,28 @@ export async function GET() {
     );
 
     return NextResponse.json(propertyTypes);
-  } catch (error) {
-    console.error("PropertyValue API hatası:", error);
+  } catch (err: any) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
+    }
+    console.error("PropertyValue API hatası:", err);
     return NextResponse.json(
       { error: "PropertyValues alınamadı" },
       { status: 500 }
     );
   }
 }
+
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { name } = body; // values: string[]
-  if (!name) {
-    return NextResponse.json({ error: "Ad bilgisi gerekli" }, { status: 400 });
-  }
   try {
+    await requireAdmin();
+
+    const body = await req.json();
+    const { name } = body;
+    if (!name) {
+      return NextResponse.json({ error: "Ad bilgisi gerekli" }, { status: 400 });
+    }
+
     const type = await db.propertyType.create({
       data: {
         name,
@@ -59,7 +67,10 @@ export async function POST(req: NextRequest) {
       include: { values: true },
     });
     return NextResponse.json(type);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (err: any) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
+    }
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { db } from "@/app/(marketing)/lib/db";
+import { requireAdmin, AdminAuthError } from "@/app/(marketing)/lib/adminAuth";
 
 export async function GET() {
   try {
+    await requireAdmin();
+
     // 1. Temel Sayımlar ve Toplam Ciro
     const [
       totalProducts,
@@ -49,6 +52,9 @@ export async function GET() {
       { status: 200 }
     );
   } catch (err: any) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
+    }
     console.error("Admin stats error:", err);
     return NextResponse.json(
       { error: "İstatistikler yüklenirken hata oluştu." },

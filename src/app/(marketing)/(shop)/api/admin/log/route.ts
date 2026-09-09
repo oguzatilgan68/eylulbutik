@@ -1,8 +1,11 @@
 import { db } from "@/app/(marketing)/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin, AdminAuthError } from "@/app/(marketing)/lib/adminAuth";
 
 export async function GET(req: NextRequest) {
   try {
+    await requireAdmin();
+
     const { searchParams } = new URL(req.url);
 
     const level = searchParams.get("level"); // info | warn | error
@@ -17,7 +20,7 @@ export async function GET(req: NextRequest) {
       where.OR = [
         { message: { contains: query, mode: "insensitive" } },
         { stack: { contains: query, mode: "insensitive" } },
-        { meta: { path: ["page"], string_contains: query } }, // page URL search
+        { meta: { path: ["page"], string_contains: query } },
       ];
     }
 
@@ -34,7 +37,10 @@ export async function GET(req: NextRequest) {
       logs,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
-  } catch (err) {
+  } catch (err: any) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ ok: false, error: err.message }, { status: err.statusCode });
+    }
     console.error("🛑 Log list API hatası:", err);
     return NextResponse.json(
       { ok: false, error: "Loglar alınamadı" },
@@ -45,9 +51,10 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAdmin();
+
     const { message, level, status, stack, meta, createdAt } = await req.json();
 
-    // IP adresini server’dan yakala
     const ip =
       req.headers.get("x-forwarded-for") ||
       req.headers.get("x-real-ip") ||
@@ -65,7 +72,10 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ ok: true });
-  } catch (err) {
+  } catch (err: any) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ ok: false, error: err.message }, { status: err.statusCode });
+    }
     console.error("🛑 Log API hatası:", err);
     return NextResponse.json(
       { ok: false, error: "Log kaydedilemedi" },
@@ -74,9 +84,10 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// 🗑️ Tekli veya çoklu log silme fonksiyonu
 export async function DELETE(req: NextRequest) {
   try {
+    await requireAdmin();
+
     const { ids } = await req.json();
 
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
@@ -93,7 +104,10 @@ export async function DELETE(req: NextRequest) {
     });
 
     return NextResponse.json({ ok: true, message: "Loglar başarıyla silindi" });
-  } catch (err) {
+  } catch (err: any) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ ok: false, error: err.message }, { status: err.statusCode });
+    }
     console.error("🛑 Log silme API hatası:", err);
     return NextResponse.json(
       { ok: false, error: "Loglar silinemedi" },

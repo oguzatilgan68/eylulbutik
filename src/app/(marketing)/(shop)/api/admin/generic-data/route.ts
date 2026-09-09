@@ -1,15 +1,20 @@
 import { db } from "@/app/(marketing)/lib/db";
 import { NextResponse } from "next/server";
+import { requireAdmin, AdminAuthError } from "@/app/(marketing)/lib/adminAuth";
 
-// 🔹 TÜM GenericData kayıtlarını getir
 export async function GET() {
   try {
+    await requireAdmin();
+
     const data = await db.genericData.findMany({
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(data);
-  } catch (error) {
-    console.error("GET /generic-data error:", error);
+  } catch (err: any) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
+    }
+    console.error("GET /generic-data error:", err);
     return NextResponse.json(
       { error: "Veriler alınırken bir hata oluştu." },
       { status: 500 }
@@ -20,13 +25,18 @@ export async function GET() {
 // 🔹 Yeni GenericData oluştur
 export async function POST(req: Request) {
   try {
+    await requireAdmin();
+
     const body = await req.json();
     const newData = await db.genericData.create({
       data: body,
     });
     return NextResponse.json(newData);
-  } catch (error) {
-    console.error("POST /generic-data error:", error);
+  } catch (err: any) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
+    }
+    console.error("POST /generic-data error:", err);
     return NextResponse.json(
       { error: "Yeni veri oluşturulurken bir hata oluştu." },
       { status: 500 }
@@ -37,6 +47,8 @@ export async function POST(req: Request) {
 // 🔹 Güncelle (ID zorunlu)
 export async function PATCH(req: Request) {
   try {
+    await requireAdmin();
+
     const body = await req.json();
     const { id, ...updateData } = body;
 
@@ -50,8 +62,11 @@ export async function PATCH(req: Request) {
     });
 
     return NextResponse.json(updated);
-  } catch (error) {
-    console.error("PATCH /generic-data error:", error);
+  } catch (err: any) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
+    }
+    console.error("PATCH /generic-data error:", err);
     return NextResponse.json(
       { error: "Veri güncellenirken bir hata oluştu." },
       { status: 500 }
@@ -62,6 +77,8 @@ export async function PATCH(req: Request) {
 // 🔹 Sil (ID zorunlu)
 export async function DELETE(req: Request) {
   try {
+    await requireAdmin();
+
     const { id } = await req.json();
 
     if (!id) {
@@ -70,8 +87,11 @@ export async function DELETE(req: Request) {
 
     await db.genericData.delete({ where: { id } });
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("DELETE /generic-data error:", error);
+  } catch (err: any) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
+    }
+    console.error("DELETE /generic-data error:", err);
     return NextResponse.json(
       { error: "Veri silinirken bir hata oluştu." },
       { status: 500 }

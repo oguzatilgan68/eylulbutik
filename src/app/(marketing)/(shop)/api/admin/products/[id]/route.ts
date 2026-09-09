@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/app/(marketing)/lib/db";
+import { requireAdmin, AdminAuthError } from "@/app/(marketing)/lib/adminAuth";
 
 export interface ProductUpdateBody {
   name?: string;
@@ -24,8 +25,6 @@ export interface ProductUpdateBody {
   }[];
   modelInfoId?: string;
   modelSize?: string;
-
-  // 🔹 Yeni alanlar
   seoTitle?: string;
   seoKeywords?: string[] | string;
   changeable?: boolean;
@@ -36,8 +35,10 @@ export async function GET(
   req: NextRequest,
   props: { params: Promise<{ id: string }> }
 ) {
-  const params = await props.params;
   try {
+    await requireAdmin();
+
+    const params = await props.params;
     const product = await db.product.findUnique({
       where: { id: params.id },
       include: {
@@ -59,7 +60,10 @@ export async function GET(
       return NextResponse.json({ error: "Ürün bulunamadı" }, { status: 404 });
 
     return NextResponse.json(product);
-  } catch (err) {
+  } catch (err: any) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
+    }
     console.error(err);
     return NextResponse.json({ error: "Ürün alınamadı" }, { status: 500 });
   }
@@ -70,11 +74,16 @@ export async function DELETE(
   req: Request,
   props: { params: Promise<{ id: string }> }
 ) {
-  const params = await props.params;
   try {
+    await requireAdmin();
+
+    const params = await props.params;
     await db.product.delete({ where: { id: params.id } });
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof AdminAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
     console.error("DELETE /api/admin/products/[id] error:", error);
     return NextResponse.json(
       { error: "Ürün silinirken hata oluştu" },
@@ -88,8 +97,10 @@ export async function PATCH(
   req: NextRequest,
   props: { params: Promise<{ id: string }> }
 ) {
-  const params = await props.params;
   try {
+    await requireAdmin();
+
+    const params = await props.params;
     const productId = params.id;
     const data: ProductUpdateBody = await req.json();
 
@@ -114,7 +125,6 @@ export async function PATCH(
           modelInfoId: data.modelInfoId || undefined,
           modelSize: data.modelSize || undefined,
 
-          // 🔹 Yeni alanlar
           seoTitle: data.seoTitle || undefined,
           seoKeywords: Array.isArray(data.seoKeywords)
             ? data.seoKeywords
@@ -192,7 +202,10 @@ export async function PATCH(
     });
 
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch (err: any) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
+    }
     console.error("Product update error:", err);
     return NextResponse.json(
       { error: "Ürün güncellenemedi." },

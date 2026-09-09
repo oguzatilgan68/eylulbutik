@@ -1,9 +1,12 @@
 import { db } from "@/app/(marketing)/lib/db";
 import { NextResponse } from "next/server";
-
+import { requireAdmin, AdminAuthError } from "@/app/(marketing)/lib/adminAuth";
 
 export async function GET(req: Request) {
   try {
+    // 1. Admin yetkisini ve oturumu kontrol et
+    await requireAdmin();
+
     const url = new URL(req.url);
     const page = parseInt(url.searchParams.get("page") || "1", 10);
     const limit = parseInt(url.searchParams.get("limit") || "10", 10);
@@ -46,8 +49,16 @@ export async function GET(req: Request) {
       categories: formattedCategories,
       totalPages,
     });
-  } catch (error) {
-    console.error("Categories fetch error:", error);
+  } catch (err: any) {
+    // Eğer hata bizim tanımladığımız AdminAuthError ise, 401 veya 403 dönüyoruz
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json(
+        { error: err.message },
+        { status: err.statusCode }
+      );
+    }
+
+    console.error("Categories fetch error:", err);
     return NextResponse.json(
       { error: "Kategoriler yüklenemedi" },
       { status: 500 }

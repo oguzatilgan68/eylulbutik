@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/app/(marketing)/lib/db";
 import { z } from "zod";
+import { requireAdmin, AdminAuthError } from "@/app/(marketing)/lib/adminAuth";
 
 const actionSchema = z.object({
   action: z.enum(["APPROVE", "REJECT"]),
@@ -12,9 +13,12 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // 1. Admin yetkisini ve oturumu kontrol et
+    await requireAdmin();
+
     const { id } = await params;
     const body = await req.json();
-
+    
     const validation = actionSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
@@ -25,7 +29,7 @@ export async function PATCH(
 
     const { action, adminNote } = validation.data;
 
-    // 1. Havale bildirimini bul
+    // 2. Havale bildirimini bul
     const transfer = await db.bankTransferNotification.findUnique({
       where: { id },
       include: { order: true },
@@ -48,7 +52,7 @@ export async function PATCH(
     const newTransferStatus = action === "APPROVE" ? "APPROVED" : "REJECTED";
     const newOrderStatus = action === "APPROVE" ? "PAID" : "PENDING"; // Onaylanırsa sipariş Ödendi olur
 
-    // 2. Transaction ile güvenli güncelleme
+    // 3. Transaction ile güvenli güncelleme
     await db.$transaction(async (tx) => {
       // A. Bildirimi güncelle
       await tx.bankTransferNotification.update({
@@ -78,6 +82,14 @@ export async function PATCH(
       { status: 200 }
     );
   } catch (err: any) {
+    // Eğer hata bizim tanımladığımız AdminAuthError ise, 401 veya 403 dönüyoruz
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json(
+        { error: err.message },
+        { status: err.statusCode }
+      );
+    }
+
     console.error("Bank transfer action error:", err);
     return NextResponse.json(
       { error: "İşlem sırasında bir sunucu hatası oluştu." },

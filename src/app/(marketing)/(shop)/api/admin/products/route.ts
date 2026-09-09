@@ -1,9 +1,12 @@
 import { db } from "@/app/(marketing)/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { generateUniqueSlug } from "./generate-slug";
+import { requireAdmin, AdminAuthError } from "@/app/(marketing)/lib/adminAuth";
 
 export async function GET(req: NextRequest) {
   try {
+    await requireAdmin();
+
     const { searchParams } = new URL(req.url);
 
     const page = parseInt(searchParams.get("page") || "1");
@@ -65,7 +68,10 @@ export async function GET(req: NextRequest) {
       totalItems,
       totalPages: Math.ceil(totalItems / pageSize),
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof AdminAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
     console.error(error);
     return NextResponse.json({ error: "Bir hata oluştu." }, { status: 500 });
   }
@@ -73,6 +79,8 @@ export async function GET(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    await requireAdmin();
+
     const body = await req.json();
 
     if (!body.ids || !Array.isArray(body.ids)) {
@@ -87,7 +95,10 @@ export async function DELETE(req: NextRequest) {
     });
 
     return NextResponse.json({ ok: true });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof AdminAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
     console.error(error);
     return NextResponse.json(
       { error: "Silme işlemi başarısız." },
@@ -98,6 +109,8 @@ export async function DELETE(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAdmin();
+
     const data = await req.json();
     if (!data.name || !data.categoryId) {
       return NextResponse.json(
@@ -122,12 +135,11 @@ export async function POST(req: NextRequest) {
           ? { connect: { id: data.modelInfoId } }
           : undefined,
 
-        // 🔹 Yeni alanlar
         seoTitle: data.seoTitle || undefined,
         seoKeywords: Array.isArray(data.seoKeywords)
           ? data.seoKeywords
           : data.seoKeywords
-            ? data.seoKeywords.split(",").map((k:string) => k.trim())
+            ? data.seoKeywords.split(",").map((k: string) => k.trim())
             : [],
         changeable: data.changeable ?? true,
       },
@@ -194,7 +206,10 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, product }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof AdminAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
     console.error("Ürün oluşturma hatası:", error);
     return NextResponse.json(
       {
