@@ -2,7 +2,8 @@ import { Category } from "@/generated/prisma";
 import HomePageClient from "./components/ui/HomePageClient";
 import { Suspense } from "react";
 import Loading from "./loading";
-import { db } from "@/app/(marketing)/lib/db"; // Veya projenizdeki db dosyasının doğru yolu
+import { db } from "./lib/db";
+
 
 export default async function HomePage() {
   let categories: Category[] = [];
