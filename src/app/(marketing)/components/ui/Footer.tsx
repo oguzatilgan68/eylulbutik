@@ -39,6 +39,7 @@ export const Footer = () => {
     { name: "İade Koşulları", href: "/return-conditions" },
     { name: "Sıkça Sorulan Sorular", href: "/sss" },
     { name: "Gizlilik Politikası", href: "/privacy-policy" },
+    { name: "İletişim", href: "/contact" },
   ];
 
   const renderLinks = (links: { name: string; href: string }[]) => (
@@ -47,7 +48,7 @@ export const Footer = () => {
         <li key={link.href}>
           <Link
             href={link.href}
-            target="_blank"
+            target="_self"
             rel="noopener noreferrer"
             className={`${linkBaseClass} inline-block`}
           >
