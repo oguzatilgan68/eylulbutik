@@ -46,7 +46,7 @@ export const ProductCard = ({
         showConfirmButton: false,
       });
     } catch (err) {
-      setFavorite(!nextState); // Hata durumunda geri al
+      setFavorite(!nextState); // Hata durumunda eski haline geri al
       Swal.fire({
         icon: "error",
         title: "İşlem başarısız oldu",
@@ -63,28 +63,42 @@ export const ProductCard = ({
   const handleRemove = async () => {
     if (!onRemove || loadingRemove) return;
 
-    setLoadingRemove(true);
-    try {
-      await onRemove(product.id);
-      Swal.fire({
-        icon: "success",
-        title: "Ürün kaldırıldı",
-        toast: true,
-        position: "top-end",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-    } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "Kaldırılamadı",
-        toast: true,
-        position: "top-end",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-    } finally {
-      setLoadingRemove(false);
+    // 🛑 SweetAlert ile silme onay penceresi açıyoruz
+    const result = await Swal.fire({
+      title: "Ürünü favorilerden kaldırmak istiyor musunuz?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#e11d48",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Evet, kaldır",
+      cancelButtonText: "İptal",
+    });
+
+    // Kullanıcı "Evet, kaldır" derse işlem başlar
+    if (result.isConfirmed) {
+      setLoadingRemove(true);
+      try {
+        await onRemove(product.id);
+        Swal.fire({
+          icon: "success",
+          title: "Ürün favorilerden kaldırıldı",
+          toast: true,
+          position: "top-end",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      } catch (err) {
+        Swal.fire({
+          icon: "error",
+          title: "Kaldırılamadı",
+          toast: true,
+          position: "top-end",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      } finally {
+        setLoadingRemove(false);
+      }
     }
   };
 

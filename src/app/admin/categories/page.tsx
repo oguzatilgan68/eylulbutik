@@ -137,7 +137,7 @@ export default function AdminCategoriesPage() {
       {/* Tablo Alanı */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse min-w-[600px]">
+          <table className="w-full text-left text-sm border-collapse min-w-150">
             <thead className="bg-gray-50 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 uppercase text-[11px] font-semibold tracking-wider border-b border-gray-200 dark:border-gray-800">
               <tr>
                 <th className="px-6 py-3.5">Kategori Adı</th>

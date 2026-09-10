@@ -15,12 +15,16 @@ export async function GET(request: Request) {
     const where: any = {};
     if (q) {
       where.OR = [
-        { reason: { contains: q, mode: "insensitive" } },
         { comment: { contains: q, mode: "insensitive" } },
         { user: { email: { contains: q, mode: "insensitive" } } },
+        { user: { fullName: { contains: q, mode: "insensitive" } } },
         {
           items: {
-            some: { orderItem: { name: { contains: q, mode: "insensitive" } } },
+            some: {
+              orderItem: {
+                name: { contains: q, mode: "insensitive" },
+              },
+            },
           },
         },
       ];
@@ -31,7 +35,7 @@ export async function GET(request: Request) {
     const returns = await db.returnRequest.findMany({
       where,
       include: {
-        user: { select: { id: true, email: true, fullName: true } },
+        user: { select: { id: true, email: true, fullName: true, phone: true } },
         items: {
           include: {
             orderItem: {
@@ -79,8 +83,17 @@ export async function PATCH(request: Request) {
       where: { id },
       data: { status },
       include: {
-        user: true,
-        items: { include: { orderItem: true } },
+        user: { select: { id: true, email: true, fullName: true, phone: true } },
+        items: {
+          include: {
+            orderItem: {
+              include: {
+                product: { include: { images: true } },
+                variant: true,
+              },
+            },
+          },
+        },
         refunds: true,
       },
     });

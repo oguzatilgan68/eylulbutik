@@ -6,6 +6,7 @@ import { Category } from "@/generated/prisma";
 import Image from "next/image";
 import Swal from "sweetalert2";
 import { supabase } from "../../lib/supabase/supabaseClient";
+import { FiFolder, FiLink, FiLayers, FiUploadCloud, FiTrash2, FiSave, FiX } from "react-icons/fi";
 
 interface CategoryFormProps {
   initialData?: Category;
@@ -52,7 +53,7 @@ export const CategoryForm = ({ initialData, onSubmit }: CategoryFormProps) => {
     setProgress(0);
   };
 
-  // ☁️ Supabase upload (abort destekli)
+  // ☁️ Supabase upload
   const uploadImage = async (
     file: File,
     abortSignal?: AbortSignal
@@ -135,7 +136,7 @@ export const CategoryForm = ({ initialData, onSubmit }: CategoryFormProps) => {
         icon: "success",
         title: "Başarılı!",
         text: "Kategori başarıyla kaydedildi.",
-        confirmButtonColor: "#16a34a",
+        confirmButtonColor: "#db2777",
       });
     } catch (err) {
       console.error(err);
@@ -159,44 +160,55 @@ export const CategoryForm = ({ initialData, onSubmit }: CategoryFormProps) => {
     }
   };
 
+  const inputClass =
+    "w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all shadow-sm";
+
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 bg-white dark:bg-gray-900 p-4 rounded-lg shadow"
+      className="space-y-6 bg-white dark:bg-gray-900 p-6 sm:p-10 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm"
     >
       {/* Kategori Adı */}
-      <div>
-        <label className="block mb-1 font-medium">Kategori Adı</label>
+      <div className="space-y-1.5">
+        <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider items-center gap-1.5">
+          <FiFolder size={14} className="text-pink-600" /> Kategori Adı
+        </label>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full border px-3 py-2 rounded dark:bg-gray-800 dark:text-gray-100"
+          placeholder="Örn: Kadın Giyim"
+          className={inputClass}
           required
         />
       </div>
 
       {/* Slug */}
-      <div>
-        <label className="block mb-1 font-medium">Slug</label>
+      <div className="space-y-1.5">
+        <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+          <FiLink size={14} className="text-pink-600" /> Slug (URL)
+        </label>
         <input
           type="text"
           value={slug}
           onChange={(e) => setSlug(e.target.value)}
-          className="w-full border px-3 py-2 rounded dark:bg-gray-800 dark:text-gray-100"
+          placeholder="Örn: kadin-giyim"
+          className={inputClass}
           required
         />
       </div>
 
       {/* Üst Kategori */}
-      <div>
-        <label className="block mb-1 font-medium">Üst Kategori</label>
+      <div className="space-y-1.5">
+        <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider items-center gap-1.5">
+          <FiLayers size={14} className="text-pink-600" /> Üst Kategori
+        </label>
         <select
           value={parentId}
           onChange={(e) => setParentId(e.target.value)}
-          className="w-full border px-3 py-2 rounded dark:bg-gray-800 dark:text-gray-100"
+          className={inputClass}
         >
-          <option value="">Ana Kategori</option>
+          <option value="">Ana Kategori (Yok)</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -205,16 +217,18 @@ export const CategoryForm = ({ initialData, onSubmit }: CategoryFormProps) => {
         </select>
       </div>
 
-      {/* Görsel Yükleme */}
-      <div>
-        <label className="block mb-1 font-medium">Kategori Görseli</label>
-        {imageUrl && (
-          <div className="relative w-40 h-40 mb-2">
+      {/* Görsel Yükleme Alanı */}
+      <div className="space-y-2">
+        <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+          Kategori Görseli
+        </label>
+        {imageUrl ? (
+          <div className="relative w-40 h-40 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 shadow-sm group">
             {imageUrl.startsWith("blob:") ? (
               <img
                 src={imageUrl}
                 alt="Kategori"
-                className="w-full h-full object-cover rounded-lg border"
+                className="w-full h-full object-cover"
               />
             ) : (
               <Image
@@ -223,50 +237,69 @@ export const CategoryForm = ({ initialData, onSubmit }: CategoryFormProps) => {
                 width={160}
                 height={160}
                 unoptimized
-                className="w-full h-full object-cover rounded-lg border"
+                className="w-full h-full object-cover"
               />
             )}
             <button
               type="button"
               onClick={removeImage}
-              className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+              className="absolute top-2 right-2 bg-rose-600 text-white rounded-xl w-7 h-7 flex items-center justify-center shadow-md hover:bg-rose-700 transition cursor-pointer"
             >
-              ×
+              <FiX size={14} />
             </button>
           </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-pink-500 dark:hover:border-pink-500 p-6 rounded-2xl bg-gray-50 dark:bg-gray-800/40 transition-colors group cursor-pointer">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+              id="categoryImage"
+            />
+            <label
+              htmlFor="categoryImage"
+              className="flex flex-col items-center cursor-pointer space-y-2"
+            >
+              <div className="p-3 rounded-2xl bg-white dark:bg-gray-800 shadow-sm text-pink-600 dark:text-pink-400 group-hover:scale-110 transition-transform">
+                <FiUploadCloud size={22} />
+              </div>
+              <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                Görsel seçmek için tıklayın
+              </span>
+              <span className="text-[11px] text-gray-400">PNG, JPG, WEBP</span>
+            </label>
+          </div>
         )}
-        <input type="file" accept="image/*" onChange={handleFileChange} />
       </div>
 
       {/* Yükleme Barı */}
       {uploading && (
-        <div className="w-full bg-gray-200 rounded h-2 mb-2">
+        <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2.5 overflow-hidden">
           <div
-            className="bg-blue-600 h-2 rounded"
+            className="bg-pink-600 h-2.5 rounded-full transition-all duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>
       )}
 
       {/* Butonlar */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
         <button
           type="submit"
           disabled={uploading}
-          className={`px-4 py-2 rounded text-white ${
-            uploading
-              ? "bg-blue-400 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700"
+          className={`flex-1 inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl bg-pink-600 hover:bg-pink-700 text-white font-medium text-sm shadow-md shadow-pink-500/20 transition-all cursor-pointer ${
+            uploading ? "opacity-50 cursor-not-allowed" : ""
           }`}
         >
-          {uploading ? "Yükleniyor..." : "Kaydet"}
+          <FiSave size={16} /> {uploading ? "Yükleniyor..." : "Kaydet"}
         </button>
 
         {uploading && (
           <button
             type="button"
             onClick={cancelUpload}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            className="px-5 py-3.5 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-medium text-sm rounded-2xl hover:bg-rose-100 border border-rose-200/60 transition cursor-pointer"
           >
             İptal Et
           </button>

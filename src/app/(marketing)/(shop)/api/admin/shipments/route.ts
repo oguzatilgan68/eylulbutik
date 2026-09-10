@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
       where.OR = [
         { orderId: { contains: q, mode: "insensitive" } },
         { trackingNo: { contains: q, mode: "insensitive" } },
-        { raw: { path: ["note"], equals: q } },
+        { order: { orderNo: { contains: q, mode: "insensitive" } } }, // Sipariş numarası ile de arama yapabilmesi için
       ];
     }
     if (provider) where.provider = provider;
@@ -28,6 +28,17 @@ export async function GET(req: NextRequest) {
     const [data, total] = await Promise.all([
       db.shipment.findMany({
         where,
+        include: {
+          order: {
+            select: {
+              id: true,
+              orderNo: true,
+              createdAt: true,
+              total: true,
+              status: true,
+            },
+          },
+        },
         orderBy: { createdAt: "desc" },
         skip: (page - 1) * perPage,
         take: perPage,
@@ -44,7 +55,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
-
 export async function POST(req: NextRequest) {
   try {
     await requireAdmin();

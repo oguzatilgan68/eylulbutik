@@ -53,7 +53,7 @@ model Address {
   city          String
   district      String
   neighbourhood String
-  address1      String   // sokak/cadde/bina
+  address1      String   
   zip           String?
   isDefault     Boolean  @default(false)
   createdAt     DateTime @default(now())

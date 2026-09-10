@@ -40,7 +40,7 @@ const ContactPage = () => {
       href: `https://wa.me/${genericData.phone.replace(/\D/g, "")}`,
       label: `WhatsApp: ${genericData.phone}`,
       icon: <FaWhatsapp className="text-emerald-600 dark:text-emerald-500 shrink-0" size={18} />,
-      text: `WhatsApp Destek (${genericData.phone})`,
+      text: `WhatsApp Destek`,
     },
     genericData?.address && {
       href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(genericData.address)}`,
@@ -140,7 +140,7 @@ const ContactPage = () => {
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
             Bize Mesaj Gönderin
           </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+          <p className="text-sm text-gray-300    dark:text-gray-400 mb-6">
             Formu doldurarak en kısa sürede size geri dönüş yapmamızı sağlayabilirsiniz.
           </p>
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import Image from "next/image";
+import Link from "next/link";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
 import { supabase } from "@/app/(marketing)/lib/supabase/supabaseClient";
@@ -18,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ProductMultiSelect } from "@/app/(marketing)/components/admin/ProductMultiSelect";
+import { FiSliders, FiArrowLeft, FiUploadCloud, FiTrash2, FiSave, FiLink, FiType, FiLayers, FiList } from "react-icons/fi";
 
 type Product = {
   id: string;
@@ -161,121 +163,177 @@ export default function EditSliderPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-300">
-        Yükleniyor...
+      <div className="flex items-center justify-center min-h-[60vh] text-gray-400 text-sm">
+        <div className="w-6 h-6 border-2 border-pink-600 border-t-transparent rounded-full animate-spin mr-2" />
+        <span>Slider yükleniyor...</span>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6 bg-white dark:bg-gray-900 shadow-md rounded-2xl mt-8">
-      <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">
-        Slider Düzenle
-      </h1>
+    <main className="max-w-3xl mx-auto px-4 py-10">
+      {/* Üst Geri Dön Navigasyonu */}
+      <div className="mb-6">
+        <Link
+          href="/admin/sliders"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
+        >
+          <FiArrowLeft size={14} /> Slider Listesine Dön
+        </Link>
+      </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Görsel */}
-        <div>
-          <Label className="dark:text-gray-200">Slider Görseli</Label>
-          {imageUrl ? (
-            <div className="relative mt-3">
-              <Image
-                src={imageUrl}
-                alt="Slider image"
-                width={600}
-                height={300}
-                className="rounded-xl border dark:border-gray-700 object-cover w-full h-48"
-              />
-              <Button
-                type="button"
-                onClick={handleDeleteImage}
-                variant="destructive"
-                className="absolute top-2 right-2 text-xs"
-              >
-                Görseli Sil
-              </Button>
-            </div>
-          ) : (
-            <div className="mt-3 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-700 p-6 rounded-xl">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleUpload}
-                disabled={uploading}
-                className="hidden"
-                id="sliderImage"
-              />
-              <Label
-                htmlFor="sliderImage"
-                className="cursor-pointer text-sm text-gray-700 dark:text-gray-300 hover:underline"
-              >
-                {uploading ? "Yükleniyor..." : "Görsel yükle"}
+      <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 sm:p-10 border border-gray-100 dark:border-gray-800 shadow-sm space-y-8">
+        
+        {/* Başlık ve İkon */}
+        <div className="flex items-center gap-4 pb-6 border-b border-gray-100 dark:border-gray-800">
+          <div className="p-3 bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 rounded-2xl shadow-inner">
+            <FiSliders size={24} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+              Slider Düzenle
+            </h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              Ana sayfa slider alanını, görsellerini ve yönlendirmelerini güncelleyin.
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          
+          {/* Görsel Alanı */}
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+              Slider Görseli
+            </Label>
+            {imageUrl ? (
+              <div className="relative mt-2 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 group">
+                <Image
+                  src={imageUrl}
+                  alt="Slider image"
+                  width={800}
+                  height={400}
+                  className="object-cover w-full h-56 sm:h-64 transition-transform duration-500 group-hover:scale-102"
+                />
+                <button
+                  type="button"
+                  onClick={handleDeleteImage}
+                  className="absolute top-3 right-3 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-600 text-white text-xs font-medium shadow-md hover:bg-rose-700 transition cursor-pointer"
+                >
+                  <FiTrash2 size={14} /> Görseli Sil
+                </button>
+              </div>
+            ) : (
+              <div className="mt-2 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-pink-500 dark:hover:border-pink-500 p-8 rounded-2xl bg-gray-50 dark:bg-gray-800/40 transition-colors group cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleUpload}
+                  disabled={uploading}
+                  className="hidden"
+                  id="sliderImage"
+                />
+                <label
+                  htmlFor="sliderImage"
+                  className="flex flex-col items-center cursor-pointer space-y-2"
+                >
+                  <div className="p-3 rounded-2xl bg-white dark:bg-gray-800 shadow-sm text-pink-600 dark:text-pink-400 group-hover:scale-110 transition-transform">
+                    <FiUploadCloud size={24} />
+                  </div>
+                  <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                    {uploading ? "Yükleniyor..." : "Görsel yüklemek için tıklayın"}
+                  </span>
+                  <span className="text-xs text-gray-400">PNG, JPG, WEBP (Önerilen: 1920x800px)</span>
+                </label>
+              </div>
+            )}
+          </div>
+
+          {/* Grid Alanı: Başlık ve Alt Başlık */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                <FiType size={14} className="text-pink-600" /> Başlık
               </Label>
+              <Input {...register("title")} placeholder="Örn: Yeni Sezon İndirimi" className="rounded-2xl dark:bg-gray-800 py-3" />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                <FiLayers size={14} className="text-pink-600" /> Alt Başlık
+              </Label>
+              <Input {...register("subtitle")} placeholder="Örn: %50'ye varan fırsatlar" className="rounded-2xl dark:bg-gray-800 py-3" />
+            </div>
+          </div>
+
+          {/* Grid Alanı: Bağlantı ve Sıralama */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                <FiLink size={14} className="text-pink-600" /> Bağlantı (URL)
+              </Label>
+              <Input {...register("link")} placeholder="Örn: /products/yeni-sezon" className="rounded-2xl dark:bg-gray-800 py-3" />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                <FiList size={14} className="text-pink-600" /> Sıralama
+              </Label>
+              <Input
+                type="number"
+                {...register("order", { valueAsNumber: true })}
+                placeholder="0"
+                className="rounded-2xl dark:bg-gray-800 py-3"
+              />
+            </div>
+          </div>
+
+          {/* Slider Tipi */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+              Slider Tipi
+            </Label>
+            <Select
+              value={selectedType}
+              onValueChange={(value) => setValue("type", value as any)}
+            >
+              <SelectTrigger className="rounded-2xl dark:bg-gray-800 py-3">
+                <SelectValue placeholder="Tip seçin" />
+              </SelectTrigger>
+              <SelectContent className="rounded-2xl">
+                <SelectItem value="PROMOTION">Tanıtım</SelectItem>
+                <SelectItem value="PRODUCT">Ürün</SelectItem>
+                <SelectItem value="CATEGORY">Kategori</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Çoklu Ürün Seçimi */}
+          {selectedType === "PRODUCT" && (
+            <div className="space-y-1.5 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800">
+              <Label className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider block mb-2">
+                Slider'da Gösterilecek Ürünler
+              </Label>
+              <ProductMultiSelect
+                products={products}
+                value={selectedProducts || []}
+                onChange={(newValue) => setValue("productIds", newValue)}
+              />
             </div>
           )}
-        </div>
 
-        {/* Başlıklar */}
-        <div>
-          <Label className="dark:text-gray-200">Başlık</Label>
-          <Input {...register("title")} className="dark:bg-gray-800" />
-        </div>
-
-        <div>
-          <Label className="dark:text-gray-200">Alt Başlık</Label>
-          <Input {...register("subtitle")} className="dark:bg-gray-800" />
-        </div>
-
-        <div>
-          <Label className="dark:text-gray-200">Bağlantı (URL)</Label>
-          <Input {...register("link")} className="dark:bg-gray-800" />
-        </div>
-
-        {/* Tip */}
-        <div>
-          <Label className="dark:text-gray-200">Slider Tipi</Label>
-          <Select
-            value={selectedType}
-            onValueChange={(value) => setValue("type", value as any)}
-          >
-            <SelectTrigger className="dark:bg-gray-800">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="PROMOTION">Tanıtım</SelectItem>
-              <SelectItem value="PRODUCT">Ürün</SelectItem>
-              <SelectItem value="CATEGORY">Kategori</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Çoklu ürün seçimi */}
-        {selectedType === "PRODUCT" && (
-          <div>
-            <Label className="dark:text-gray-200">Ürünleri Seç</Label>
-            <ProductMultiSelect
-              products={products}
-              value={selectedProducts || []}
-              onChange={(newValue) => setValue("productIds", newValue)}
-            />
+          {/* Kaydet Butonu */}
+          <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-end">
+            <Button
+              type="submit"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-pink-600 hover:bg-pink-700 text-white font-medium text-sm shadow-md shadow-pink-500/20 transition-all cursor-pointer"
+            >
+              <FiSave size={16} /> Değişiklikleri Kaydet
+            </Button>
           </div>
-        )}
 
-        <div>
-          <Label className="dark:text-gray-200">Sıralama</Label>
-          <Input
-            type="number"
-            {...register("order", { valueAsNumber: true })}
-            className="dark:bg-gray-800"
-          />
-        </div>
-
-        <div className="flex justify-end">
-          <Button type="submit" className="mt-4">
-            Güncelle
-          </Button>
-        </div>
-      </form>
-    </div>
+        </form>
+      </div>
+    </main>
   );
 }

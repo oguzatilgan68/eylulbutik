@@ -95,7 +95,7 @@ export default function OrderDetailClient({
     );
   }
 
-  // Sipariş Durumu Etiketi (Müşteri için salt okunur rozet)
+  // Sipariş Durumu Etiketi
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; class: string }> = {
       PAID: {
@@ -131,6 +131,7 @@ export default function OrderDetailClient({
       (sum: number, item: any) => sum + Number(item.unitPrice) * item.qty,
       0
     ) || 0;
+  
   const grandTotal =
     order.total !== undefined && order.total !== null
       ? Number(order.total)
@@ -166,7 +167,6 @@ export default function OrderDetailClient({
           Sipariş Detayı: <span className="text-pink-600">#{order.orderNo}</span>
         </h1>
 
-        {/* Admin ise Select Menü, Müşteri ise Salt Okunur Rozet */}
         {isAdmin ? (
           <div className="flex items-center gap-2">
             <label
@@ -211,9 +211,9 @@ export default function OrderDetailClient({
             Alıcı Bilgisi
           </span>
           <p className="font-semibold text-gray-800 dark:text-gray-200 text-sm mt-0.5">
-            {order.user?.name || order.address?.fullName || "Bilinmiyor"}
+            {order.user?.name || order.addressFullName || "Misafir Kullanıcı"}
           </p>
-          <p className="text-xs text-gray-400">{order.user?.email}</p>
+          <p className="text-xs text-gray-400">{order.user?.email || order.phone || "-"}</p>
         </div>
         <div className="sm:text-right flex flex-col justify-center">
           <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold">
@@ -222,31 +222,30 @@ export default function OrderDetailClient({
           <p className="text-xl font-extrabold text-pink-600 dark:text-pink-400 mt-0.5">
             {grandTotal.toLocaleString("tr-TR", {
               style: "currency",
-              currency: "TRY",
+              currency: order.currency || "TRY",
             })}
           </p>
         </div>
       </section>
 
-      {/* Teslimat Adresi */}
-      {order.address && (
-        <section className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-2">
-          <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2 border-b border-gray-100 dark:border-gray-800 pb-3">
-            <FiMapPin className="text-pink-600" /> Teslimat Adresi
-          </h2>
-          <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1 pt-1">
-            <p className="font-semibold text-gray-900 dark:text-white">
-              {order.address.fullName}
-            </p>
-            <p>Tel: {order.address.phone}</p>
-            <p>{order.address.address1}</p>
-            <p>
-              {order.address.district} / {order.address.city}{" "}
-              {order.address.zip ? `- ${order.address.zip}` : ""}
-            </p>
-          </div>
-        </section>
-      )}
+      {/* Teslimat Adresi (Gelen JSON Yapısına Uyarlanmıştır) */}
+      <section className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-2">
+        <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2 border-b border-gray-100 dark:border-gray-800 pb-3">
+          <FiMapPin className="text-pink-600" /> Teslimat Adresi ({order.addressTitle || "Adres"})
+        </h2>
+        <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1 pt-1">
+          <p className="font-semibold text-gray-900 dark:text-white">
+            {order.addressFullName}
+          </p>
+          <p>Tel: {order.addressPhone}</p>
+          <p>{order.addressDetail}</p>
+          <p>
+            {order.addressNeighbourhood ? `${order.addressNeighbourhood} Mah. / ` : ""}
+            {order.addressDistrict} / {order.addressCity}{" "}
+            {order.addressZip ? `- ${order.addressZip}` : ""}
+          </p>
+        </div>
+      </section>
 
       {/* Ürünler Listesi */}
       <section className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4">
@@ -274,7 +273,7 @@ export default function OrderDetailClient({
                     >
                       <Image
                         src={productImage}
-                        alt={item.product?.name || "Ürün resmi"}
+                        alt={item.product?.name || item.name || "Ürün resmi"}
                         fill
                         sizes="64px"
                         className="object-cover group-hover:scale-105 transition-transform"
@@ -290,7 +289,7 @@ export default function OrderDetailClient({
                       href={targetUrl}
                       className="font-semibold text-gray-900 dark:text-white hover:text-pink-600 transition-colors inline-flex items-center gap-1.5"
                     >
-                      {item.product?.name || "Silinmiş Ürün"}
+                      {item.product?.name || item.name || "Silinmiş Ürün"}
                       <FiExternalLink size={13} className="text-gray-400" />
                     </Link>
                     {item.variant && (
@@ -313,14 +312,14 @@ export default function OrderDetailClient({
                     <p className="text-xs text-gray-400">
                       {Number(item.unitPrice).toLocaleString("tr-TR", {
                         style: "currency",
-                        currency: "TRY",
+                        currency: order.currency || "TRY",
                       })}{" "}
                       / adet
                     </p>
                     <p className="font-bold text-gray-900 dark:text-white text-base">
                       {(Number(item.unitPrice) * item.qty).toLocaleString("tr-TR", {
                         style: "currency",
-                        currency: "TRY",
+                        currency: order.currency || "TRY",
                       })}
                     </p>
                   </div>
@@ -338,20 +337,22 @@ export default function OrderDetailClient({
               <span>
                 {itemsSubtotal.toLocaleString("tr-TR", {
                   style: "currency",
-                  currency: "TRY",
+                  currency: order.currency || "TRY",
                 })}
               </span>
             </div>
             <div className="flex justify-between text-gray-500 dark:text-gray-400">
               <span>Kargo:</span>
-              <span className="text-emerald-600 font-medium">Ücretsiz</span>
+              <span className="text-emerald-600 font-medium">
+                {Number(order.shippingTotal) === 0 ? "Ücretsiz" : `${order.shippingTotal} ₺`}
+              </span>
             </div>
             <div className="flex justify-between items-baseline pt-2 border-t border-gray-100 dark:border-gray-800 text-base font-bold text-gray-900 dark:text-white">
               <span>Genel Toplam:</span>
               <span className="text-xl text-pink-600 dark:text-pink-400">
                 {grandTotal.toLocaleString("tr-TR", {
                   style: "currency",
-                  currency: "TRY",
+                  currency: order.currency || "TRY",
                 })}
               </span>
             </div>
@@ -368,7 +369,6 @@ export default function OrderDetailClient({
             <FiTruck className="text-pink-600" /> Kargo Bilgileri
           </h2>
 
-          {/* 🎯 SADECE ADMİN İÇİN FORM, MÜŞTERİ İÇİN BİLGİ KARTI */}
           {isAdmin ? (
             <form
               onSubmit={(e) => {
@@ -424,7 +424,6 @@ export default function OrderDetailClient({
               </button>
             </form>
           ) : (
-            // Müşteri Görünümü (Salt Okunur)
             <div className="space-y-3 text-sm">
               {order.shipment && order.shipment.trackingNo ? (
                 <>
@@ -440,16 +439,6 @@ export default function OrderDetailClient({
                       {order.shipment.trackingNo}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center py-1">
-                    <span className="text-gray-500 dark:text-gray-400">Gönderi Durumu:</span>
-                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                      {order.shipment.status === "DELIVERED"
-                        ? "Teslim Edildi"
-                        : order.shipment.status === "SHIPPED"
-                        ? "Kargoya Verildi"
-                        : "Hazırlanıyor"}
-                    </span>
-                  </div>
                 </>
               ) : (
                 <div className="py-6 text-center text-gray-400 text-xs space-y-1">
@@ -463,38 +452,34 @@ export default function OrderDetailClient({
         </section>
 
         {/* Ödeme Kartı */}
-        {order.payment && (
-          <section className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-3">
-            <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2 border-b border-gray-100 dark:border-gray-800 pb-3">
-              <FiCreditCard className="text-pink-600" /> Ödeme Özeti
-            </h2>
-            <div className="text-sm space-y-2 pt-1">
-              <p className="flex justify-between">
-                <span className="text-gray-500">Durum:</span>
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                  {order.payment.status === "SUCCEEDED"
-                    ? "Başarılı Ödeme"
-                    : order.payment.status}
-                </span>
-              </p>
-              <p className="flex justify-between">
-                <span className="text-gray-500">İşlem Kodu:</span>
-                <span className="font-mono text-xs text-gray-700 dark:text-gray-300">
-                  {order.payment.txId || "-"}
-                </span>
-              </p>
-              <p className="flex justify-between pt-1 border-t border-gray-100 dark:border-gray-800">
-                <span className="text-gray-500">Tahsil Edilen Tutar:</span>
-                <span className="font-bold text-gray-900 dark:text-white">
-                  {grandTotal.toLocaleString("tr-TR", {
-                    style: "currency",
-                    currency: "TRY",
-                  })}
-                </span>
-              </p>
-            </div>
-          </section>
-        )}
+        <section className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-3">
+          <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2 border-b border-gray-100 dark:border-gray-800 pb-3">
+            <FiCreditCard className="text-pink-600" /> Ödeme Özeti
+          </h2>
+          <div className="text-sm space-y-2 pt-1">
+            <p className="flex justify-between">
+              <span className="text-gray-500">Durum:</span>
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                {order.payment ? order.payment.status : "Beklemede / PENDING"}
+              </span>
+            </p>
+            <p className="flex justify-between">
+              <span className="text-gray-500">İşlem Kodu:</span>
+              <span className="font-mono text-xs text-gray-700 dark:text-gray-300">
+                {order.payment?.txId || "-"}
+              </span>
+            </p>
+            <p className="flex justify-between pt-1 border-t border-gray-100 dark:border-gray-800">
+              <span className="text-gray-500">Tahsil Edilen Tutar:</span>
+              <span className="font-bold text-gray-900 dark:text-white">
+                {grandTotal.toLocaleString("tr-TR", {
+                  style: "currency",
+                  currency: order.currency || "TRY",
+                })}
+              </span>
+            </p>
+          </div>
+        </section>
       </div>
     </div>
   );

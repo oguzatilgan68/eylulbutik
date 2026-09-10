@@ -15,23 +15,23 @@ export default function WishlistGrid({
   const [products, setProducts] = useState(initialProducts);
 
   const handleRemove = async (productId: string) => {
-    try {
-      const res = await fetch("/api/wishlist/remove", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, productId }),
-      });
-      if (!res.ok) throw new Error("Kaldırılamadı");
-      setProducts((prev) => prev.filter((p) => p.id !== productId));
-    } catch (err) {
-      console.error(err);
-      throw err; // ProductCard içindeki catch bloğunun hata yakalaması için
-    }
+    // ProductCard kendi içinde zaten Swal ile onay alıp başarı mesajı gösterdiği için 
+    // burada sadece API isteğini atıp state'i güncelliyoruz.
+    const res = await fetch("/api/wishlist/remove", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, productId }),
+    });
+
+    if (!res.ok) throw new Error("Kaldırılamadı");
+
+    // Listeden ürünü anında düşürüyoruz
+    setProducts((prev) => prev.filter((p) => p.id !== productId));
   };
 
   if (!products || products.length === 0) {
     return (
-      <div className="min-h-[400px] flex flex-col items-center justify-center text-center p-8 bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4 max-w-xl mx-auto my-12">
+      <div className="min-h-100 flex flex-col items-center justify-center text-center p-8 bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4 max-w-xl mx-auto my-12">
         <div className="w-16 h-16 rounded-full bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 flex items-center justify-center shadow-inner">
           <Heart size={28} className="fill-pink-500/20" />
         </div>
@@ -44,7 +44,7 @@ export default function WishlistGrid({
           </p>
         </div>
         <Link
-          href="/products"
+          href="/"
           className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-pink-600 hover:bg-pink-700 text-white font-medium text-sm shadow-md shadow-pink-500/20 transition-all mt-2"
         >
           <ShoppingBag size={16} /> Koleksiyonu Keşfet

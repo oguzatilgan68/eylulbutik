@@ -1,4 +1,4 @@
-import { getToken } from "next-auth/jwt"
+import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import getRateLimitMiddlewares from "next-rate-limit";
 import { log } from "./app/(marketing)/lib/logger";
@@ -18,12 +18,12 @@ export async function proxy(req: NextRequest) {
   // ------------------------
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");
-response.headers.set(
+  response.headers.set(
     "Content-Security-Policy",
     "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com https://www.gstatic.com; connect-src 'self' https://www.google.com https://zbqvmfyxhpuihkgvmxhi.supabase.co https://www.gstatic.com; frame-src https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co; font-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self';"
   );
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  response.headers.set("Access-Control-Allow-Origin", "https://localhost:3000");
+  response.headers.set("Access-Control-Allow-Origin", "http://localhost:3000"); // https yerine http local için daha güvenlidir
   response.headers.set(
     "Access-Control-Allow-Methods",
     "GET, POST, PUT, DELETE, OPTIONS"
@@ -50,31 +50,27 @@ response.headers.set(
   });
 
   // ------------------------
-  // 👤 /account Yönlendirme Kontrolü (NextAuth ile)
+  // 👤 /account Yönlendirme Kontrolü
   // ------------------------
   if (pathname.startsWith("/account")) {
     if (!nextAuthToken) {
-      const res = NextResponse.redirect(new URL("/login", req.url));
-      return res;
+      return NextResponse.redirect(new URL("/login", req.url));
     }
   }
 
   // ------------------------
-  // 🛡️ /admin ve /api/admin kontrolü (NextAuth)
+  // 🛡️ /admin ve /api/admin kontrolü
   // ------------------------
   if (pathname.startsWith("/admin") && pathname !== "/admin-login") {
-    if (!nextAuthToken) {
+    if (!nextAuthToken || nextAuthToken.role !== "ADMIN") {
       const res = NextResponse.redirect(new URL("/admin-login", req.url));
-      res.cookies.delete({ name: "next-auth.session-token", path: "/" });
       return res;
     }
   }
 
   if (pathname.startsWith("/api/admin")) {
     if (!nextAuthToken) {
-      const res = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      res.cookies.delete({ name: "next-auth.session-token", path: "/" });
-      return res;
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     if (nextAuthToken.role !== "ADMIN") {
@@ -90,7 +86,7 @@ response.headers.set(
   // ------------------------
   if (pathname.startsWith("/api/")) {
     try {
-      const headers = checkNext(req, 60); // dakikada 30 istek
+      const headers = checkNext(req, 60); 
       headers.forEach((value, key) => response.headers.set(key, value));
     } catch (err: any) {
       if (err?.message?.includes("Rate limit exceeded")) {

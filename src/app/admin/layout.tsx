@@ -114,7 +114,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-
+  
   return (
     <div className="min-h-screen flex bg-gray-100/60 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
       

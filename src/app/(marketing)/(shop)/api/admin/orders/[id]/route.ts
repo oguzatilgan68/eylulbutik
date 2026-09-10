@@ -70,40 +70,62 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Admin yetkisini kontrol ediyoruz
     await requireAdmin();
 
     const { id } = await params;
     const body = await req.json();
     const { status, trackingNo, provider, shipmentStatus } = body;
 
-    // 1. Sipariş durumunu güncelle
-    if (status) {
-      await db.order.update({
+    // İşlemleri veri tutarlılığı için Transaction içinde yapıyoruz
+    await db.$transaction(async (tx) => {
+      // 1. Önce mevcut siparişi ve ürünlerini/varyantlarını çekelim (İptal kontrolü için)
+      const existingOrder = await tx.order.findUnique({
         where: { id },
-        data: { status },
+        include: { items: true },
       });
-    }
 
-    // 2. Kargo bilgisi güncelle veya oluştur (upsert)
-    if (trackingNo !== undefined || provider !== undefined || shipmentStatus !== undefined) {
-      await db.shipment.upsert({
-        where: { orderId: id },
-        update: {
-          ...(trackingNo !== undefined && { trackingNo }),
-          ...(provider !== undefined && { provider }),
-          ...(shipmentStatus !== undefined && { status: shipmentStatus }),
-        },
-        create: {
-          orderId: id,
-          provider: provider || "Yurtiçi Kargo",
-          trackingNo: trackingNo || "",
-          status: shipmentStatus || "SHIPPED",
-        },
-      });
-    }
+      if (!existingOrder) {
+        throw new Error("Sipariş bulunamadı");
+      }
 
-    // Güncel veriyi tüm ilişkileriyle tekrar dön
+      if (status) {
+        // Eğer yeni durum CANCELLED olduysa VE eski durum henüz CANCELLED değilse stokları iade et
+        if (status === "CANCELLED" && existingOrder.status !== "CANCELLED") {
+          for (const item of existingOrder.items) {
+            if (item.variantId) {
+              await tx.productVariant.update({
+                where: { id: item.variantId },
+                data: { stockQty: { increment: item.qty } },
+              });
+            }
+          }
+        }
+
+        // Sipariş durumunu güncelle
+        await tx.order.update({
+          where: { id },
+          data: { status },
+        });
+      }
+
+      if (trackingNo !== undefined || provider !== undefined || shipmentStatus !== undefined) {
+        await tx.shipment.upsert({
+          where: { orderId: id },
+          update: {
+            ...(trackingNo !== undefined && { trackingNo }),
+            ...(provider !== undefined && { provider }),
+            ...(shipmentStatus !== undefined && { status: shipmentStatus }),
+          },
+          create: {
+            orderId: id,
+            provider: provider || "Yurtiçi Kargo",
+            trackingNo: trackingNo || "",
+            status: shipmentStatus || "SHIPPED",
+          },
+        });
+      }
+    });
+
     const updatedOrder = await db.order.findUnique({
       where: { id },
       include: {

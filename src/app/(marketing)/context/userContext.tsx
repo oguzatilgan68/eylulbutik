@@ -37,7 +37,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [genericData, setGenericData] = useState<GenericData | null>(null);
   const router = useRouter();
 
-  // 🧠 Kullanıcıyı çek (accessToken veya refreshToken ile)
+  // 🧠 Kullanıcıyı bir kez çek
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -59,8 +59,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     };
 
     fetchUser();
-  }, [router]);
-// 🌐 GenericData’yı çek
+  }, []); // router bağımlılığını kaldırdık ki gereksiz tetiklenmesin
+
+  // 🌐 GenericData’yı çek
   useEffect(() => {
     const fetchGenericData = async () => {
       try {
@@ -69,7 +70,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           cache: "no-store",
         });
         const data = await res.json();
-        // Gelen veri dizi ise ilk elemanı, nesne ise direkt kendisini ata
         setGenericData(Array.isArray(data) ? data[0] : data);
       } catch (err) {
         console.error("Generic data çekilemedi:", err);
@@ -79,33 +79,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     fetchGenericData();
   }, []);
-useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch("/api/auth/me", {
-          method: "GET",
-          cache: "no-store",
-          credentials: "include",
-        });
-        const data = await res.json();
-
-        if (res.status === 200 && data.user) {
-          setUser(data.user);
-        } else {
-          setUser(null);
-        }
-      } catch (err) {
-        setUser(null);
-      }
-    };
-
-    fetchUser();
-  }, []); 
 
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
-    router.push("/login"); 
+    router.push("/login");
   };
 
   return (

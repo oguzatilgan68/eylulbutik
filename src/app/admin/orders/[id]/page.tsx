@@ -13,7 +13,6 @@ const AdminOrderDetailPage = async (props: OrderPageProps) => {
   const params = await props.params;
   const cookieStore = await cookies();
 
-  // API rotası (/api/orders veya /api/admin/orders ikisini de dener)
   let res = await fetch(
     `${process.env.NEXT_PUBLIC_APP_URL}/api/admin/orders/${params.id}`,
     {

@@ -26,7 +26,6 @@ export async function log(
     console[level](logData);
   }
 
-  // API Route üzerinden log kaydı
   try {
     await fetch("/api/log", {
       method: "POST",

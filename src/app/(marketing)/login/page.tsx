@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUser } from "../context/userContext";
+import { signIn } from "next-auth/react"; // NextAuth client fonksiyonu
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loading } from "../components/ui/loading";
-import { log } from "../lib/logger";
-import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { FiLogIn } from "react-icons/fi";
 
 const schema = z.object({
@@ -21,7 +20,6 @@ type FormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setUser } = useUser();
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -36,30 +34,22 @@ export default function LoginPage() {
   const onSubmit = async (data: FormData) => {
     setError("");
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+      const result = await signIn("credentials", {
+        redirect: false, 
+        email: data.email,
+        password: data.password,
       });
-      const result = await res.json();
-      if (res.ok) {
-        await log(`Login successful for email: ${data.email}`, "info", {
-          email: data.email,
-        });
+
+      if (result?.error) {
+        throw new Error(result.error);
       }
-      if (!res.ok) {
-        await log(`Login failed for email: ${data.email}`, "warn", {
-          email: data.email,
-        });
-        throw new Error(result.error || "Giriş başarısız");
+
+      if (result?.ok) {
+        router.push("/");
+        router.refresh();
       }
-      const meRes = await fetch("/api/auth/me");
-      const meData = await meRes.json();
-      setUser(meData.user);
-      router.push("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata oluştu");
-      console.error(err);
+      setError(err instanceof Error ? err.message : "Giriş yapılırken bir hata oluştu");
     }
   };
 
