@@ -2,39 +2,61 @@ import { db } from "@/app/(marketing)/lib/db";
 import { NextResponse } from "next/server";
 import { requireAdmin, AdminAuthError } from "@/app/(marketing)/lib/adminAuth";
 
-export async function PATCH(req: Request, props: { params: Promise<{ id: string }> }) {
+export async function PATCH(req: Request) {
   try {
     await requireAdmin();
 
-    const params = await props.params;
-    const { id } = params;
-    const body = await req.json();
-    const { values } = body;
+    const { id, values } = await req.json(); // values: string[] (Güncel liste)
 
-    if (!values || !Array.isArray(values)) {
+    if (!id || !Array.isArray(values)) {
       return NextResponse.json({ error: "Eksik alanlar" }, { status: 400 });
     }
 
-    // Önce mevcut değerleri sil
-    await db.propertyValue.deleteMany({ where: { propertyTypeId: id } });
+    // 1. Önce bu tipe ait mevcut değerleri bul
+    const existingValues = await db.propertyValue.findMany({
+      where: { propertyTypeId: id },
+    });
 
-    // Yeni değerleri ekle
-    const updated = await db.propertyType.update({
-      where: { id },
-      data: {
-        values: {
-          create: values.map((v: string) => ({ value: v })),
-        },
-      },
-      include: { values: true },
+    const existingValueMap = new Map(existingValues.map((v) => [v.value, v.id]));
+
+    // 2. Gelen listede olup veritabanında olmayanlar (Yeni eklenecekler)
+    const valuesToCreate = values.filter((v: string) => !existingValueMap.has(v));
+
+    // 3. Veritabanında olup gelen listede olmayanlar (Silinecekler)
+    const valuesToDelete = existingValues
+      .filter((v) => !values.includes(v.value))
+      .map((v) => v.id);
+
+    // 4. Transaction ile silme ve ekleme işlemlerini aynı anda yapalım
+    const updated = await db.$transaction(async (tx) => {
+      if (valuesToDelete.length > 0) {
+        await tx.propertyValue.deleteMany({
+          where: { id: { in: valuesToDelete } },
+        });
+      }
+
+      if (valuesToCreate.length > 0) {
+        await tx.propertyValue.createMany({
+          data: valuesToCreate.map((v: string) => ({
+            value: v,
+            propertyTypeId: id,
+          })),
+        });
+      }
+
+      return await tx.propertyType.findUnique({
+        where: { id },
+        include: { values: true },
+      });
     });
 
     return NextResponse.json(updated);
-  } catch (error: any) {
-    if (error instanceof AdminAuthError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+  } catch (err: any) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("PATCH Hata:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 

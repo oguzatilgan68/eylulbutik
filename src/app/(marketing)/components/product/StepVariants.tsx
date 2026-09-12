@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { AttributeType, ProductFormData } from "./types/types";
+import { FiLayers, FiRefreshCw, FiTrash2, FiPlus } from "react-icons/fi";
 
 interface Props {
   attributeTypes: AttributeType[];
@@ -14,32 +16,75 @@ export default function StepVariants({ attributeTypes, uploadImage }: Props) {
   const basePrice = watch("price") || "";
   const baseSku = watch("sku") || "";
 
-  // Benzersiz 4 haneli rastgele bir ek üreten fonksiyon
+  // Hangi özellik türünden hangi değerler seçildi? Örn: { "renk_id": ["beyaz_id", "siyah_id"] }
+  const [selectedValuesMap, setSelectedValuesMap] = useState<Record<string, string[]>>({});
+
   const generateRandomSuffix = () => 
     Math.random().toString(36).substring(2, 6).toUpperCase();
 
-  // Seçilen özelliklere ve benzersiz koda göre SKU üreten fonksiyon
-  const generateSku = (attributeValueIds: string[], currentVariant: any) => {
-    const parts = attributeTypes
-      .map((at, ai) => {
-        const valId = attributeValueIds[ai];
-        const val = at.values.find((item) => item.id === valId);
-        return val ? val.value.replace(/\s+/g, "").toUpperCase() : "";
-      })
-      .filter(Boolean);
-
-    // Varyant için daha önce oluşturulmuş benzersiz bir ek var mı kontrol et, yoksa üret
-    let suffix = currentVariant?.uniqueSuffix;
-    if (!suffix) {
-      suffix = generateRandomSuffix();
-      currentVariant.uniqueSuffix = suffix;
+  // Seçenek seçimini yönet
+  const handleToggleValue = (typeId: string, valId: string) => {
+    const current = selectedValuesMap[typeId] || [];
+    if (current.includes(valId)) {
+      setSelectedValuesMap({
+        ...selectedValuesMap,
+        [typeId]: current.filter((id) => id !== valId),
+      });
+    } else {
+      setSelectedValuesMap({
+        ...selectedValuesMap,
+        [typeId]: [...current, valId],
+      });
     }
-
-    const skuParts = [baseSku, ...parts, suffix].filter(Boolean);
-    return skuParts.join("-");
   };
 
-  const handleAddVariant = () => {
+  // 🚀 Matris Kombinasyon Üretici (Cartesian Product)
+  const generateMatrixVariants = () => {
+    const activeTypes = attributeTypes.filter(
+      (at) => selectedValuesMap[at.id] && selectedValuesMap[at.id].length > 0
+    );
+
+    if (activeTypes.length === 0) {
+      alert("Lütfen en az bir özellik ve değer seçin.");
+      return;
+    }
+
+    // Kombinasyonları recursive (özyinelemeli) olarak türetelim
+    const cartesian = (arr: any[][]): any[][] =>
+      arr.reduce((a, b) => a.flatMap((d) => b.map((e) => [d, e].flat())), [[]]);
+
+    const valueArrays = activeTypes.map((at) => 
+      selectedValuesMap[at.id].map((valId) => ({
+        typeId: at.id,
+        valId,
+        valObj: at.values.find((v) => v.id === valId),
+      }))
+    );
+
+    const combinations = cartesian(valueArrays);
+
+    // Üretilen kombinasyonları variant formatına çevir
+    const newVariants = combinations.map((combo) => {
+      const attributeValueIds = combo.map((c: any) => c.valId);
+      const nameParts = combo.map((c: any) => c.valObj?.value.replace(/\s+/g, "").toUpperCase()).filter(Boolean);
+      
+      const suffix = generateRandomSuffix();
+      const sku = [baseSku, ...nameParts, suffix].filter(Boolean).join("-");
+
+      return {
+        sku,
+        price: basePrice,
+        stockQty: "10",
+        attributeValueIds,
+        images: [],
+        uniqueSuffix: suffix,
+      };
+    });
+
+    setValue("variants", newVariants);
+  };
+
+  const handleAddVariantManual = () => {
     const newSuffix = generateRandomSuffix();
     const initialSku = baseSku ? `${baseSku}-${newSuffix}` : newSuffix;
 
@@ -74,28 +119,77 @@ export default function StepVariants({ attributeTypes, uploadImage }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-            Ürün Varyantları
+      {/* Üst Bilgi ve Matris Seçim Alanı */}
+      <div className="p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 space-y-4">
+        <div className="flex items-center gap-2">
+          <FiLayers className="text-pink-600" size={20} />
+          <h3 className="text-base font-bold text-gray-900 dark:text-white">
+            Varyant Kombinasyon Üreticisi (Matris)
           </h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Farklı kombinasyonlar için stok kodları çakışmayacak şekilde otomatik ve benzersiz oluşturulur.
-          </p>
         </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Aşağıdan ürünün sahip olabileceği özellikleri ve seçenekleri işaretleyin. Sistem tüm olası kombinasyonları otomatik olarak hesaplayacaktır.
+        </p>
+
+        {/* Özellik Grupları ve Seçenekleri */}
+        <div className="space-y-3 pt-2">
+          {attributeTypes.map((at) => (
+            <div key={at.id} className="space-y-1.5">
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                {at.name}
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {at.values.map((val) => {
+                  const isSelected = (selectedValuesMap[at.id] || []).includes(val.id);
+                  return (
+                    <button
+                      key={val.id}
+                      type="button"
+                      onClick={() => handleToggleValue(at.id, val.id)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+                        isSelected
+                          ? "bg-pink-600 text-white shadow-md shadow-pink-500/20"
+                          : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-pink-500"
+                      }`}
+                    >
+                      {val.value} {isSelected && "✓"}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex justify-end pt-2">
+          <button
+            type="button"
+            onClick={generateMatrixVariants}
+            className="px-5 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-semibold shadow-md shadow-pink-500/20 transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <FiRefreshCw size={14} /> Kombinasyonları Otomatik Üret
+          </button>
+        </div>
+      </div>
+
+      {/* Üretilen Varyant Listesi / Tablosu */}
+      <div className="flex justify-between items-center pt-2">
+        <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
+          Oluşan Varyantlar ({variants.length})
+        </h3>
         <button
           type="button"
-          onClick={handleAddVariant}
-          className="px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-semibold shadow-md shadow-pink-500/20 transition-all flex items-center gap-1.5"
+          onClick={handleAddVariantManual}
+          className="px-3.5 py-1.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 text-xs font-medium transition flex items-center gap-1 cursor-pointer"
         >
-          <span>+</span> Varyant Ekle
+          <FiPlus size={14} /> Manuel Satır Ekle
         </button>
       </div>
 
       {variants.length === 0 ? (
         <div className="text-center py-10 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl bg-gray-50/50 dark:bg-gray-800/40">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Henüz varyant eklenmedi. Yukarıdaki butona basarak ilk varyantı oluşturun.
+            Henüz varyant oluşturulmadı. Yukarıdan özellikleri seçip "Kombinasyonları Otomatik Üret" butonuna basın.
           </p>
         </div>
       ) : (
@@ -105,26 +199,24 @@ export default function StepVariants({ attributeTypes, uploadImage }: Props) {
               key={idx}
               className="p-4 sm:p-5 border border-gray-200 dark:border-gray-800 rounded-2xl bg-gray-50/50 dark:bg-gray-800/50 space-y-4 shadow-sm"
             >
-              {/* Üst Kısım: Varyant Numarası & Sil Butonu */}
               <div className="flex justify-between items-center border-b border-gray-200/60 dark:border-gray-700/60 pb-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-pink-600 dark:text-pink-400">
-                  Varyant #{idx + 1}
+                  Varyant Kombinasyonu #{idx + 1}
                 </span>
                 <button
                   type="button"
                   onClick={() => handleRemoveVariant(idx)}
-                  className="px-3 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 hover:bg-rose-100 text-xs font-semibold transition-colors"
+                  className="px-3 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 hover:bg-rose-100 text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer"
                 >
-                  Kaldır
+                  <FiTrash2 size={12} /> Kaldır
                 </button>
               </div>
 
               {/* SKU / Fiyat / Stok Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">SKU (Stok Kodu - Benzersiz)</label>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">SKU (Stok Kodu)</label>
                   <input
-                    placeholder="Örn: MNT-001-KRM-A1B2"
                     value={v.sku}
                     onChange={(e) => updateVariant(idx, { sku: e.target.value })}
                     className={inputClass}
@@ -133,7 +225,6 @@ export default function StepVariants({ attributeTypes, uploadImage }: Props) {
                 <div>
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Fiyat (₺)</label>
                   <input
-                    placeholder="0.00"
                     type="number"
                     step="0.01"
                     value={v.price}
@@ -144,7 +235,6 @@ export default function StepVariants({ attributeTypes, uploadImage }: Props) {
                 <div>
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Stok Miktarı</label>
                   <input
-                    placeholder="0"
                     type="number"
                     value={v.stockQty}
                     onChange={(e) => updateVariant(idx, { stockQty: e.target.value })}
@@ -153,51 +243,20 @@ export default function StepVariants({ attributeTypes, uploadImage }: Props) {
                 </div>
               </div>
 
-              {/* Attribute Seçimleri */}
-              <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Özellik Seçimleri</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {attributeTypes.map((at, ai) => (
-                    <select
-                      key={at.id}
-                      value={v.attributeValueIds[ai] || ""}
-                      onChange={(e) => {
-                        const arr = [...(v.attributeValueIds || [])];
-                        arr[ai] = e.target.value;
-                        const newSku = generateSku(arr, v);
-                        updateVariant(idx, { attributeValueIds: arr, sku: newSku });
-                      }}
-                      className={inputClass}
-                    >
-                      <option value="">{at.name} Seç</option>
-                      {at.values.map((val) => (
-                        <option key={val.id} value={val.id}>
-                          {val.value}
-                        </option>
-                      ))}
-                    </select>
-                  ))}
-                </div>
-              </div>
-
               {/* Görseller */}
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Varyant Görselleri</label>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Varyanta Özel Görseller</label>
                 <div className="flex flex-wrap gap-2.5">
                   {(v.images || []).map((img: any, i: number) => (
                     <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
-                      <img
-                        src={img.url}
-                        alt={img.alt || ""}
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={img.url} alt="" className="w-full h-full object-cover" />
                       <button
                         type="button"
                         onClick={() => {
                           const arr = (v.images || []).filter((_: any, j: number) => j !== i);
                           updateVariant(idx, { images: arr });
                         }}
-                        className="absolute top-1 right-1 bg-rose-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] shadow"
+                        className="absolute top-1 right-1 bg-rose-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] shadow cursor-pointer"
                       >
                         ✕
                       </button>

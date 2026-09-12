@@ -31,16 +31,46 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Eksik alanlar" }, { status: 400 });
     }
 
-    const type = await db.propertyType.create({
-      data: {
-        name,
-        values: {
-          create: values.map((v: string) => ({ value: v })),
-        },
-      },
-      include: { values: true },
+    // 1. Önce bu isimde bir PropertyType var mı diye kontrol edelim
+    let propertyType = await db.propertyType.findUnique({
+      where: { name },
     });
-    return NextResponse.json(type);
+
+    if (propertyType) {
+      // Eğer varsa, yeni değerleri mevcut türe ekleyelim (Duplicate hatası almamak için)
+      const existingValues = await db.propertyValue.findMany({
+        where: { propertyTypeId: propertyType.id },
+        select: { value: true },
+      });
+      const existingValueStrings = existingValues.map((v) => v.value);
+
+      const newValues = values.filter(
+        (v: string) => !existingValueStrings.includes(v)
+      );
+
+      propertyType = await db.propertyType.update({
+        where: { id: propertyType.id },
+        data: {
+          values: {
+            create: newValues.map((v: string) => ({ value: v })),
+          },
+        },
+        include: { values: true },
+      });
+    } else {
+      // Eğer yoksa yeni oluşturalım
+      propertyType = await db.propertyType.create({
+        data: {
+          name,
+          values: {
+            create: values.map((v: string) => ({ value: v })),
+          },
+        },
+        include: { values: true },
+      });
+    }
+
+    return NextResponse.json(propertyType);
   } catch (error: any) {
     if (error instanceof AdminAuthError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });

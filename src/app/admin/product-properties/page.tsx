@@ -301,7 +301,7 @@ export default function PropertyTypesPage() {
                   <h3 className="font-bold text-base text-gray-900 dark:text-white mb-1">
                     {t.name}
                   </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 break-words">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 wrap-break-word">
                     {t.values.length > 0 
                       ? t.values.map((v) => v.value).join(", ") 
                       : "Henüz değer eklenmemiş."}

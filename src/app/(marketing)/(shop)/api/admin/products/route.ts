@@ -120,29 +120,93 @@ export async function POST(req: NextRequest) {
     }
 
     const slug = await generateUniqueSlug(data.name);
+    // Tüm kayıt işlemlerini transaction içine alalım
+    const product = await db.$transaction(async (tx) => {
+      // 1. Ürünü oluştur
+      const newProduct = await tx.product.create({
+        data: {
+          name: data.name,
+          slug,
+          price: Number(data.price) || 0,
+          category: { connect: { id: data.categoryId } },
+          brand: data.brandId ? { connect: { id: data.brandId } } : undefined,
+          status: data.status || "DRAFT",
+          inStock: data.inStock ?? true,
+          modelSize: data.modelSize || undefined,
+          modelInfo: data.modelInfoId
+            ? { connect: { id: data.modelInfoId } }
+            : undefined,
+          seoTitle: data.seoTitle || undefined,
+          seoKeywords: Array.isArray(data.seoKeywords)
+            ? data.seoKeywords
+            : data.seoKeywords
+              ? data.seoKeywords.split(",").map((k: string) => k.trim())
+              : [],
+          changeable: data.changeable ?? true,
+        },
+      });
 
-    const product = await db.product.create({
-      data: {
-        name: data.name,
-        slug,
-        price: Number(data.price) || 0,
-        category: { connect: { id: data.categoryId } },
-        brand: data.brandId ? { connect: { id: data.brandId } } : undefined,
-        status: data.status || "DRAFT",
-        inStock: data.inStock ?? true,
-        modelSize: data.modelSize || undefined,
-        modelInfo: data.modelInfoId
-          ? { connect: { id: data.modelInfoId } }
-          : undefined,
+      // 2. Ana Ürün Görselleri
+      if (Array.isArray(data.images) && data.images.length > 0) {
+        await tx.productImage.createMany({
+          data: data.images.map((img: any, idx: number) => ({
+            productId: newProduct.id,
+            url: img.url,
+            alt: img.alt || "",
+            order: idx,
+          })),
+        });
+      }
 
-        seoTitle: data.seoTitle || undefined,
-        seoKeywords: Array.isArray(data.seoKeywords)
-          ? data.seoKeywords
-          : data.seoKeywords
-            ? data.seoKeywords.split(",").map((k: string) => k.trim())
-            : [],
-        changeable: data.changeable ?? true,
-      },
+      // 3. Varyantlar ve Varyant Detayları
+      if (Array.isArray(data.variants) && data.variants.length > 0) {
+        for (const v of data.variants) {
+          const variant = await tx.productVariant.create({
+            data: {
+              productId: newProduct.id,
+              sku: v.sku || undefined,
+              price: Number(v.price) || 0,
+              stockQty: v.stockQty ? parseInt(v.stockQty) : 0,
+            },
+          });
+
+          if (Array.isArray(v.images) && v.images.length > 0) {
+            await tx.variantImage.createMany({
+              data: v.images.map((img: any, idx: number) => ({
+                variantId: variant.id,
+                url: img.url,
+                alt: img.alt || "",
+                order: idx,
+              })),
+            });
+          }
+
+          if (
+            Array.isArray(v.attributeValueIds) &&
+            v.attributeValueIds.length > 0
+          ) {
+            await tx.productVariantAttribute.createMany({
+              data: v.attributeValueIds.map((attrId: string) => ({
+                variantId: variant.id,
+                attributeValueId: attrId,
+              })),
+            });
+          }
+        }
+      }
+
+      // 4. Properties (Özellikler)
+      if (Array.isArray(data.properties) && data.properties.length > 0) {
+        await tx.productProperty.createMany({
+          data: data.properties.map((p: any) => ({
+            productId: newProduct.id,
+            propertyTypeId: p.propertyTypeId,
+            propertyValueId: p.propertyValueId,
+          })),
+        });
+      }
+
+      return newProduct;
     });
 
     // Görseller

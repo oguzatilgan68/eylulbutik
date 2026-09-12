@@ -1,86 +1,114 @@
-import DeleteButton from "@/app/(marketing)/components/attribute-types/DeleteButton";
-import Link from "next/link";
-import { Key } from "react";
-import { FiPlus, FiEdit2, FiLayers } from "react-icons/fi";
+"use client";
 
-export default async function AttributeTypesPage() {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/attribute-types`,
-    {
-      cache: "no-store",
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import Swal from "sweetalert2";
+import { FiPlus, FiX, FiCheck, FiArrowLeft } from "react-icons/fi";
+import Link from "next/link";
+
+export default function NewAttributeTypePage() {
+  const router = useRouter();
+  const [name, setName] = useState("");
+  const [values, setValues] = useState<string[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const addValue = () => {
+    if (!inputValue.trim()) return;
+    if (values.includes(inputValue.trim())) {
+      Swal.fire({ icon: "warning", title: "Bu değer zaten ekli!", timer: 1500, showConfirmButton: false });
+      return;
     }
-  );
-  const types = await res.json();
+    setValues([...values, inputValue.trim()]);
+    setInputValue("");
+  };
+
+  const removeValue = (val: string) => {
+    setValues(values.filter((v) => v !== val));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      Swal.fire({ icon: "warning", title: "Grup adı boş olamaz!", confirmButtonColor: "#db2777" });
+      return;
+    }
+    if (values.length === 0) {
+      Swal.fire({ icon: "warning", title: "En az bir seçenek eklemelisiniz!", confirmButtonColor: "#db2777" });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await fetch("/api/attribute-types", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, values }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Kayıt başarısız");
+
+      Swal.fire({ icon: "success", title: "Başarılı!", text: "Özellik grubu oluşturuldu.", timer: 1500, showConfirmButton: false });
+      router.push("/admin/attribute-types");
+      router.refresh();
+    } catch (err: any) {
+      Swal.fire({ icon: "error", title: "Hata!", text: err.message, confirmButtonColor: "#ef4444" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Üst Başlık & Yeni Ekle */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <FiLayers className="text-pink-600" /> Varyasyon Tipleri (Beden, Renk vb.)
-          </h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            Ürün varyantlarında kullanılan özellik gruplarını buradan yönetebilirsiniz.
-          </p>
-        </div>
-        <Link
-          href="/admin/attribute-types/new"
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-sm font-medium shadow-md shadow-pink-500/20 transition-all"
-        >
-          <FiPlus size={18} /> Yeni Ekle
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div className="flex items-center gap-3">
+        <Link href="/admin/attribute-types" className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 transition">
+          <FiArrowLeft size={18} />
         </Link>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Yeni Varyasyon Tipi Oluştur</h1>
       </div>
 
-      {/* Liste Alanı */}
-      {types && types.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {types.map(
-            (t: { id: Key | null | undefined; name: string; values: any[] }) => (
-              <div
-                key={t.id}
-                className="p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm flex flex-col justify-between space-y-4 hover:border-pink-500/50 transition-all"
-              >
-                <div>
-                  <h3 className="font-bold text-base text-gray-900 dark:text-white mb-1">
-                    {t.name}
-                  </h3>
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {t.values && t.values.length > 0 ? (
-                      t.values.map((v) => (
-                        <span
-                          key={v.id || v.value}
-                          className="px-2.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium border border-gray-200 dark:border-gray-700"
-                        >
-                          {v.value}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-xs text-gray-400 italic">Değer eklenmemiş</span>
-                    )}
-                  </div>
-                </div>
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 p-6 sm:p-8 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm space-y-5">
+        <div>
+          <label className="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-300 mb-1.5">Grup Adı (Örn: Renk, Beden)</label>
+          <Input placeholder="Örn: Beden" value={name} onChange={(e) => setName(e.target.value)} required className="rounded-xl" />
+        </div>
 
-                <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-800 justify-end">
-                  <Link
-                    href={`/admin/attribute-types/${String(t.id)}/edit`}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                  >
-                    <FiEdit2 size={13} /> Düzenle
-                  </Link>
-                  <DeleteButton id={t.id ? String(t.id) : ""} />
-                </div>
-              </div>
-            )
-          )}
+        <div>
+          <label className="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-300 mb-1.5">Seçenekler / Değerler</label>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Değer yazın (Örn: S, M, L veya Kırmızı)"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addValue(); } }}
+              className="rounded-xl"
+            />
+            <Button type="button" onClick={addValue} className="rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-200">
+              <FiPlus size={16} className="mr-1" /> Ekle
+            </Button>
+          </div>
         </div>
-      ) : (
-        <div className="p-12 text-center bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Henüz attribute tipi eklenmemiş.
-          </p>
+
+        {values.length > 0 && (
+          <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800">
+            {values.map((val) => (
+              <span key={val} className="px-3 py-1 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg text-xs font-medium border border-gray-200 dark:border-gray-600 flex items-center gap-2 shadow-sm">
+                {val}
+                <button type="button" onClick={() => removeValue(val)} className="text-rose-500 hover:text-rose-700"><FiX size={13} /></button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-800">
+          <Button type="submit" disabled={loading} className="bg-pink-600 hover:bg-pink-700 text-white rounded-xl px-6 font-medium shadow-md shadow-pink-500/20">
+            <FiCheck size={16} className="mr-1.5" /> Kaydet
+          </Button>
         </div>
-      )}
+      </form>
     </div>
   );
 }
