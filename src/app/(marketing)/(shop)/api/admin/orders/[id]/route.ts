@@ -74,14 +74,12 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await req.json();
-    const { status, trackingNo, provider, shipmentStatus } = body;
+    const { status, trackingNo, provider, shipmentStatus, paymentStatus } = body; // 👈 paymentStatus eklendi
 
-    // İşlemleri veri tutarlılığı için Transaction içinde yapıyoruz
     await db.$transaction(async (tx) => {
-      // 1. Önce mevcut siparişi ve ürünlerini/varyantlarını çekelim (İptal kontrolü için)
       const existingOrder = await tx.order.findUnique({
         where: { id },
-        include: { items: true },
+        include: { items: true, payment: true },
       });
 
       if (!existingOrder) {
@@ -89,7 +87,7 @@ export async function PATCH(
       }
 
       if (status) {
-        // Eğer yeni durum CANCELLED olduysa VE eski durum henüz CANCELLED değilse stokları iade et
+        // Eğer durum CANCELLED olduysa stokları iade et
         if (status === "CANCELLED" && existingOrder.status !== "CANCELLED") {
           for (const item of existingOrder.items) {
             if (item.variantId) {
@@ -104,10 +102,23 @@ export async function PATCH(
         // Sipariş durumunu güncelle
         await tx.order.update({
           where: { id },
-          data: { status },
+          data: { 
+            status,
+            // İsteğe bağlı akıllı mantık: Sipariş "PAID" yapıldıysa ödemeyi de otomatik SUCCEEDED yapabiliriz
+            ...(status === "PAID" && { payment: { update: { status: "SUCCEEDED" } } })
+          },
         });
       }
 
+      // Eğer dışarıdan ayrıca bir paymentStatus gönderildiyse ödemeyi güncelle
+      if (paymentStatus && existingOrder.payment) {
+        await tx.payment.update({
+          where: { orderId: id },
+          data: { status: paymentStatus },
+        });
+      }
+
+      // Kargo işlemleri
       if (trackingNo !== undefined || provider !== undefined || shipmentStatus !== undefined) {
         await tx.shipment.upsert({
           where: { orderId: id },

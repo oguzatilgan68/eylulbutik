@@ -128,6 +128,7 @@ export function ShipmentModal({
               required
               readOnly={Boolean(form.id)}
               placeholder="Sipariş ID"
+              disabled
               value={form.orderId}
               onChange={(e) => setForm((s) => ({ ...s, orderId: e.target.value }))}
               className={`${inputClass} font-mono text-xs ${form.id ? "opacity-60 cursor-not-allowed bg-gray-50 dark:bg-gray-800" : ""}`}

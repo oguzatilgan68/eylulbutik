@@ -63,17 +63,19 @@ export default function GlobalPropertiesPage() {
     setForm({ name: prop.name });
   };
 
-  const handleDelete = async (id: string) => {
+const handleDelete = async (id: string) => {
     if (!confirm("Bu özelliği silmek istediğinize emin misiniz?")) return;
     try {
       const res = await fetch(`/api/admin/product-properties/${id}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Silme işlemi başarısız");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Silme işlemi başarısız");
+      
       setProps((all) => all.filter((p) => p.id !== id));
     } catch (err: any) {
       console.error(err);
-      alert(err.message);
+      alert(err.message); 
     }
   };
 
@@ -85,7 +87,7 @@ export default function GlobalPropertiesPage() {
           <FiSliders className="text-pink-600" /> Global Ürün Özellikleri
         </h1>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-          Ürünlere tanımlanabilecek ana özellik başlıklarını (Örn: Renk, Beden, Kumaş) yönetin.
+          Ürünlere tanımlanabilecek ana özellik başlıklarını (Örn: Mevsim,Kalıp,Yaka,Kol,Bel,Boy,Aksesuar) yönetin.
         </p>
       </div>
 
@@ -93,7 +95,7 @@ export default function GlobalPropertiesPage() {
       <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col sm:flex-row gap-3 items-center">
         <Input
           className="w-full sm:flex-1 rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-sm py-2.5"
-          placeholder="Özellik Adı (örn: Renk, Materyal)"
+          placeholder="Özellik Adı (örn: Kumaş, Materyal, Kalıp, Bel, Yaka)"
           value={form.name}
           onChange={(e) => setForm({ name: e.target.value })}
         />

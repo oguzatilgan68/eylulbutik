@@ -82,26 +82,88 @@ export async function DELETE(req: NextRequest) {
     await requireAdmin();
 
     const body = await req.json();
+    const { ids } = body; // string[] (silinecek ürün ID'leri)
 
-    if (!body.ids || !Array.isArray(body.ids)) {
-      return NextResponse.json(
-        { error: "Silinecek ürün ID'leri gönderilmedi." },
-        { status: 400 }
-      );
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json({ error: "Silinecek ürün seçilmedi." }, { status: 400 });
     }
 
-    await db.product.deleteMany({
-      where: { id: { in: body.ids } },
+    // 🚀 Transaction ile seçilen ürünlere bağlı tüm alt tabloları temizleyip güvenle siliyoruz
+    await db.$transaction(async (tx) => {
+      // 1. Bu ürünlere ait varyant ID'lerini bulalım
+      const variants = await tx.productVariant.findMany({
+        where: { productId: { in: ids } },
+        select: { id: true },
+      });
+      const variantIds = variants.map((v) => v.id);
+
+      // 2. Sepet öğelerinden (CartItem) bu ürünlere/varyantlara ait olanları temizle
+      await tx.cartItem.deleteMany({
+        where: {
+          OR: [
+            { productId: { in: ids } },
+            ...(variantIds.length > 0 ? [{ variantId: { in: variantIds } }] : []),
+          ],
+        },
+      });
+
+      // 3. Siparişi verilmiş ürünler varsa engelle
+      const orderItemCount = await tx.orderItem.count({
+        where: {
+          OR: [
+            { productId: { in: ids } },
+            ...(variantIds.length > 0 ? [{ variantId: { in: variantIds } }] : []),
+          ],
+        },
+      });
+
+      if (orderItemCount > 0) {
+        throw new Error("Seçilen ürünlerden biri veya birkaçı daha önce satın alındığı (sipariş geçmişi olduğu) için silinemez.");
+      }
+
+      // 4. Varyant alt ilişkilerini temizle
+      if (variantIds.length > 0) {
+        await tx.productVariantAttribute.deleteMany({
+          where: { variantId: { in: variantIds } },
+        });
+        await tx.variantImage.deleteMany({
+          where: { variantId: { in: variantIds } },
+        });
+        await tx.productVariant.deleteMany({
+          where: { productId: { in: ids } },
+        });
+      }
+
+      // 5. Ürünün görsellerini, özelliklerini (ProductProperty), yorumlarını ve wishlist bağlarını temizle
+      await tx.productImage.deleteMany({ where: { productId: { in: ids } } });
+      await tx.productProperty.deleteMany({ where: { productId: { in: ids } } });
+      await tx.review.deleteMany({ where: { productId: { in: ids } } });
+
+      // Wishlist ve Slider M-N ilişkilerini koparalım
+      for (const id of ids) {
+        await tx.product.update({
+          where: { id },
+          data: {
+            wishlists: { set: [] },
+            sliders: { set: [] },
+          },
+        });
+      }
+
+      // 6. Artık ürünleri güvenle silebiliriz
+      await tx.product.deleteMany({
+        where: { id: { in: ids } },
+      });
     });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ success: true, message: "Seçilen ürünler başarıyla silindi." });
   } catch (error: any) {
     if (error instanceof AdminAuthError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
-    console.error(error);
+    console.error("Toplu ürün silme hatası:", error);
     return NextResponse.json(
-      { error: "Silme işlemi başarısız." },
+      { error: error.message || "Ürünler silinirken bir hata oluştu." },
       { status: 500 }
     );
   }
@@ -120,7 +182,8 @@ export async function POST(req: NextRequest) {
     }
 
     const slug = await generateUniqueSlug(data.name);
-    // Tüm kayıt işlemlerini transaction içine alalım
+
+    // Tüm işlemler tek bir transaction içinde güvenle yürütülüyor
     const product = await db.$transaction(async (tx) => {
       // 1. Ürünü oluştur
       const newProduct = await tx.product.create({
@@ -128,20 +191,18 @@ export async function POST(req: NextRequest) {
           name: data.name,
           slug,
           price: Number(data.price) || 0,
-          category: { connect: { id: data.categoryId } },
-          brand: data.brandId ? { connect: { id: data.brandId } } : undefined,
+          categoryId: data.categoryId,
+          brandId: data.brandId || undefined,
           status: data.status || "DRAFT",
           inStock: data.inStock ?? true,
           modelSize: data.modelSize || undefined,
-          modelInfo: data.modelInfoId
-            ? { connect: { id: data.modelInfoId } }
-            : undefined,
+          modelInfoId: data.modelInfoId || undefined,
           seoTitle: data.seoTitle || undefined,
           seoKeywords: Array.isArray(data.seoKeywords)
             ? data.seoKeywords
             : data.seoKeywords
-              ? data.seoKeywords.split(",").map((k: string) => k.trim())
-              : [],
+            ? data.seoKeywords.split(",").map((k: string) => k.trim())
+            : [],
           changeable: data.changeable ?? true,
         },
       });
@@ -181,15 +242,13 @@ export async function POST(req: NextRequest) {
             });
           }
 
-          if (
-            Array.isArray(v.attributeValueIds) &&
-            v.attributeValueIds.length > 0
-          ) {
+          if (Array.isArray(v.attributeValueIds) && v.attributeValueIds.length > 0) {
             await tx.productVariantAttribute.createMany({
               data: v.attributeValueIds.map((attrId: string) => ({
                 variantId: variant.id,
                 attributeValueId: attrId,
               })),
+              skipDuplicates: true,
             });
           }
         }
@@ -203,71 +262,12 @@ export async function POST(req: NextRequest) {
             propertyTypeId: p.propertyTypeId,
             propertyValueId: p.propertyValueId,
           })),
+          skipDuplicates: true,
         });
       }
 
       return newProduct;
     });
-
-    // Görseller
-    if (Array.isArray(data.images) && data.images.length > 0) {
-      await db.productImage.createMany({
-        data: data.images.map((img: any, idx: number) => ({
-          productId: product.id,
-          url: img.url,
-          alt: img.alt || "",
-          order: idx,
-        })),
-      });
-    }
-
-    // Varyantlar
-    if (Array.isArray(data.variants) && data.variants.length > 0) {
-      for (const v of data.variants) {
-        const variant = await db.productVariant.create({
-          data: {
-            productId: product.id,
-            sku: v.sku || undefined,
-            price: Number(v.price) || 0,
-            stockQty: v.stockQty ? parseInt(v.stockQty) : 0,
-          },
-        });
-
-        if (Array.isArray(v.images) && v.images.length > 0) {
-          await db.variantImage.createMany({
-            data: v.images.map((img: any, idx: number) => ({
-              variantId: variant.id,
-              url: img.url,
-              alt: img.alt || "",
-              order: idx,
-            })),
-          });
-        }
-
-        if (
-          Array.isArray(v.attributeValueIds) &&
-          v.attributeValueIds.length > 0
-        ) {
-          await db.productVariantAttribute.createMany({
-            data: v.attributeValueIds.map((attrId: string) => ({
-              variantId: variant.id,
-              attributeValueId: attrId,
-            })),
-          });
-        }
-      }
-    }
-
-    // Properties
-    if (Array.isArray(data.properties) && data.properties.length > 0) {
-      await db.productProperty.createMany({
-        data: data.properties.map((p: any) => ({
-          productId: product.id,
-          propertyTypeId: p.propertyTypeId,
-          propertyValueId: p.propertyValueId,
-        })),
-      });
-    }
 
     return NextResponse.json({ success: true, product }, { status: 201 });
   } catch (error: any) {
@@ -276,10 +276,7 @@ export async function POST(req: NextRequest) {
     }
     console.error("Ürün oluşturma hatası:", error);
     return NextResponse.json(
-      {
-        error:
-          (error as Error).message || "Ürün oluşturulurken bir hata oluştu.",
-      },
+      { error: error.message || "Ürün oluşturulurken bir hata oluştu." },
       { status: 500 }
     );
   }

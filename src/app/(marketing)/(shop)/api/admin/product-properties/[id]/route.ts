@@ -61,19 +61,42 @@ export async function PATCH(req: Request) {
 }
 
 // PropertyType ve bağlı değerleri sil
-export async function DELETE(req: Request, props: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  _: Request,
+  props: { params: Promise<{ id: string }> }
+) {
   try {
     await requireAdmin();
-
     const params = await props.params;
     const { id } = params;
 
-    await db.propertyType.delete({ where: { id } });
-    return NextResponse.json({ message: "Silindi" });
-  } catch (error: any) {
-    if (error instanceof AdminAuthError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    // 1. Bu özellik tipine bağlı ürünler var mı kontrol edelim
+    const usageCount = await db.productProperty.count({
+      where: { propertyTypeId: id },
+    });
+
+    if (usageCount > 0) {
+      return NextResponse.json(
+        { error: `Bu özellik şu anda ${usageCount} üründe tanımlı olduğu için silinemez.` },
+        { status: 400 }
+      );
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // 2. Bağlı ürün yoksa önce alt değerlerini, sonra tipi silelim
+    await db.$transaction(async (tx) => {
+      await tx.propertyValue.deleteMany({
+        where: { propertyTypeId: id },
+      });
+      await tx.propertyType.delete({
+        where: { id },
+      });
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
+    }
+    return NextResponse.json({ error: err.message || "Silme başarısız" }, { status: 500 });
   }
 }

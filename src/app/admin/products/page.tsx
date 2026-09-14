@@ -5,7 +5,8 @@ import Pagination from "@/app/(marketing)/components/ui/Pagination";
 import Select from "@/app/(marketing)/components/product/Select";
 import { ActionButton } from "@/app/(marketing)/components/ui/ActionButton";
 import TextInput from "@/app/(marketing)/components/ui/TextInput";
-import { FiBox, FiPlus, FiSearch, FiTrash2, FiEdit2, FiTag, FiGrid } from "react-icons/fi";
+import { FiBox, FiSearch, FiTrash2 } from "react-icons/fi";
+import Swal from "sweetalert2";
 
 interface Product {
   id: string;
@@ -27,9 +28,7 @@ const statusMap: Record<string, { label: string; class: string }> = {
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [brands, setBrands] = useState<{ id: string; name: string }[]>([]);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>(
-    []
-  );
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -51,7 +50,6 @@ export default function AdminProductsPage() {
     return () => clearTimeout(handler);
   }, [search]);
 
-  // Fetch Products
   const fetchProducts = async () => {
     setLoading(true);
     try {
@@ -75,7 +73,6 @@ export default function AdminProductsPage() {
     }
   };
 
-  // Fetch Brands & Categories
   const fetchFilters = async () => {
     try {
       const [brandRes, categoryRes] = await Promise.all([
@@ -97,39 +94,67 @@ export default function AdminProductsPage() {
     fetchProducts();
   }, [page, debouncedSearch, statusFilter, brandFilter, categoryFilter]);
 
-  // Delete Product
+  // Tekil Ürün Silme
   const handleDelete = async (id: string) => {
-    if (!confirm("Bu ürünü silmek istediğinize emin misiniz?")) return;
+    const result = await Swal.fire({
+      title: "Emin misiniz?",
+      text: "Bu ürün kalıcı olarak silinecek!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Evet, Sil",
+      cancelButtonText: "Vazgeç",
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
       const res = await fetch(`/api/admin/products/${id}`, {
         method: "DELETE",
-        body: JSON.stringify({ ids: [id] }),
       });
-      if (res.ok) fetchProducts();
-    } catch (error) {
-      console.error(error);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Silme işlemi başarısız");
+
+      Swal.fire({ icon: "success", title: "Silindi!", timer: 1200, showConfirmButton: false });
+      fetchProducts();
+    } catch (error: any) {
+      Swal.fire({ icon: "error", title: "Silinemedi!", text: error.message, confirmButtonColor: "#ef4444" });
     }
   };
 
-  // Bulk Delete
+  // Toplu Ürün Silme
   const handleBulkDelete = async () => {
-    if (!confirm(`Seçilen ${selectedIds.length} ürünü silmek istediğinize emin misiniz?`)) return;
+    const result = await Swal.fire({
+      title: "Emin misiniz?",
+      text: `Seçilen ${selectedIds.length} ürünü silmek istediğinize emin misiniz?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Evet, Hepsini Sil",
+      cancelButtonText: "Vazgeç",
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
       const res = await fetch(`/api/admin/products`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: selectedIds }),
       });
-      if (res.ok) {
-        setSelectedIds([]);
-        fetchProducts();
-      }
-    } catch (error) {
-      console.error(error);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Toplu silme başarısız");
+
+      Swal.fire({ icon: "success", title: "Başarılı!", text: "Seçilen ürünler silindi.", timer: 1500, showConfirmButton: false });
+      setSelectedIds([]);
+      fetchProducts();
+    } catch (error: any) {
+      Swal.fire({ icon: "error", title: "Hata!", text: error.message, confirmButtonColor: "#ef4444" });
     }
   };
 
-  // Select / Deselect All
   const toggleSelectAll = (checked: boolean) => {
     if (checked) setSelectedIds(products.map((p) => p.id));
     else setSelectedIds([]);
@@ -137,7 +162,6 @@ export default function AdminProductsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Üst Başlık & Yeni Ürün Butonu */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -147,14 +171,9 @@ export default function AdminProductsPage() {
             Mağazanızdaki tüm ürünleri listeleyin, fiyatlarını ve stok durumlarını güncelleyin.
           </p>
         </div>
-        <ActionButton 
-          href="/admin/products/new" 
-          label="Yeni Ürün Ekle" 
-          primary 
-        />
+        <ActionButton href="/admin/products/new" label="Yeni Ürün Ekle" primary />
       </div>
 
-      {/* Filtreleme & Arama Çubuğu */}
       <div className="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="relative">
@@ -172,10 +191,7 @@ export default function AdminProductsPage() {
             onChange={setStatusFilter}
             options={[
               { label: "Tüm Durumlar", value: "" },
-              ...Object.entries(statusMap).map(([v, l]) => ({
-                value: v,
-                label: l.label,
-              })),
+              ...Object.entries(statusMap).map(([v, l]) => ({ value: v, label: l.label })),
             ]}
           />
 
@@ -212,21 +228,17 @@ export default function AdminProductsPage() {
         )}
       </div>
 
-      {/* Responsive Tablo */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse min-w-[800px]">
+          <table className="w-full text-left text-sm border-collapse min-w-200">
             <thead className="bg-gray-50 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 uppercase text-[11px] font-semibold tracking-wider border-b border-gray-200 dark:border-gray-800">
               <tr>
                 <th className="px-6 py-3.5 w-12">
                   <input
                     type="checkbox"
-                    checked={
-                      selectedIds.length === products.length &&
-                      products.length > 0
-                    }
+                    checked={selectedIds.length === products.length && products.length > 0}
                     onChange={(e) => toggleSelectAll(e.target.checked)}
-                    className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
+                    className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500 cursor-pointer"
                   />
                 </th>
                 <th className="px-6 py-3.5">Ürün Adı</th>
@@ -253,23 +265,16 @@ export default function AdminProductsPage() {
                   const displayPrice = p.variants?.[0]?.price ?? p.price;
 
                   return (
-                    <tr
-                      key={p.id}
-                      className="hover:bg-pink-50/30 dark:hover:bg-gray-800/50 transition-colors"
-                    >
+                    <tr key={p.id} className="hover:bg-pink-50/30 dark:hover:bg-gray-800/50 transition-colors">
                       <td className="px-6 py-4">
                         <input
                           type="checkbox"
                           checked={selectedIds.includes(p.id)}
                           onChange={(e) => {
-                            if (e.target.checked)
-                              setSelectedIds((prev) => [...prev, p.id]);
-                            else
-                              setSelectedIds((prev) =>
-                                prev.filter((id) => id !== p.id)
-                              );
+                            if (e.target.checked) setSelectedIds((prev) => [...prev, p.id]);
+                            else setSelectedIds((prev) => prev.filter((id) => id !== p.id));
                           }}
-                          className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
+                          className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500 cursor-pointer"
                         />
                       </td>
                       <td className="px-6 py-4">
@@ -278,7 +283,7 @@ export default function AdminProductsPage() {
                             <img
                               src={p.images[0].url}
                               alt={p.images[0].alt || p.name}
-                              className="w-11 h-11 object-cover rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex-shrink-0"
+                              className="w-11 h-11 object-cover rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm shrink-0"
                             />
                           ) : (
                             <div className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 border border-gray-200 dark:border-gray-700">
@@ -306,15 +311,8 @@ export default function AdminProductsPage() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <ActionButton
-                            href={`/admin/products/${p.id}`}
-                            label="Düzenle"
-                          />
-                          <ActionButton
-                            label="Sil"
-                            onClick={() => handleDelete(p.id)}
-                            danger
-                          />
+                          <ActionButton href={`/admin/products/${p.id}`} label="Düzenle" />
+                          <ActionButton label="Sil" onClick={() => handleDelete(p.id)} danger />
                         </div>
                       </td>
                     </tr>
@@ -322,10 +320,7 @@ export default function AdminProductsPage() {
                 })
               ) : (
                 <tr>
-                  <td
-                    colSpan={7}
-                    className="px-6 py-12 text-center text-gray-500 dark:text-gray-400"
-                  >
+                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                     Henüz ürün bulunmamaktadır.
                   </td>
                 </tr>
@@ -335,7 +330,6 @@ export default function AdminProductsPage() {
         </div>
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center mt-6">
           <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { ProductFormData } from "./types/types";
 
@@ -9,7 +10,41 @@ interface Props {
 }
 
 export default function StepBasicInfo({ categories, brands }: Props) {
-  const { register } = useFormContext<ProductFormData>();
+  const { register, watch, setValue } = useFormContext<ProductFormData>();
+
+  const productName = watch("name");
+  const brandId = watch("brandId");
+  const categoryId = watch("categoryId");
+
+  // 🚀 Otomatik SEO Üretici Efekti
+  useEffect(() => {
+    if (!productName) return;
+
+    const selectedBrand = brands.find((b) => b.id === brandId)?.name || "";
+    const selectedCategory = categories.find((c) => c.id === categoryId)?.name || "";
+
+    // 1. SEO Başlığı (String)
+    const autoTitle = [productName, selectedBrand, selectedCategory]
+      .filter(Boolean)
+      .join(" - ");
+
+    setValue("seoTitle", autoTitle, { shouldValidate: true });
+
+    // 2. SEO Anahtar Kelimeler (string[] olarak dizi şeklinde tutulmalı)
+    const keywordsSet = Array.from(
+      new Set(
+        [
+          ...productName.toLowerCase().split(" "),
+          selectedBrand.toLowerCase(),
+          selectedCategory.toLowerCase(),
+        ].filter((k) => k.length > 2)
+      )
+    );
+
+    // Dizi olarak atıyoruz (TypeScript artık hata vermeyecek)
+    setValue("seoKeywords", keywordsSet, { shouldValidate: true });
+
+  }, [productName, brandId, categoryId, brands, categories, setValue]);
 
   const inputClass =
     "w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all shadow-sm";
@@ -17,7 +52,6 @@ export default function StepBasicInfo({ categories, brands }: Props) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        {/* Ürün Adı */}
         <div>
           <label className="block mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
             Ürün Adı *
@@ -29,7 +63,6 @@ export default function StepBasicInfo({ categories, brands }: Props) {
           />
         </div>
 
-        {/* Fiyat */}
         <div>
           <label className="block mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
             Fiyat (₺) *
@@ -45,10 +78,10 @@ export default function StepBasicInfo({ categories, brands }: Props) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        {/* SEO Başlığı */}
         <div>
-          <label className="block mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-            SEO Başlığı
+          <label className=" mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300 flex justify-between">
+            <span>SEO Başlığı</span>
+            <span className="text-[10px] text-pink-600 lowercase font-normal">otomatik oluşturulur</span>
           </label>
           <input
             {...register("seoTitle")}
@@ -57,10 +90,10 @@ export default function StepBasicInfo({ categories, brands }: Props) {
           />
         </div>
 
-        {/* SEO Anahtar Kelimeler */}
         <div>
-          <label className="block mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-            SEO Anahtar Kelimeler
+          <label className=" mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300 flex justify-between">
+            <span>SEO Anahtar Kelimeler</span>
+            <span className="text-[10px] text-pink-600 lowercase font-normal">otomatik oluşturulur</span>
           </label>
           <input
             {...register("seoKeywords")}
@@ -72,70 +105,50 @@ export default function StepBasicInfo({ categories, brands }: Props) {
 
       <hr className="border-gray-100 dark:border-gray-800 my-2" />
 
-      {/* Grid: Yayın, Kategori, Marka & Switch alanları */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {/* Yayın Durumu */}
         <div className="flex flex-col">
           <label className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
             Yayın Durumu
           </label>
-          <select
-            {...register("status")}
-            className={inputClass}
-            defaultValue="PUBLISHED"
-          >
+          <select {...register("status")} className={inputClass} defaultValue="PUBLISHED">
             <option value="DRAFT">Taslak</option>
             <option value="PUBLISHED">Yayında</option>
             <option value="ARCHIVED">Arşiv</option>
           </select>
         </div>
 
-        {/* Kategori */}
         <div className="flex flex-col">
           <label className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
             Kategori *
           </label>
-          <select
-            {...register("categoryId")}
-            className={inputClass}
-            defaultValue=""
-          >
+          <select {...register("categoryId")} className={inputClass} defaultValue="">
             <option value="">- Kategori Seç -</option>
             {categories?.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
+              <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
         </div>
 
-        {/* Marka */}
         <div className="flex flex-col">
           <label className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
             Marka
           </label>
-          <select
-            {...register("brandId")}
-            className={inputClass}
-            defaultValue=""
-          >
+          <select {...register("brandId")} className={inputClass} defaultValue="">
             <option value="">- Marka Seç -</option>
             {brands?.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
+              <option key={b.id} value={b.id}>{b.name}</option>
             ))}
           </select>
         </div>
       </div>
 
-      {/* Checkbox Alanları */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
         <label className="flex items-center space-x-3 rounded-xl border border-gray-200 dark:border-gray-700 p-3.5 bg-gray-50/50 dark:bg-gray-800/50 cursor-pointer hover:border-pink-500 transition-all">
           <input
             type="checkbox"
             id="inStock"
             {...register("inStock")}
+            defaultChecked={true}
             className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500 dark:bg-gray-700 dark:border-gray-600"
           />
           <span className="text-sm font-medium text-gray-700 dark:text-gray-200">

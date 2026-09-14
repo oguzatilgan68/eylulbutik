@@ -35,11 +35,24 @@ export default function StepModelInfo() {
   }, []);
 
   const handleSelect = (model: Model) => {
-    setValue("modelInfoId", model.id);
+    // Eğer tıklanan manken zaten seçiliyse seçimi kaldırabilir veya güncelleyebiliriz
+    if (currentModelId === model.id) {
+      setValue("modelInfoId", "");
+    } else {
+      setValue("modelInfoId", model.id);
+    }
   };
 
   return (
-    <div className="space-y-6">
+    <div 
+      className="space-y-6"
+      onKeyDown={(e) => {
+        // 🚀 KRİTİK: Bu adımda Enter tuşunun formu yanlışlıkla submit etmesini engelliyoruz
+        if (e.key === "Enter") {
+          e.preventDefault();
+        }
+      }}
+    >
       <div>
         <h3 className="text-base font-semibold text-gray-900 dark:text-white">
           Manken Bilgileri
@@ -60,9 +73,9 @@ export default function StepModelInfo() {
             return (
               <button
                 key={m.id}
-                type="button"
+                type="button" // 👈 Kesinlikle type="button" olmalı ki form submit olmasın!
                 onClick={() => handleSelect(m)}
-                className={`p-4 rounded-2xl border text-left transition-all relative ${
+                className={`p-4 rounded-2xl border text-left transition-all relative cursor-pointer ${
                   isSelected
                     ? "border-pink-600 bg-pink-50/60 dark:bg-pink-950/30 shadow-md ring-2 ring-pink-500/20"
                     : "border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 hover:border-gray-300"

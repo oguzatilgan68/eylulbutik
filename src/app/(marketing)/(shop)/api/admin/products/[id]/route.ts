@@ -69,24 +69,93 @@ export async function GET(
   }
 }
 
-/* -------------------- DELETE -------------------- */
-export async function DELETE(
-  req: Request,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(req: NextRequest) {
   try {
     await requireAdmin();
 
-    const params = await props.params;
-    await db.product.delete({ where: { id: params.id } });
-    return NextResponse.json({ success: true });
+    const body = await req.json();
+    const { ids } = body; // string[] (silinecek ürün ID'leri)
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json({ error: "Silinecek ürün seçilmedi." }, { status: 400 });
+    }
+
+    // 🚀 Transaction ile seçilen ürünlere bağlı tüm alt tabloları temizleyip güvenle siliyoruz
+    await db.$transaction(async (tx) => {
+      // 1. Bu ürünlere ait varyant ID'lerini bulalım
+      const variants = await tx.productVariant.findMany({
+        where: { productId: { in: ids } },
+        select: { id: true },
+      });
+      const variantIds = variants.map((v) => v.id);
+
+      // 2. Sepet öğelerinden (CartItem) bu ürünlere/varyantlara ait olanları temizle
+      await tx.cartItem.deleteMany({
+        where: {
+          OR: [
+            { productId: { in: ids } },
+            ...(variantIds.length > 0 ? [{ variantId: { in: variantIds } }] : []),
+          ],
+        },
+      });
+
+      // 3. Siparişi verilmiş ürünler varsa engelle
+      const orderItemCount = await tx.orderItem.count({
+        where: {
+          OR: [
+            { productId: { in: ids } },
+            ...(variantIds.length > 0 ? [{ variantId: { in: variantIds } }] : []),
+          ],
+        },
+      });
+
+      if (orderItemCount > 0) {
+        throw new Error("Seçilen ürünlerden biri veya birkaçı daha önce satın alındığı (sipariş geçmişi olduğu) için silinemez.");
+      }
+
+      // 4. Varyant alt ilişkilerini temizle
+      if (variantIds.length > 0) {
+        await tx.productVariantAttribute.deleteMany({
+          where: { variantId: { in: variantIds } },
+        });
+        await tx.variantImage.deleteMany({
+          where: { variantId: { in: variantIds } },
+        });
+        await tx.productVariant.deleteMany({
+          where: { productId: { in: ids } },
+        });
+      }
+
+      // 5. Ürünün görsellerini, özelliklerini (ProductProperty), yorumlarını ve wishlist bağlarını temizle
+      await tx.productImage.deleteMany({ where: { productId: { in: ids } } });
+      await tx.productProperty.deleteMany({ where: { productId: { in: ids } } });
+      await tx.review.deleteMany({ where: { productId: { in: ids } } });
+
+      // Wishlist ve Slider M-N ilişkilerini koparalım
+      for (const id of ids) {
+        await tx.product.update({
+          where: { id },
+          data: {
+            wishlists: { set: [] },
+            sliders: { set: [] },
+          },
+        });
+      }
+
+      // 6. Artık ürünleri güvenle silebiliriz
+      await tx.product.deleteMany({
+        where: { id: { in: ids } },
+      });
+    });
+
+    return NextResponse.json({ success: true, message: "Seçilen ürünler başarıyla silindi." });
   } catch (error: any) {
     if (error instanceof AdminAuthError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
-    console.error("DELETE /api/admin/products/[id] error:", error);
+    console.error("Toplu ürün silme hatası:", error);
     return NextResponse.json(
-      { error: "Ürün silinirken hata oluştu" },
+      { error: error.message || "Ürünler silinirken bir hata oluştu." },
       { status: 500 }
     );
   }

@@ -72,7 +72,7 @@ export async function fetchInitialData(
     safeFetch(`${baseUrl}/api/categories`, "Kategori", 300, cookieHeader),
     safeFetch(`${baseUrl}/api/brands`, "Marka", 300, cookieHeader),
     safeFetch(
-      `${baseUrl}/api/attribute-types`,
+      `${baseUrl}/api/admin/attribute-types`,
       "Attribute Tipi",
       120,
       cookieHeader

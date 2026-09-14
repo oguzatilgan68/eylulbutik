@@ -176,19 +176,23 @@ model AttributeType {
 }
 
 model AttributeValue {
-  id               String                      @id @default(uuid())
+  id               String         @id @default(uuid())
   attributeTypeId  String
   value            String
-  type             AttributeType               @relation(fields: [attributeTypeId], references: [id])
+  type             AttributeType  @relation(fields: [attributeTypeId], references: [id], onDelete: Cascade)
   variantAttributes ProductVariantAttribute[]
+
+  @@unique([attributeTypeId, value])
 }
 
 model ProductVariantAttribute {
-  id               String           @id @default(uuid())
+  id               String         @id @default(uuid())
   variantId        String
   attributeValueId String
-  variant          ProductVariant   @relation(fields: [variantId], references: [id])
-  value            AttributeValue   @relation(fields: [attributeValueId], references: [id])
+  variant          ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  value            AttributeValue @relation(fields: [attributeValueId], references: [id])
+
+  @@unique([variantId, attributeValueId])
 }
 
 model ProductImage {
@@ -302,7 +306,6 @@ model Payment {
   updatedAt    DateTime @updatedAt
   refunds      Refund[]
 
-  // ⚠ Burayı optional bırakıyoruz
   order        Order?   @relation(fields: [orderId], references: [id])
   orderId      String   @unique
 }

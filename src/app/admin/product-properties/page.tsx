@@ -237,7 +237,7 @@ export default function PropertyTypesPage() {
         {/* Yeni değer ekleme */}
         <div className="flex gap-2">
           <Input
-            placeholder="Yeni değer yazın (örn: Kırmızı, S, 38)"
+            placeholder="Yeni değer yazın"
             value={newValue}
             onChange={(e) => setNewValue(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addValue(); } }}
