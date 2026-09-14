@@ -5,12 +5,21 @@ import { UserContext } from "@/app/(marketing)/context/userContext";
 import Link from "next/link";
 import React, { useContext } from "react";
 import { FaInstagram, FaMapMarkerAlt, FaPhoneAlt, FaWhatsapp } from "react-icons/fa";
-
 import { FiMail, FiHeadphones } from "react-icons/fi";
 
 const CustomerService: React.FC = () => {
-  const genericData = useContext(UserContext)?.genericData;
-  if (!genericData) return null;
+  const context = useContext(UserContext);
+  const genericData = context?.genericData;
+
+  // 🚀 Eğer veri hala yükleniyorsa bomboş ekran yerine şık bir yükleme göstergesi verelim
+  if (!genericData) {
+    return (
+      <div className="max-w-4xl mx-auto p-12 text-center space-y-3">
+        <div className="w-8 h-8 border-2 border-pink-600 border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-sm text-gray-400">Yükleniyor...</p>
+      </div>
+    );
+  }
 
   const breadcrumbs = [
     { label: "Hesabım", href: "/account" },

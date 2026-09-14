@@ -61,7 +61,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     fetchUser();
   }, []); // router bağımlılığını kaldırdık ki gereksiz tetiklenmesin
 
-  // 🌐 GenericData’yı çek
   useEffect(() => {
     const fetchGenericData = async () => {
       try {
@@ -70,7 +69,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           cache: "no-store",
         });
         const data = await res.json();
-        setGenericData(Array.isArray(data) ? data[0] : data);
+        
+        // Eğer dizi geldiyse ve içi boşsa bile en azından null atalım ki sayfa "Yükleniyor"da takılmasın
+        if (Array.isArray(data)) {
+          setGenericData(data.length > 0 ? data[0] : null);
+        } else {
+          setGenericData(data || null);
+        }
       } catch (err) {
         console.error("Generic data çekilemedi:", err);
         setGenericData(null);
