@@ -25,12 +25,12 @@ export default function StepVariants({ attributeTypes, uploadImage }: Props) {
   const variants = watch("variants") || [];
   const basePrice = watch("price") || "";
   const baseSku = watch("sku") || "";
-  
+
   // Ürünün 1. adımda yüklediği ana görselleri form state'inden alıyoruz
   const mainProductImages = watch("images") || []; // [{ url: string, alt?: string }]
 
   const [selectedValuesMap, setSelectedValuesMap] = useState<Record<string, string[]>>({});
-  
+
   // Hangi varyant için görsel seçme modalı açık? (Index tutuyoruz)
   const [activeImageModalIdx, setActiveImageModalIdx] = useState<number | null>(null);
 
@@ -45,7 +45,7 @@ export default function StepVariants({ attributeTypes, uploadImage }: Props) {
     }
   };
 
-// 🚀 Profesyonel Matris Kombinasyon Üretici (Eskileri silmeden koruyan yapı)
+  // 🚀 Profesyonel Matris Kombinasyon Üretici (Eskileri silmeden koruyan yapı)
   const generateMatrixVariants = () => {
     const activeTypes = attributeTypes.filter(
       (at) => selectedValuesMap[at.id] && selectedValuesMap[at.id].length > 0
@@ -59,7 +59,7 @@ export default function StepVariants({ attributeTypes, uploadImage }: Props) {
     const cartesian = (arr: any[][]): any[][] =>
       arr.reduce((a, b) => a.flatMap((d) => b.map((e) => [d, e].flat())), [[]]);
 
-    const valueArrays = activeTypes.map((at) => 
+    const valueArrays = activeTypes.map((at) =>
       selectedValuesMap[at.id].map((valId) => ({
         typeId: at.id,
         valId,
@@ -74,7 +74,7 @@ export default function StepVariants({ attributeTypes, uploadImage }: Props) {
 
     combinations.forEach((combo) => {
       const attributeValueIds = combo.map((c: any) => c.valId);
-      
+
       // Bu kombinasyona sahip bir varyant zaten listede var mı kontrol edelim
       const existingVariantIndex = currentVariants.findIndex((v: any) => {
         const vIds = v.attributeValueIds || [];
@@ -173,11 +173,10 @@ export default function StepVariants({ attributeTypes, uploadImage }: Props) {
                       key={val.id}
                       type="button"
                       onClick={() => handleToggleValue(at.id, val.id)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
-                        isSelected
+                      className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${isSelected
                           ? "bg-pink-600 text-white shadow-md shadow-pink-500/20"
                           : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-pink-500"
-                      }`}
+                        }`}
                     >
                       {val.value} {isSelected && "✓"}
                     </button>
@@ -334,7 +333,6 @@ export default function StepVariants({ attributeTypes, uploadImage }: Props) {
                   </label>
                 </div>
 
-                {/* 🌟 ANA GÖRSEL HAVUZU SEÇİM PANELİ (Açılır Kutu) */}
                 {activeImageModalIdx === idx && (
                   <div className="p-4 rounded-2xl bg-white dark:bg-gray-900 border border-pink-200 dark:border-pink-900/50 shadow-md space-y-3 mt-2 animate-in fade-in zoom-in-95 duration-150">
                     <div className="flex justify-between items-center">
@@ -352,16 +350,16 @@ export default function StepVariants({ attributeTypes, uploadImage }: Props) {
 
                     <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
                       {mainProductImages.map((mainImg: any, mIdx: number) => {
+                        // Hangi görselin bu varyanta ait olduğunu kontrol et
                         const isSelected = (v.images || []).some((vi: any) => vi.url === mainImg.url);
                         return (
                           <div
                             key={mIdx}
                             onClick={() => handleToggleImageToVariant(idx, mainImg.url)}
-                            className={`relative aspect-square rounded-xl overflow-hidden border-2 cursor-pointer transition-all ${
-                              isSelected
+                            className={`relative aspect-square rounded-xl overflow-hidden border-2 cursor-pointer transition-all ${isSelected
                                 ? "border-pink-600 ring-2 ring-pink-500/30 scale-95"
                                 : "border-gray-200 dark:border-gray-700 opacity-70 hover:opacity-100"
-                            }`}
+                              }`}
                           >
                             <img src={mainImg.url} alt="" className="w-full h-full object-cover" />
                             {isSelected && (

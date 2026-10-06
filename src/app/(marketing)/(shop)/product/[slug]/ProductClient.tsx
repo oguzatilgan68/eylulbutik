@@ -21,6 +21,10 @@ export default function ProductClient({ product }: any) {
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const [activeTab, setActiveTab] = useState("details");
 
+  // 🔍 1. LOG: Backend'den gelen ham ürün ve varyant verilerini görelim
+  console.log("🔍 [ProductClient] Gelen Product Verisi:", product);
+  console.log("🔍 [ProductClient] Gelen Variants Listesi:", product.variants);
+
   const attributeTypes = useMemo(() => {
     const types: Record<string, string[]> = {};
     product.variants.forEach((variant: any) => {
@@ -30,6 +34,9 @@ export default function ProductClient({ product }: any) {
           types[attr.key].push(attr.value);
       });
     });
+    
+    // 🔍 2. LOG: Oluşan hammadde attribute tipleri
+    console.log("🔍 [ProductClient] Hesaplanan attributeTypes (Seçenek havuzu):", types);
     return types;
   }, [product.variants]);
 
@@ -52,13 +59,23 @@ export default function ProductClient({ product }: any) {
     [selectedAttributes, product.variants]
   );
 
+  // 🔍 3. LOG: Anlık yapılan seçime göre eşleşen gerçek varyant var mı?
+  console.log("🔍 [ProductClient] Anlık Seçilen Kombinasyon (selectedAttributes):", selectedAttributes);
+  console.log("🔍 [ProductClient] Eşleşen selectedVariant:", selectedVariant);
+
   const displayPrice = selectedVariant ? selectedVariant.price : product.price;
   const inStock = selectedVariant
     ? selectedVariant.stockQty > 0
     : product.inStock;
+  
+  // 📸 DÜZELTME & LOG: Eğer seçilen varyantın kendine ait özel görselleri yoksa (boşsa), 
+  // tüm havuzdaki resimlerin gösterilmesini engellemek için ana ürün resimlerine düşmesini 
+  // ya da varyantın kendi resmini filtrelemesini buradan kontrol edebiliriz.
   const images = selectedVariant?.images?.length
     ? selectedVariant.images
     : product.images;
+
+  console.log("🔍 [ProductClient] Gösterilen Aktif Görseller (images):", images);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 lg:py-12 space-y-12">
@@ -82,10 +99,14 @@ export default function ProductClient({ product }: any) {
             inStock={inStock}
           />
           <hr className="border-gray-100 dark:border-gray-800" />
+          
+          {/* 🚀 ÖNEMLİ: ProductAttributes bileşenine gerçek variants dizisini de gönderiyoruz 
+              ki hangi kombinasyonun olup olmadığı orada süzülebsin. */}
           <ProductAttributes
             attributeTypes={attributeTypes}
             selectedAttributes={selectedAttributes}
             setSelectedAttributes={setSelectedAttributes}
+            variants={product.variants} 
           />
         </div>
       </div>
