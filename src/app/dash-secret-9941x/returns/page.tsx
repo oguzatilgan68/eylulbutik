@@ -1,9 +1,10 @@
-"use client";
-
 import ReturnDetailsModal from "@/app/(marketing)/components/admin/returns/ReturnDetailsModal";
 import ReturnsCards from "@/app/(marketing)/components/admin/returns/ReturnsCards";
 import ReturnsTable from "@/app/(marketing)/components/admin/returns/ReturnsTable";
 import { ReturnRequestWithRelations } from "@/app/(marketing)/components/admin/returns/types";
+"use client";
+
+
 import Pagination from "@/app/(marketing)/components/ui/Pagination";
 import { useEffect, useState } from "react";
 import { FiRotateCcw } from "react-icons/fi";
@@ -81,7 +82,7 @@ export default function ReturnsPage() {
           <div className="block lg:hidden">
             <ReturnsCards
               list={list}
-              onSelect={(r) => setSelected(r)}
+              onSelect={(r:any) => setSelected(r)}
               onUpdate={updateStatus}
             />
           </div>
@@ -90,7 +91,7 @@ export default function ReturnsPage() {
           <div className="hidden lg:block bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
             <ReturnsTable
               list={list}
-              onSelect={(r) => setSelected(r)}
+              onSelect={(r:any) => setSelected(r)}
               onUpdate={updateStatus}
             />
           </div>

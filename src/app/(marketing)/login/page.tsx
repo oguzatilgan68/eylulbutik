@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react"; // NextAuth client fonksiyonu
+import { signIn, getSession } from "next-auth/react"; // NextAuth client fonksiyonu
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -10,6 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loading } from "../components/ui/loading";
 import { Eye, EyeOff } from "lucide-react";
 import { FiLogIn } from "react-icons/fi";
+import { SECRET_ADMIN_PATH } from "@/config/admin";
 
 const schema = z.object({
   email: z.string().email("Geçerli bir e-posta adresi giriniz"),
@@ -35,7 +36,7 @@ export default function LoginPage() {
     setError("");
     try {
       const result = await signIn("credentials", {
-        redirect: false, 
+        redirect: false,
         email: data.email,
         password: data.password,
       });
@@ -45,7 +46,17 @@ export default function LoginPage() {
       }
 
       if (result?.ok) {
-        router.push("/");
+        // Session'ı alarak kullanıcının rolünü kontrol et
+        const session = await getSession();
+        const userRole = session?.user?.role;
+
+        if (userRole === "ADMIN") {
+          // Admin ise gizli yola yönlendir
+          router.push(`/${SECRET_ADMIN_PATH}`);
+        } else {
+          // Normal kullanıcı ise account sayfasına yönlendir
+          router.push("/account");
+        }
         router.refresh();
       }
     } catch (err) {

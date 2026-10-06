@@ -2,6 +2,7 @@ import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import getRateLimitMiddlewares from "next-rate-limit";
 import { log } from "./app/(marketing)/lib/logger";
+import { SECRET_ADMIN_PATH } from "./config/admin";
 
 const { checkNext } = getRateLimitMiddlewares({
   interval: 60 * 1000, // 1 dakika
@@ -59,11 +60,11 @@ export async function proxy(req: NextRequest) {
   }
 
   // ------------------------
-  // 🛡️ /admin ve /api/admin kontrolü
+  // 🛡️ SECRET_ADMIN_PATH kontrolü
   // ------------------------
-  if (pathname.startsWith("/admin") && pathname !== "/admin-login") {
+  if (pathname.startsWith(`/${SECRET_ADMIN_PATH}`)) {
     if (!nextAuthToken || nextAuthToken.role !== "ADMIN") {
-      const res = NextResponse.redirect(new URL("/admin-login", req.url));
+      const res = NextResponse.redirect(new URL("/login", req.url));
       return res;
     }
   }

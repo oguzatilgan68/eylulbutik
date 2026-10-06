@@ -7,6 +7,7 @@ import { ActionButton } from "@/app/(marketing)/components/ui/ActionButton";
 import TextInput from "@/app/(marketing)/components/ui/TextInput";
 import { FiBox, FiSearch, FiTrash2 } from "react-icons/fi";
 import Swal from "sweetalert2";
+import { SECRET_ADMIN_PATH } from "../../../config/admin";
 
 interface Product {
   id: string;
@@ -171,7 +172,8 @@ export default function AdminProductsPage() {
             Mağazanızdaki tüm ürünleri listeleyin, fiyatlarını ve stok durumlarını güncelleyin.
           </p>
         </div>
-        <ActionButton href="/admin/products/new" label="Yeni Ürün Ekle" primary />
+        {/* HATA DÜZELTİLDİ: Çift tırnak yerine backtick (`) kullanıldı */}
+        <ActionButton href={`/${SECRET_ADMIN_PATH}/products/new`} label="Yeni Ürün Ekle" primary />
       </div>
 
       <div className="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm space-y-3">
@@ -311,7 +313,8 @@ export default function AdminProductsPage() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <ActionButton href={`/admin/products/${p.id}`} label="Düzenle" />
+                          {/* HATA DÜZELTİLDİ: Çift tırnak yerine backtick (`) kullanıldı */}
+                          <ActionButton href={`/${SECRET_ADMIN_PATH}/products/${p.id}`} label="Düzenle" />
                           <ActionButton label="Sil" onClick={() => handleDelete(p.id)} danger />
                         </div>
                       </td>

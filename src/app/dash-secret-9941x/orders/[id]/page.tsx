@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { FiArrowLeft, FiUser, FiMapPin, FiPackage, FiCreditCard, FiExternalLink } from "react-icons/fi";
 import { OrderStatusSelect } from "./OrderStatusSelect";
+import { SECRET_ADMIN_PATH } from "../../../../config/admin";
 
 interface OrderPageProps {
   params: Promise<{ id: string }>;
@@ -44,7 +45,7 @@ const AdminOrderDetailPage = async (props: OrderPageProps) => {
     return (
       <div className="max-w-4xl mx-auto p-12 text-center">
         <p className="text-rose-500 font-semibold mb-4">Sipariş bulunamadı veya hata oluştu.</p>
-        <Link href="/admin/orders" className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-xl text-sm font-medium">
+        <Link href={`/${SECRET_ADMIN_PATH}/orders`} className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-xl text-sm font-medium">
           ← Siparişlere Geri Dön
         </Link>
       </div>
@@ -69,7 +70,7 @@ const AdminOrderDetailPage = async (props: OrderPageProps) => {
     return (
       <div className="max-w-4xl mx-auto p-12 text-center">
         <p className="text-rose-500 font-semibold mb-4">Sipariş detay verisi okunamadı.</p>
-        <Link href="/admin/orders" className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-xl text-sm font-medium">
+        <Link href={`/${SECRET_ADMIN_PATH}/orders`} className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-xl text-sm font-medium">
           ← Siparişlere Geri Dön
         </Link>
       </div>
@@ -84,7 +85,7 @@ const AdminOrderDetailPage = async (props: OrderPageProps) => {
       <div className="flex items-center justify-between bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="flex items-center gap-4">
           <Link
-            href="/admin/orders"
+            href={`/${SECRET_ADMIN_PATH}/orders`}
             className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 transition-colors"
           >
             <FiArrowLeft size={18} />

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CheckCircle2, XCircle, Search, UserPlus, Edit3, Trash2 } from "lucide-react";
 import Pagination from "@/app/(marketing)/components/ui/Pagination";
 import { FiUsers, FiSearch } from "react-icons/fi";
+import { SECRET_ADMIN_PATH } from "../../../config/admin";
 
 interface User {
   id: string;
@@ -46,8 +47,8 @@ export default function CustomersPage() {
     if (!confirm("Bu kullanıcıyı silmek istediğinize emin misiniz?")) return;
 
     try {
-      const res = await fetch("/admin/customers", {
-        method: "POST",
+      const res = await fetch(`/api/admin/customers`, {
+        method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
       });
@@ -87,7 +88,7 @@ export default function CustomersPage() {
           </div>
 
           <Link
-            href="/admin/customers/new"
+            href={`/${SECRET_ADMIN_PATH}/customers/new`}
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-sm font-medium shadow-md shadow-pink-500/20 transition-all whitespace-nowrap"
           >
             <UserPlus size={16} /> Yeni Müşteri
@@ -146,7 +147,7 @@ export default function CustomersPage() {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Link
-                          href={`/admin/customers/${user.id}`}
+                          href={`/dash-secret-9941x/customers/${user.id}`}
                           className="px-3.5 py-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-xs font-semibold flex items-center gap-1.5"
                         >
                           <Edit3 size={13} /> Düzenle

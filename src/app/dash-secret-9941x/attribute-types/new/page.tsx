@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import Swal from "sweetalert2";
 import { FiPlus, FiX, FiCheck, FiArrowLeft } from "react-icons/fi";
 import Link from "next/link";
+import { SECRET_ADMIN_PATH } from "@/config/admin";
 
 export default function NewAttributeTypePage() {
   const router = useRouter();
@@ -52,7 +53,7 @@ export default function NewAttributeTypePage() {
       if (!res.ok) throw new Error(data.error || "Kayıt başarısız");
 
       Swal.fire({ icon: "success", title: "Başarılı!", text: "Varyasyon grubu oluşturuldu.", timer: 1500, showConfirmButton: false });
-      router.push("/admin/attribute-types");
+      router.push(`/${SECRET_ADMIN_PATH}/attribute-types`);
       router.refresh();
     } catch (err: any) {
       Swal.fire({ icon: "error", title: "Hata!", text: err.message, confirmButtonColor: "#ef4444" });
@@ -64,7 +65,7 @@ export default function NewAttributeTypePage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
-        <Link href="/admin/attribute-types" className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 transition">
+        <Link href={`/${SECRET_ADMIN_PATH}/attribute-types`} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 transition">
           <FiArrowLeft size={18} />
         </Link>
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">Yeni Varyasyon Tipi Oluştur</h1>

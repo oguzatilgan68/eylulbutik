@@ -4,12 +4,14 @@ import { db } from "@/app/(marketing)/lib/db";
 import { CategoryForm } from "@/app/(marketing)/components/category/categoryForm";
 import Link from "next/link";
 import { FiArrowLeft, FiFolderPlus } from "react-icons/fi";
+import { SECRET_ADMIN_PATH } from "../../../../config/admin";
 
 const NewCategoryPage = () => {
   const handleCreate = async (data: any) => {
     "use server";
     await db.category.create({ data });
-    redirect("/admin/categories");
+    // HATA DÜZELTİLDİ: Çift tırnak yerine backtick (`) kullanıldı
+    redirect(`/${SECRET_ADMIN_PATH}/categories`);
   };
 
   return (
@@ -17,7 +19,7 @@ const NewCategoryPage = () => {
       {/* Üst Geri Dön Navigasyonu */}
       <div className="mb-6">
         <Link
-          href="/admin/categories"
+          href={`/${SECRET_ADMIN_PATH}/categories`}
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
         >
           <FiArrowLeft size={14} /> Kategori Listesine Dön

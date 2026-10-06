@@ -18,8 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ProductMultiSelect } from "@/app/(marketing)/components/admin/ProductMultiSelect";
+// DÜZELTME: Hardcoded yol yerine SECRET_ADMIN_PATH dinamik olarak kullanıldı
 import { FiSliders, FiArrowLeft, FiUploadCloud, FiTrash2, FiSave, FiLink, FiType, FiLayers, FiList } from "react-icons/fi";
+import { SECRET_ADMIN_PATH } from "../../../../config/admin";
+import { ProductMultiSelect } from "@/app/(marketing)/components/admin/ProductMultiSelect";
 
 type Product = {
   id: string;
@@ -155,7 +157,8 @@ export default function EditSliderPage() {
 
       if (!response.ok) throw new Error("Sunucu hatası");
       toast.success("Slider başarıyla güncellendi 🎉");
-      router.push("/admin/sliders");
+      // HATA DÜZELTİLDİ: Çift tırnak yerine backtick (`) kullanıldı
+      router.push(`/${SECRET_ADMIN_PATH}/sliders`);
     } catch {
       toast.error("Slider güncellenirken hata oluştu ❌");
     }
@@ -175,7 +178,7 @@ export default function EditSliderPage() {
       {/* Üst Geri Dön Navigasyonu */}
       <div className="mb-6">
         <Link
-          href="/admin/sliders"
+          href={`/${SECRET_ADMIN_PATH}/sliders`}
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
         >
           <FiArrowLeft size={14} /> Slider Listesine Dön

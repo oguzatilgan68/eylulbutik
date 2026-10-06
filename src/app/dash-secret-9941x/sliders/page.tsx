@@ -3,6 +3,7 @@
 import useSWR from "swr";
 import Link from "next/link";
 import { FiPlus, FiEdit2, FiTrash2, FiImage } from "react-icons/fi";
+import { SECRET_ADMIN_PATH } from "../../../config/admin";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -33,7 +34,7 @@ export default function SliderList() {
           </p>
         </div>
         <Link
-          href="/admin/sliders/new"
+          href={`/${SECRET_ADMIN_PATH}/sliders/new`}
           className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-sm font-medium shadow-md shadow-pink-500/20 transition-all"
         >
           <FiPlus size={18} /> Yeni Slider
@@ -94,7 +95,7 @@ export default function SliderList() {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Link
-                          href={`/admin/sliders/${slider.id}`}
+                          href={`/dash-secret-9941x/sliders/${slider.id}`}
                           className="px-3.5 py-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-xs font-semibold flex items-center gap-1.5"
                         >
                           <FiEdit2 size={13} /> Düzenle

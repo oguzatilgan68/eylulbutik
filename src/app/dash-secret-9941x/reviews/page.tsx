@@ -1,3 +1,4 @@
+import { SECRET_ADMIN_PATH } from "../../../config/admin";
 "use client";
 import { DynamicComponents } from "@/app/utils/dynamic-import";
 const { ReviewManager } = DynamicComponents;

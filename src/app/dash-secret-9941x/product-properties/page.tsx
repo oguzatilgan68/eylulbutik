@@ -1,3 +1,4 @@
+import { SECRET_ADMIN_PATH } from "../../../config/admin";
 "use client";
 
 import { useState, useEffect } from "react";
@@ -175,7 +176,7 @@ export default function PropertyTypesPage() {
     if (!result.isConfirmed) return;
 
     try {
-      const res = await fetch(`/api/property-types/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/product-properties/${id}`, { method: "DELETE" });
 
       if (res.ok) {
         setTypes((all) => all.filter((t) => t.id !== id));

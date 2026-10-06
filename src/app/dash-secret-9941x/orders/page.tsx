@@ -1,3 +1,4 @@
+import { SECRET_ADMIN_PATH } from "../../../config/admin";
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
@@ -229,7 +230,7 @@ export default function AdminOrdersPage() {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Link
-                          href={`/admin/orders/${order.id}`}
+                          href={`/${SECRET_ADMIN_PATH}/orders/${order.id}`}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-xs font-semibold"
                         >
                           <FiEye size={13} /> Detay

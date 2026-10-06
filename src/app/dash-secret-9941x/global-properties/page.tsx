@@ -1,3 +1,4 @@
+import { SECRET_ADMIN_PATH } from "../../../config/admin";
 "use client";
 
 import { useEffect, useState } from "react";
@@ -63,19 +64,19 @@ export default function GlobalPropertiesPage() {
     setForm({ name: prop.name });
   };
 
-const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Bu özelliği silmek istediğinize emin misiniz?")) return;
     try {
-      const res = await fetch(`/api/admin/product-properties/${id}`, {
+      const res = await fetch(`/api/admin/global-properties/${id}`, {
         method: "DELETE",
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Silme işlemi başarısız");
-      
+
       setProps((all) => all.filter((p) => p.id !== id));
     } catch (err: any) {
       console.error(err);
-      alert(err.message); 
+      alert(err.message);
     }
   };
 

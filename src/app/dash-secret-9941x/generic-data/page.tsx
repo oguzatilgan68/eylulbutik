@@ -1,3 +1,4 @@
+import { SECRET_ADMIN_PATH } from "../../../config/admin";
 "use client";
 
 import { useEffect, useState } from "react";

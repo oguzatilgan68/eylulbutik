@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { FiLayers, FiPlus, FiEdit2, FiTrash2 } from "react-icons/fi";
 import Swal from "sweetalert2";
+import { SECRET_ADMIN_PATH } from "../../../config/admin";
 
 interface AttributeValue {
   id: string;
@@ -52,7 +53,7 @@ export default function AttributeTypesPage() {
     if (!result.isConfirmed) return;
 
     try {
-      const res = await fetch(`/api/attribute-types/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/attribute-types/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Silme başarısız");
 
       setTypes(types.filter((t) => t.id !== id));
@@ -75,7 +76,7 @@ export default function AttributeTypesPage() {
             Ürünlerinizde otomatik kombinasyon üretilmesini sağlayacak özellikleri ve değerlerini yönetin.
           </p>
         </div>
-        <Link href="/admin/attribute-types/new">
+        <Link href={`/${SECRET_ADMIN_PATH}/attribute-types/new`}>
           <Button className="bg-pink-600 hover:bg-pink-700 text-white rounded-xl px-4 text-xs font-semibold shadow-md shadow-pink-500/20 cursor-pointer">
             <FiPlus size={16} className="mr-1.5" /> Yeni Varyasyon Tipi Ekle
           </Button>
@@ -96,7 +97,7 @@ export default function AttributeTypesPage() {
               </div>
             </div>
             <div className="flex gap-2 pt-3 border-t border-gray-100 dark:border-gray-800 justify-end">
-              <Link href={`/admin/attribute-types/${t.id}/edit`}>
+              <Link href={`/${SECRET_ADMIN_PATH}/attribute-types/${t.id}/edit`}>
                 <Button size="sm" variant="ghost" className="h-8 px-3 text-xs rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 cursor-pointer">
                   <FiEdit2 size={13} className="mr-1" /> Düzenle
                 </Button>

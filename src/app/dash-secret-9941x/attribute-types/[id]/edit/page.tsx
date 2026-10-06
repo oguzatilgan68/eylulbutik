@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import Swal from "sweetalert2";
 import { FiPlus, FiX, FiCheck, FiArrowLeft } from "react-icons/fi";
 import Link from "next/link";
+import { SECRET_ADMIN_PATH } from "../../../../../config/admin";
 
 export default function EditAttributeTypePage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
@@ -27,7 +28,7 @@ export default function EditAttributeTypePage(props: { params: Promise<{ id: str
         setValues(data.values.map((v: any) => v.value));
       } catch (err: any) {
         Swal.fire({ icon: "error", title: "Hata!", text: err.message });
-        router.push("/admin/attribute-types");
+        router.push(`/${SECRET_ADMIN_PATH}/attribute-types`);
       } finally {
         setLoading(false);
       }
@@ -68,7 +69,9 @@ export default function EditAttributeTypePage(props: { params: Promise<{ id: str
       if (!res.ok) throw new Error(data.error || "Güncelleme başarısız");
 
       Swal.fire({ icon: "success", title: "Başarılı!", text: "Varyasyon grubu güncellendi.", timer: 1500, showConfirmButton: false });
-      router.push("/admin/attribute-types");
+      
+      // HATA DÜZELTİLDİ: Çift tırnak yerine backtick (`) kullanıldı
+      router.push(`/${SECRET_ADMIN_PATH}/attribute-types`);
       router.refresh();
     } catch (err: any) {
       Swal.fire({ icon: "error", title: "Hata!", text: err.message, confirmButtonColor: "#ef4444" });
@@ -82,7 +85,7 @@ export default function EditAttributeTypePage(props: { params: Promise<{ id: str
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
-        <Link href="/admin/attribute-types" className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 transition">
+        <Link href={`/${SECRET_ADMIN_PATH}/attribute-types`} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 transition">
           <FiArrowLeft size={18} />
         </Link>
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">Varyasyon Tipini Düzenle</h1>
@@ -123,7 +126,8 @@ export default function EditAttributeTypePage(props: { params: Promise<{ id: str
 
         <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-800">
           <Button type="submit" disabled={submitting} className="bg-pink-600 hover:bg-pink-700 text-white rounded-xl px-6 font-medium shadow-md shadow-pink-500/20 cursor-pointer">
-            <FiCheck size={16} className="mrs-1.5" /> Değişiklikleri Kaydet
+            {/* HATA DÜZELTİLDİ: mrs-1.5 typo'su mr-1.5 olarak düzeltildi */}
+            <FiCheck size={16} className="mr-1.5" /> Değişiklikleri Kaydet
           </Button>
         </div>
       </form>

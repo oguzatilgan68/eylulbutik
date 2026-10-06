@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { supabase } from "@/app/(marketing)/lib/supabase/supabaseClient";
 import ProductForm from "@/app/(marketing)/components/forms/ProductForm";
 import { ProductFormData } from "@/app/(marketing)/components/product/types/types";
+import { SECRET_ADMIN_PATH } from "../../../../config/admin"; // IMPORT EKLENDİ (Yolunu projenize göre kontrol edebilirsiniz)
 
 interface Props {
   categories: any[];
@@ -37,7 +38,8 @@ export default function ProductFormContainer({
         throw new Error(result.error || "Ürün oluşturulamadı");
       }
 
-      router.push("/admin/products");
+      // HATA DÜZELTİLDİ: Çift tırnak yerine backtick (`) kullanıldı
+      router.push(`/${SECRET_ADMIN_PATH}/products`);
     } catch (error) {
       console.error("Ürün kaydı hatası:", error);
       alert("Ürün oluşturulurken hata oluştu.");

@@ -17,9 +17,10 @@ import Image from "next/image";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
 import { supabase } from "@/app/(marketing)/lib/supabase/supabaseClient";
-import { ProductMultiSelect } from "@/app/(marketing)/components/admin/ProductMultiSelect";
 import { FiArrowLeft, FiCheck, FiUploadCloud } from "react-icons/fi";
 import Link from "next/link";
+import { SECRET_ADMIN_PATH } from "../../../../config/admin";
+import { ProductMultiSelect } from "@/app/(marketing)/components/admin/ProductMultiSelect";
 
 type Product = {
   id: string;
@@ -124,7 +125,8 @@ export default function NewSliderPage() {
 
       if (!response.ok) throw new Error("Sunucu hatası");
       toast.success("Slider başarıyla eklendi 🎉");
-      router.push("/admin/sliders");
+      // HATA DÜZELTİLDİ: Çift tırnak yerine backtick (`) kullanıldı
+      router.push(`/${SECRET_ADMIN_PATH}/sliders`);
     } catch {
       toast.error("Slider eklenirken hata oluştu ❌");
     }
@@ -135,7 +137,7 @@ export default function NewSliderPage() {
       {/* Üst Başlık & Geri Dön */}
       <div className="flex items-center gap-4 bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
         <Link
-          href="/admin/sliders"
+          href={`/${SECRET_ADMIN_PATH}/sliders`}
           className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 transition-colors"
         >
           <FiArrowLeft size={18} />

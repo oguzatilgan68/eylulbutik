@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { SECRET_ADMIN_PATH } from "../../../../config/admin";
 
 export default function NewUserPage() {
   const router = useRouter();
@@ -10,12 +11,12 @@ export default function NewUserPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch("/admin/users/new", {
+    await fetch(`/api/admin/customers`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ fullName, email, phone }),
     });
-    router.push("/admin/users");
+    router.push(`/${SECRET_ADMIN_PATH}/customers`);
   };
 
   return (

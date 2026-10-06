@@ -5,6 +5,7 @@ import ProductForm from "@/app/(marketing)/components/forms/ProductForm";
 import Swal from "sweetalert2";
 import { uploadImage } from "@/app/(marketing)/lib/supabase/upload";
 import { useRouter } from "next/navigation";
+import { SECRET_ADMIN_PATH } from "../../../../config/admin"; // IMPORT EKLENDİ (Yolunu projene göre kontrol edebilirsin)
 
 type EditProductFormProps = {
   initialData: any;
@@ -23,6 +24,7 @@ export default function EditProductForm({
 }: EditProductFormProps) {
   const [product, setProduct] = useState(initialData);
   const router = useRouter();
+  
   const handleUpdate = async (data: any) => {
     try {
       const res = await fetch(`/api/admin/products/${initialData.id}`, {
@@ -38,7 +40,8 @@ export default function EditProductForm({
         timer: 1500,
         showConfirmButton: false,
       });
-      router.push("/admin/products");
+      // HATA DÜZELTİLDİ: Çift tırnak yerine backtick (`) kullanıldı
+      router.push(`/${SECRET_ADMIN_PATH}/products`);
     } catch (err: any) {
       Swal.fire({ icon: "error", title: "Hata", text: err.message });
     }

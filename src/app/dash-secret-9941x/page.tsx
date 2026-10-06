@@ -2,17 +2,16 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { 
-  FiShoppingBag, 
-  FiBox, 
-  FiGrid, 
-  FiDollarSign, 
-  FiClock, 
-  FiArrowRight, 
-  FiTrendingUp, 
-  FiShield,
-  FiAlertCircle
+import {
+  FiShoppingBag,
+  FiBox,
+  FiGrid,
+  FiDollarSign,
+  FiClock,
+  FiArrowRight,
+  FiTrendingUp,
 } from "react-icons/fi";
+import { SECRET_ADMIN_PATH } from "@/config/admin";
 
 interface Stats {
   totalProducts: number;
@@ -90,7 +89,7 @@ export default function AdminHomePage() {
         </div>
         <div className="flex items-center gap-2">
           <Link
-            href="/admin/bank-transfers"
+            href={`/${SECRET_ADMIN_PATH}/bank-transfers`}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-semibold shadow-md shadow-pink-500/20 transition-all"
           >
             <FiClock size={15} /> Havale Bildirimleri 
@@ -193,7 +192,7 @@ export default function AdminHomePage() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Link
-            href="/admin/products"
+            href={`/${SECRET_ADMIN_PATH}/products`}
             className="flex items-center justify-between p-5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm hover:border-pink-500/50 transition-all group"
           >
             <div className="flex items-center gap-3">
@@ -209,7 +208,7 @@ export default function AdminHomePage() {
           </Link>
 
           <Link
-            href="/admin/orders"
+            href={`/${SECRET_ADMIN_PATH}/orders`}
             className="flex items-center justify-between p-5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm hover:border-pink-500/50 transition-all group"
           >
             <div className="flex items-center gap-3">
@@ -225,7 +224,7 @@ export default function AdminHomePage() {
           </Link>
 
           <Link
-            href="/admin/categories"
+            href={`/${SECRET_ADMIN_PATH}/categories`}
             className="flex items-center justify-between p-5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm hover:border-pink-500/50 transition-all group"
           >
             <div className="flex items-center gap-3">
@@ -249,7 +248,7 @@ export default function AdminHomePage() {
             <FiTrendingUp className="text-pink-600" /> Son Gelen Siparişler
           </h2>
           <Link
-            href="/admin/orders"
+            href={`/${SECRET_ADMIN_PATH}/orders`}
             className="text-xs font-semibold text-pink-600 dark:text-pink-400 hover:underline"
           >
             Tümünü Gör →

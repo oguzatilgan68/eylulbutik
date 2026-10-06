@@ -2,6 +2,7 @@ import { db } from "@/app/(marketing)/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { User, Mail, Phone, Save, ArrowLeft, Shield } from "lucide-react";
+import { SECRET_ADMIN_PATH } from "../../../../config/admin";
 
 export default async function EditUserPage(
   props: {
@@ -17,7 +18,7 @@ export default async function EditUserPage(
       {/* Üst Geri Dön Navigasyonu */}
       <div className="mb-6">
         <Link
-          href="/admin/customers"
+          href={`/${SECRET_ADMIN_PATH}/customers`}
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
         >
           <ArrowLeft size={14} /> Müşteri Listesine Dön

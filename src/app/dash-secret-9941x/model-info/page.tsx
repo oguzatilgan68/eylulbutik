@@ -1,3 +1,4 @@
+import { SECRET_ADMIN_PATH } from "../../../config/admin";
 "use client";
 
 import { useEffect, useState } from "react";
@@ -83,7 +84,7 @@ export default function ModelInfoPage() {
     if (!confirm("Bu mankeni silmek istediğinize emin misiniz?")) return;
 
     try {
-      const res = await fetch(`/api/model-info/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/model-info/${id}`, { method: "DELETE" });
       if (!res.ok) {
         const errorText = await res.text();
         throw new Error(`Silme işlemi başarısız: ${res.status} - ${errorText}`);

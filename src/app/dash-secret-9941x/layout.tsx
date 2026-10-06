@@ -4,21 +4,22 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
-import { 
-  FiMenu, 
-  FiX, 
-  FiChevronRight, 
-  FiHome, 
-  FiBox, 
-  FiGrid, 
-  FiTag, 
-  FiImage, 
-  FiShoppingBag, 
-  FiUsers, 
-  FiUserCheck, 
-  FiSettings, 
-  FiActivity 
+import {
+  FiMenu,
+  FiX,
+  FiChevronRight,
+  FiHome,
+  FiBox,
+  FiGrid,
+  FiTag,
+  FiImage,
+  FiShoppingBag,
+  FiUsers,
+  FiUserCheck,
+  FiSettings,
+  FiActivity
 } from "react-icons/fi";
+import { SECRET_ADMIN_PATH } from "@/config/admin";
 
 const navLinks = [
   {
@@ -26,85 +27,85 @@ const navLinks = [
     label: "Anasayfa",
     icon: <FiHome size={18} />,
     children: [{ href: "/", label: "Siteye Git" },
-      { href: "/admin", label: "Yönetim Paneli" }
+      { href: `/${SECRET_ADMIN_PATH}`, label: "Yönetim Paneli" }
     ],
   },
 
   {
-    href: "/admin/products",
+    href: `/${SECRET_ADMIN_PATH}/products`,
     label: "Ürünler",
     icon: <FiBox size={18} />,
     children: [
-      { href: "/admin/products", label: "Ürünler" },
-      { href: "/admin/products/new", label: "Yeni Ürün" },
-      { href: "/admin/global-properties", label: "Ürün Özellikleri" },
-      { href: "/admin/product-properties", label: "Özellik Değerleri" },
-      { href: "/admin/attribute-types", label: "Varyasyonlar" },
-      { href: "/admin/coupons", label: "Kuponlar" },
-      { href: "/admin/reviews", label: "Yorum Yönetimi" },
+      { href: `/${SECRET_ADMIN_PATH}/products`, label: "Ürünler" },
+      { href: `/${SECRET_ADMIN_PATH}/products/new`, label: "Yeni Ürün" },
+      { href: `/${SECRET_ADMIN_PATH}/global-properties`, label: "Ürün Özellikleri" },
+      { href: `/${SECRET_ADMIN_PATH}/product-properties`, label: "Özellik Değerleri" },
+      { href: `/${SECRET_ADMIN_PATH}/attribute-types`, label: "Varyasyonlar" },
+      { href: `/${SECRET_ADMIN_PATH}/coupons`, label: "Kuponlar" },
+      { href: `/${SECRET_ADMIN_PATH}/reviews`, label: "Yorum Yönetimi" },
     ],
   },
   {
-    href: "/admin/categories",
+    href: `/${SECRET_ADMIN_PATH}/categories`,
     label: "Kategoriler",
     icon: <FiGrid size={18} />,
     children: [
-      { href: "/admin/categories", label: "Kategoriler" },
-      { href: "/admin/categories/new", label: "Yeni Kategori" },
+      { href: `/${SECRET_ADMIN_PATH}/categories`, label: "Kategoriler" },
+      { href: `/${SECRET_ADMIN_PATH}/categories/new`, label: "Yeni Kategori" },
     ],
   },
   {
-    href: "/admin/brands",
+    href: `/${SECRET_ADMIN_PATH}/brands`,
     label: "Markalar",
     icon: <FiTag size={18} />,
     children: [
-      { href: "/admin/brands", label: "Markalar" },
-      { href: "/admin/brands/new", label: "Yeni Marka" },
+      { href: `/${SECRET_ADMIN_PATH}/brands`, label: "Markalar" },
+      { href: `/${SECRET_ADMIN_PATH}/brands/new`, label: "Yeni Marka" },
     ],
   },
   {
-    href: "/admin/sliders",
+    href: `/${SECRET_ADMIN_PATH}/sliders`,
     label: "Ana Sayfa Slayt",
     icon: <FiImage size={18} />,
     children: [
-      { href: "/admin/sliders", label: "Slayt Listesi" },
-      { href: "/admin/sliders/new", label: "Yeni Ekle" },
+      { href: `/${SECRET_ADMIN_PATH}/sliders`, label: "Slayt Listesi" },
+      { href: `/${SECRET_ADMIN_PATH}/sliders/new`, label: "Yeni Ekle" },
     ],
   },
   {
-    href: "/admin/orders",
+    href: `/${SECRET_ADMIN_PATH}/orders`,
     label: "Siparişler",
     icon: <FiShoppingBag size={18} />,
     children: [
-      { href: "/admin/orders", label: "Tüm Siparişler" },
-      { href: "/admin/shipment", label: "Kargo Gönderim" },
-      { href: "/admin/returns", label: "İadeler" },
-      { href: "/admin/bank-transfers", label: "Banka Transferleri" },
+      { href: `/${SECRET_ADMIN_PATH}/orders`, label: "Tüm Siparişler" },
+      { href: `/${SECRET_ADMIN_PATH}/shipment`, label: "Kargo Gönderim" },
+      { href: `/${SECRET_ADMIN_PATH}/returns`, label: "İadeler" },
+      { href: `/${SECRET_ADMIN_PATH}/bank-transfers`, label: "Banka Transferleri" },
     ],
   },
   {
-    href: "/admin/customers",
+    href: `/${SECRET_ADMIN_PATH}/customers`,
     label: "Müşteriler",
     icon: <FiUsers size={18} />,
-    children: [{ href: "/admin/customers", label: "Müşteriler" }],
+    children: [{ href: `/${SECRET_ADMIN_PATH}/customers`, label: "Müşteriler" }],
   },
   {
-    href: "/admin/model-info",
+    href: `/${SECRET_ADMIN_PATH}/model-info`,
     label: "Model Bilgileri",
     icon: <FiUserCheck size={18} />,
-    children: [{ href: "/admin/model-info", label: "Model Bilgileri" }],
+    children: [{ href: `/${SECRET_ADMIN_PATH}/model-info`, label: "Model Bilgileri" }],
   },
   {
-    href: "/admin/generic-data",
+    href: `/${SECRET_ADMIN_PATH}/generic-data`,
     label: "Site Ayarları",
     icon: <FiSettings size={18} />,
-    children: [{ href: "/admin/generic-data", label: "Site Ayarları" }],
+    children: [{ href: `/${SECRET_ADMIN_PATH}/generic-data`, label: "Site Ayarları" }],
   },
   {
-    href: "/admin/logs",
+    href: `/${SECRET_ADMIN_PATH}/logs`,
     label: "Loglar",
     icon: <FiActivity size={18} />,
-    children: [{ href: "/admin/logs", label: "Sistem Logları" }],
+    children: [{ href: `/${SECRET_ADMIN_PATH}/logs`, label: "Sistem Logları" }],
   },
 ];
 

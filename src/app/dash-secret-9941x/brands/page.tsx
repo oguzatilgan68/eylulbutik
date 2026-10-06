@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { FiPlus, FiEdit2, FiTrash2, FiTag } from "react-icons/fi";
+import { SECRET_ADMIN_PATH } from "../../../config/admin";
 
 interface Brand {
   id: string;
@@ -16,7 +17,7 @@ export default function BrandList() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/brands`)
+    fetch(`/api/admin/brands`)
       .then((res) => res.json())
       .then((data) => {
         setBrands(data);
@@ -31,7 +32,7 @@ export default function BrandList() {
   const deleteBrand = async (id: string) => {
     if (!confirm("Bu markayı silmek istediğinize emin misiniz?")) return;
     try {
-      const res = await fetch(`/api/brands/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/brands/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Silme başarısız");
       setBrands(brands.filter((b) => b.id !== id));
     } catch (err) {
@@ -53,7 +54,7 @@ export default function BrandList() {
           </p>
         </div>
         <Link
-          href="/admin/brands/new"
+          href={`/${SECRET_ADMIN_PATH}/brands/new`}
           className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-sm font-medium shadow-md shadow-pink-500/20 transition-all"
         >
           <FiPlus size={18} /> Marka Ekle
@@ -106,7 +107,7 @@ export default function BrandList() {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Link
-                          href={`/admin/brands/${brand.id}`}
+                          href={`/dash-secret-9941x/brands/${brand.id}`}
                           className="px-3.5 py-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-xs font-semibold flex items-center gap-1.5"
                         >
                           <FiEdit2 size={13} /> Düzenle
