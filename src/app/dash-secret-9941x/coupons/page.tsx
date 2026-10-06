@@ -1,4 +1,3 @@
-import { SECRET_ADMIN_PATH } from "../../../config/admin";
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -161,7 +160,7 @@ export default function CouponsAdmin() {
       {/* Tablo Alanı */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse min-w-[750px]">
+          <table className="w-full text-left text-sm border-collapse min-w-175">
             <thead className="bg-gray-50 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 uppercase text-[11px] font-semibold tracking-wider border-b border-gray-200 dark:border-gray-800">
               <tr>
                 <th className="px-6 py-3.5">Kupon Kodu</th>

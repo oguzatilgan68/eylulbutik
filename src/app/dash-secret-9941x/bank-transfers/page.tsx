@@ -1,7 +1,6 @@
-import { SECRET_ADMIN_PATH } from "../../../config/admin";
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { 
   FiDollarSign, 
   FiCheck, 

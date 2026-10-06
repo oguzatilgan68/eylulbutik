@@ -1,4 +1,3 @@
-import { SECRET_ADMIN_PATH } from "../../../config/admin";
 "use client";
 
 import { useEffect, useState } from "react";
@@ -164,7 +163,7 @@ export default function GenericDataPage() {
             placeholder="Eylül Butik hakkında kısa açıklama..."
             value={form.description || ""}
             onChange={handleChange}
-            className={`${inputClass} min-h-[120px] resize-y`}
+            className={`${inputClass} min-h-30 resize-y`}
           />
         </div>
 

@@ -1,4 +1,3 @@
-import { SECRET_ADMIN_PATH } from "../../../config/admin";
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
@@ -6,6 +5,7 @@ import Link from "next/link";
 import Pagination from "@/app/(marketing)/components/ui/Pagination";
 import { FiSearch, FiEye, FiShoppingBag, FiTrash2 } from "react-icons/fi";
 import Swal from "sweetalert2";
+import { SECRET_ADMIN_PATH } from "@/config/admin";
 
 interface Order {
   id: string;

@@ -1,7 +1,6 @@
-import { SECRET_ADMIN_PATH } from "../../../config/admin";
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 import { Shipment, ShipmentModal } from "@/app/(marketing)/components/shipment/shipmentModal";
 import { Header } from "@/app/(marketing)/components/admin/ShipmentsAdmin/Header";
