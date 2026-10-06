@@ -6,6 +6,7 @@ import { z } from "zod";
 const createOrderSchema = z.object({
   addressId: z.string().uuid("Geçersiz adres ID"),
   userId: z.string().min(1, "Kullanıcı ID gereklidir"),
+  couponCode: z.string().optional(),
   // İsteğe bağlı indirim veya toplam bilgileri gelebilir
   total: z.number().positive().optional(),
 });
@@ -23,7 +24,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { addressId, userId } = validation.data;
+    const { addressId, userId, couponCode } = validation.data;
 
     // 2. Kullanıcının adresini veritabanından çek (Sipariş anında adres değişse bile siparişte sabit kalması için)
     const address = await db.address.findUnique({
@@ -47,6 +48,7 @@ export async function POST(req: Request) {
             variant: true,
           },
         },
+        coupon: true,
       },
     });
 
@@ -64,12 +66,51 @@ export async function POST(req: Request) {
       subtotal += price * item.qty;
     }
 
+    // 5. Kupon indirimini hesapla
+    let discountTotal = 0;
+    let couponId = null;
+
+    if (couponCode && cart.coupon) {
+      const coupon = cart.coupon;
+      const now = new Date();
+
+      // Kupon geçerlilik kontrolü
+      if (coupon.isActive &&
+          (!coupon.startsAt || new Date(coupon.startsAt) <= now) &&
+          (!coupon.endsAt || new Date(coupon.endsAt) >= now) &&
+          (!coupon.maxUses || coupon.usedCount < coupon.maxUses)) {
+
+        if (coupon.type === "PERCENT") {
+          // Yüzdelik indirim
+          discountTotal = subtotal * (Number(coupon.value) / 100);
+        } else if (coupon.type === "FIXED") {
+          // Sabit tutar indirim
+          discountTotal = Number(coupon.value);
+        }
+
+        // İndirim ara toplamı aşmamalı
+        if (discountTotal > subtotal) {
+          discountTotal = subtotal;
+        }
+
+        couponId = coupon.id;
+      }
+    }
+
     const shippingTotal = 0; // İsteğe göre kargo ücreti eklenebilir
     const taxTotal = 0;      // İsteğe göre vergi eklenebilir
-    const total = subtotal + shippingTotal + taxTotal;
+    const total = subtotal - discountTotal + shippingTotal + taxTotal;
 
     // Benzersiz bir Sipariş Numarası üret (Örn: EYU-1725867492000)
     const orderNo = `EYU-${Date.now().toString().slice(-8)}`;
+
+    // 6. Kupon kullanım sayısını artır
+    if (couponId) {
+      await db.coupon.update({
+        where: { id: couponId },
+        data: { usedCount: { increment: 1 } },
+      });
+    }
 
     // 5. Transaction ile güvenli sipariş oluşturma ve sepeti temizleme
     const order = await db.$transaction(async (tx) => {
@@ -80,10 +121,12 @@ export async function POST(req: Request) {
           userId,
           status: "PENDING", // Ödeme yapılana veya EFT onaylanana kadar PENDING
           subtotal,
+          discountTotal,
           shippingTotal,
           taxTotal,
           total,
           currency: "TRY",
+          couponId,
           // Adres bilgilerini siparişe kopyala (Adres sonradan silinse bile siparişte kalsın)
           addressTitle: address.title,
           addressFullName: address.fullName,

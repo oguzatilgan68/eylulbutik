@@ -89,7 +89,8 @@ const handleEftSubmit = async (e: React.FormEvent) => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               ...orderData,
-              userId: orderData.userId || user?.id || "", 
+              userId: orderData.userId || user?.id || "",
+              couponCode: orderData.couponCode || "",
             }),
           });
         const orderResult = await orderRes.json();

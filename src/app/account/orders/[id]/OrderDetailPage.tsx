@@ -131,11 +131,13 @@ export default function OrderDetailClient({
       (sum: number, item: any) => sum + Number(item.unitPrice) * item.qty,
       0
     ) || 0;
-  
+
+  const discountTotal = Number(order.discountTotal) || 0;
+
   const grandTotal =
     order.total !== undefined && order.total !== null
       ? Number(order.total)
-      : itemsSubtotal;
+      : itemsSubtotal - discountTotal;
 
   const breadcrumbs = isAdmin
     ? [
@@ -341,6 +343,17 @@ export default function OrderDetailClient({
                 })}
               </span>
             </div>
+            {discountTotal > 0 && (
+              <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                <span>İndirim:</span>
+                <span className="font-medium">
+                  -{discountTotal.toLocaleString("tr-TR", {
+                    style: "currency",
+                    currency: order.currency || "TRY",
+                  })}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between text-gray-500 dark:text-gray-400">
               <span>Kargo:</span>
               <span className="text-emerald-600 font-medium">

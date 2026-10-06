@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useCoupon } from "../../context/CouponContext";
 import { FiTag, FiCheck, FiArrowRight, FiPercent } from "react-icons/fi";
 
 interface OrderSummaryProps {
@@ -18,18 +17,17 @@ export default function OrderSummary({
   onCheckout,
   showCheckoutButton = true,
 }: OrderSummaryProps) {
-  const { coupon, setCoupon, clearCoupon } = useCoupon();
-  const [code, setCode] = useState(coupon?.code || "");
-  const [discountAmount, setDiscountAmount] = useState(coupon?.discount || 0);
-  const [finalAmount, setFinalAmount] = useState(
-    coupon?.final || subtotal - (coupon?.discount || 0)
-  );
+  // Context yerine yerel state kullanarak başka sayfalara geçildiğinde kalıcı olmasını engelliyoruz
+  const [code, setCode] = useState("");
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [finalAmount, setFinalAmount] = useState(subtotal);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
 
   useEffect(() => {
+    // Ara toplam değiştikçe indirim oranını koruyarak final tutarı güncelleyebiliriz
     setFinalAmount(subtotal - discountAmount);
   }, [subtotal, discountAmount]);
 
@@ -43,37 +41,29 @@ export default function OrderSummary({
     setMessage("");
 
     try {
-      const res = await fetch("/api/coupon/apply", {
+      const res = await fetch("/api/cart/coupon", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           code: code.toUpperCase(),
-          orderTotal: subtotal,
         }),
       });
 
       const data = await res.json();
 
-      if (res.ok && data.data) {
-        setCoupon({
-          code: code.toUpperCase(),
-          discount: data.data.discount,
-          final: data.data.final,
-        });
-        setDiscountAmount(data.data.discount);
-        setFinalAmount(data.data.final);
+      if (res.ok && data.success) {
+        setDiscountAmount(data.discount);
+        setFinalAmount(subtotal - data.discount);
         setMessage("Kupon başarıyla uygulandı! ✨");
-        onApply?.(data.data.discount, data.data.final);
+        onApply?.(data.discount, subtotal - data.discount);
       } else {
-        clearCoupon();
         setDiscountAmount(0);
         setFinalAmount(subtotal);
-        setMessage(data.error || "Kupon uygulanamadı.");
+        setMessage(data.message || "Kupon uygulanamadı.");
         onApply?.(0, subtotal);
       }
     } catch (err) {
       console.error(err);
-      clearCoupon();
       setDiscountAmount(0);
       setFinalAmount(subtotal);
       setMessage("Sunucu hatası, lütfen tekrar deneyin.");
@@ -83,8 +73,17 @@ export default function OrderSummary({
     }
   };
 
-  const removeCoupon = () => {
-    clearCoupon();
+  const removeCoupon = async () => {
+    try {
+      await fetch("/api/cart/coupon", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+    } catch (err) {
+      console.error(err);
+    }
+
     setCode("");
     setDiscountAmount(0);
     setFinalAmount(subtotal);

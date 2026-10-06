@@ -75,6 +75,48 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// PUT: update (full/general update with query param id)
+export async function PUT(req: NextRequest) {
+  try {
+    await requireAdmin();
+
+    const url = new URL(req.url);
+    const id = url.searchParams.get("id");
+    if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+    const body = await req.json();
+    const { code, type, value, startsAt, endsAt, maxUses, isActive } = body;
+
+    if (!code || !type || value == null) {
+      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+    }
+
+    const updated = await db.coupon.update({
+      where: { id },
+      data: {
+        code: String(code).toUpperCase(),
+        type: type as CouponType,
+        value: new Prisma.Decimal(String(value)),
+        startsAt: startsAt ? new Date(startsAt) : null,
+        endsAt: endsAt ? new Date(endsAt) : null,
+        maxUses: maxUses ? Number(maxUses) : null,
+        isActive: isActive === false ? false : true,
+      },
+    });
+
+    return NextResponse.json({ data: updated });
+  } catch (err: any) {
+    if (err instanceof AdminAuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.statusCode });
+    }
+    console.error(err);
+    return NextResponse.json(
+      { error: err.message || "Server error" },
+      { status: 500 }
+    );
+  }
+}
+
 // PATCH: update (partial)
 export async function PATCH(req: NextRequest) {
   try {

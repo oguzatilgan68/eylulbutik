@@ -37,9 +37,8 @@ export const MarketingNavbar: React.FC<{ categories?: Category[] }> = ({
 
   return (
     <>
-      {/* 🚀 Üst Kampanya / Duyuru Bandı - Daha Şık, Gradient ve Canlı */}
-      <div className="relative bg-linear-to-r from-pink-600 via-rose-500 to-purple-600 text-white text-xs sm:text-sm py-2 px-4 text-center font-medium tracking-wide shadow-inner overflow-hidden">
-        {/* Arka plan dekoratif parıltı efekti */}
+      {/* Üst Duyuru Bandı */}
+      <div className="relative bg-linear-to-r from-pink-600 via-rose-500 to-purple-600 text-white text-xs sm:text-sm py-2 px-4 text-center font-medium tracking-wide shadow-inner">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent pointer-events-none" />
         
         <div className="relative flex items-center justify-center gap-2">
@@ -51,16 +50,16 @@ export const MarketingNavbar: React.FC<{ categories?: Category[] }> = ({
         </div>
       </div>
 
+      {/* DİKKAT: overflow-* sınıfları Kesinlikle OLMAMALI, alt menünün dışarı taşmasına izin verilmeli */}
       <header
-        className={`sticky top-0 z-40 w-full transition-all duration-300 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md ${
+        className={`sticky top-0 z-50 w-full transition-all duration-300 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md ${
           isScrolled
             ? "shadow-lg shadow-gray-200/50 dark:shadow-black/20 border-b border-gray-100 dark:border-gray-800"
             : "border-b border-gray-200/80 dark:border-gray-800"
         }`}
       >
-        {/* ÜST NAVBAR (Logo, Arama, Kullanıcı Linkleri) */}
+        {/* ÜST NAVBAR */}
         <div className="w-full max-w-7xl mx-auto py-3.5 flex items-center justify-between gap-4 px-4 sm:px-6">
-          {/* Mobil Menü Butonu */}
           <button
             className="sm:hidden text-2xl text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-xl transition-colors cursor-pointer"
             onClick={() => setIsSidebarOpen(true)}
@@ -71,7 +70,6 @@ export const MarketingNavbar: React.FC<{ categories?: Category[] }> = ({
 
           <BrandLogo />
 
-          {/* Masaüstü Arama Alanı */}
           <div className="hidden sm:block w-full max-w-md">
             <SearchBar />
           </div>
@@ -79,17 +77,17 @@ export const MarketingNavbar: React.FC<{ categories?: Category[] }> = ({
           <NavbarLinks />
         </div>
 
-        {/* 🔍 Mobil Arama Alanı */}
+        {/* Mobil Arama */}
         <div className="sm:hidden w-full px-4 pb-3.5">
           <SearchBar />
         </div>
 
         {/* ALT NAVBAR - Masaüstü Kategoriler */}
-        <nav className="hidden sm:block bg-linear-to-b from-gray-50/80 to-gray-100/50 dark:from-gray-800/40 dark:to-gray-900/40 border-t border-gray-200/60 dark:border-gray-800">
-          <div className="w-full max-w-7xl mx-auto flex items-center justify-center gap-1 sm:gap-4 px-4 py-2.5 text-sm overflow-x-auto scrollbar-none">
+        <nav className="hidden sm:block bg-linear-to-b from-gray-50/80 to-gray-100/50 dark:from-gray-800/40 dark:to-gray-900/40 border-t border-gray-200/60 dark:border-gray-800 relative">
+          <div className="w-full max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-1.5 sm:gap-3 px-4 py-2.5 text-sm">
             {safeCategories.length > 0 ? (
               safeCategories.map((cat) => (
-                <div key={cat.id} className="shrink-0">
+                <div key={cat.id} className="relative">
                   <CategoryItem cat={cat} />
                 </div>
               ))
@@ -102,7 +100,6 @@ export const MarketingNavbar: React.FC<{ categories?: Category[] }> = ({
         </nav>
       </header>
 
-      {/* Mobil Sidebar */}
       <MobileSidebar
         categories={safeCategories}
         isOpen={isSidebarOpen}

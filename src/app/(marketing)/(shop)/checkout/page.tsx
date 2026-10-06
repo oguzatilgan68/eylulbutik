@@ -26,14 +26,32 @@ export default function CheckoutPage() {
       const res = await fetch("/api/cart");
       const data = await res.json();
       setCartItems(data.items);
+
+      // Kupon indirimini hesapla
+      let calculatedDiscount = 0;
+      if (data.coupon) {
+        const total = data.items.reduce(
+          (acc: number, item: any) => acc + item.unitPrice * item.qty,
+          0
+        );
+        if (data.coupon.type === "PERCENT") {
+          calculatedDiscount = total * (data.coupon.value / 100);
+        } else if (data.coupon.type === "FIXED") {
+          calculatedDiscount = data.coupon.value;
+        }
+        if (calculatedDiscount > total) calculatedDiscount = total;
+        setDiscount(calculatedDiscount);
+      }
+
       const total = data.items.reduce(
         (acc: number, item: any) => acc + item.unitPrice * item.qty,
         0
       );
       setSubtotal(total);
-      setFinalTotal(total - discount);
+      setFinalTotal(total - calculatedDiscount);
       setOrderData((prev: any) => ({
         ...prev,
+        couponCode: data.coupon?.code || "",
         basketItems: data.items.map((item: any) => ({
           id: item.product?.id,
           name: item.name,
@@ -42,8 +60,8 @@ export default function CheckoutPage() {
           qty: item.qty,
         })),
         subtotal: total,
-        discount,
-        total: total - discount,
+        discount: calculatedDiscount,
+        total: total - calculatedDiscount,
       }));
     } catch (err) {
       console.error(err);

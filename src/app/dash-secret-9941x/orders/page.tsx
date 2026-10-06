@@ -12,6 +12,8 @@ interface Order {
   orderNo: string;
   status: string;
   total: number;
+  subtotal: number;
+  discountTotal: number;
   currency: string;
   createdAt: string;
   user?: { fullName?: string; email?: string };
@@ -176,7 +178,9 @@ export default function AdminOrdersPage() {
                 </th>
                 <th className="px-6 py-3.5">Sipariş No</th>
                 <th className="px-6 py-3.5">Müşteri</th>
-                <th className="px-6 py-3.5">Toplam Tutar</th>
+                <th className="px-6 py-3.5">Ara Toplam</th>
+                <th className="px-6 py-3.5">İndirim</th>
+                <th className="px-6 py-3.5">Genel Toplam</th>
                 <th className="px-6 py-3.5">Durum</th>
                 <th className="px-6 py-3.5">Tarih</th>
                 <th className="px-6 py-3.5 text-right">İşlemler</th>
@@ -211,6 +215,18 @@ export default function AdminOrdersPage() {
                     </td>
                     <td className="px-6 py-4 text-gray-700 dark:text-gray-300 font-medium">
                       {order.user?.fullName || order.user?.email || "Misafir Kullanıcı"}
+                    </td>
+                    <td className="px-6 py-4 text-gray-600 dark:text-gray-300">
+                      {Number(order.subtotal).toFixed(2)} {order.currency || "₺"}
+                    </td>
+                    <td className="px-6 py-4">
+                      {Number(order.discountTotal) > 0 ? (
+                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                          -{Number(order.discountTotal).toFixed(2)} {order.currency || "₺"}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 font-bold text-gray-900 dark:text-white">
                       {Number(order.total).toFixed(2)} {order.currency || "₺"}
@@ -249,7 +265,7 @@ export default function AdminOrdersPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                     Henüz sipariş bulunmamaktadır.
                   </td>
                 </tr>

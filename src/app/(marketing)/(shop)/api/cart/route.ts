@@ -46,11 +46,12 @@ export async function GET(req: NextRequest) {
             },
           },
         },
+        coupon: true,
       },
     });
 
     if (!cart) {
-      return NextResponse.json({ items: [] });
+      return NextResponse.json({ items: [], coupon: null });
     }
 
     const serializedItems = cart.items.map((item) => ({
@@ -87,7 +88,15 @@ export async function GET(req: NextRequest) {
         : null,
     }));
 
-    return NextResponse.json({ items: serializedItems });
+    return NextResponse.json({
+      items: serializedItems,
+      coupon: cart.coupon ? {
+        id: cart.coupon.id,
+        code: cart.coupon.code,
+        type: cart.coupon.type,
+        value: Number(cart.coupon.value),
+      } : null,
+    });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Sepet getirilemedi" }, { status: 500 });

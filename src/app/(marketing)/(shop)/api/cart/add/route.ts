@@ -19,19 +19,42 @@ export async function POST(req: Request) {
     });
     if (!cart) cart = await db.cart.create({ data: { userId } });
 
-    const product = await db.product.findUnique({ where: { id: productId } });
+    // Ürünü ve varsa varyantlarını veritabanından çekelim
+    const product = await db.product.findUnique({
+      where: { id: productId },
+      include: { variants: true },
+    });
+
     if (!product)
       return NextResponse.json({ error: "PRODUCT_NOT_FOUND" }, { status: 404 });
 
-    // unitPrice: varyant fiyatı yoksa ürün fiyatı
-    // (ProductVariant modelinde fiyat alanınız varsa onu okuyun)
-    const unitPrice = product.price ?? undefined;
-    if (!unitPrice)
-      return NextResponse.json({ error: "PRICE_MISSING" }, { status: 400 });
+    let unitPrice: number | undefined = undefined;
 
-    // Aynı ürün(varyant) ekliyse qty arttır
+    // 1. Eğer bir varyant seçilmişse, o varyantın fiyatını bulmaya çalışalım
+    if (variantId) {
+      const variant = product.variants.find((v) => v.id === variantId);
+      if (variant && variant.price !== null) {
+        unitPrice = Number(variant.price);
+      }
+    }
+
+    // 2. Varyant fiyatı bulunamadıysa (veya varyant yoksa) ana ürün fiyatına bakalım
+    if (unitPrice === undefined && product.price !== null) {
+      unitPrice = Number(product.price);
+    }
+
+    // Hala fiyat bulunamadıysa hata dön
+    if (unitPrice === undefined || isNaN(unitPrice)) {
+      return NextResponse.json({ error: "PRICE_MISSING" }, { status: 400 });
+    }
+
+    // Aynı ürün (veya aynı varyant) sepette ekliyse miktarını (qty) arttır
     const existing = await db.cartItem.findFirst({
-      where: { cartId: cart.id, productId, variantId: variantId ?? undefined },
+      where: { 
+        cartId: cart.id, 
+        productId, 
+        variantId: variantId ?? null 
+      },
     });
 
     if (existing) {
@@ -42,6 +65,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, cartItem: updated });
     }
 
+    // Yeni sepet kalemi oluştur
     const created = await db.cartItem.create({
       data: {
         cartId: cart.id,

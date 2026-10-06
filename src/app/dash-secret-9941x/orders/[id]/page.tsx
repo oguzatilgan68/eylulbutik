@@ -53,7 +53,7 @@ const AdminOrderDetailPage = async (props: OrderPageProps) => {
   }
 
   const data = await res.json();
-  
+
   // Veri hem { order, address } hem de düz { id, orderNo, ... } formatını destekleyecek şekilde normalize edilir
   const order = data.order || data;
   const address = data.address || {
@@ -65,6 +65,8 @@ const AdminOrderDetailPage = async (props: OrderPageProps) => {
     city: order.addressCity,
     zip: order.addressZip,
   };
+
+  const discountTotal = Number(order.discountTotal) || 0;
 
   if (!order || !order.id) {
     return (
@@ -225,10 +227,24 @@ const AdminOrderDetailPage = async (props: OrderPageProps) => {
             <FiCreditCard className="text-pink-600" /> Ödeme Özeti
           </h2>
           <div className="flex justify-between items-center text-sm">
+            <span className="text-gray-500">Ara Toplam:</span>
+            <span className="text-gray-800 dark:text-gray-200">{formatCurrency(order.subtotal)}</span>
+          </div>
+          {discountTotal > 0 && (
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-emerald-600 dark:text-emerald-400">İndirim:</span>
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400">-{formatCurrency(discountTotal)}</span>
+            </div>
+          )}
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-gray-500">Kargo:</span>
+            <span className="text-gray-800 dark:text-gray-200">{formatCurrency(order.shippingTotal)}</span>
+          </div>
+          <div className="flex justify-between items-center text-sm">
             <span className="text-gray-500">Ödeme Durumu:</span>
             <span className={`font-semibold px-2.5 py-0.5 rounded-full text-xs ${
-              order.payment?.status === "SUCCEEDED" 
-                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400" 
+              order.payment?.status === "SUCCEEDED"
+                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400"
                 : "bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400"
             }`}>
               {order.payment?.status === "SUCCEEDED" ? "Başarılı Ödeme" : "Bekliyor / Başarısız"}
