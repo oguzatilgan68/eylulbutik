@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { wrapEmailTemplate } from "./emailTemplate";
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -31,6 +32,7 @@ export async function sendEmail({
     throw new Error("Email gönderilemedi");
   }
 }
+
 export async function sendContactEmail({
   name,
   email,
@@ -40,20 +42,23 @@ export async function sendContactEmail({
   email: string;
   message: string;
 }) {
-  const htmlContent = `
-    <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; border-radius: 10px;">
-      <h2 style="color: #db2777;">Yeni İletişim Mesajı Var!</h2>
-      <p><strong>Gönderen Kişi:</strong> ${name}</p>
-      <p><strong>E-posta Adresi:</strong> ${email}</p>
-      <hr style="border: none; border-top: 1px solid #ddd; margin: 15px 0;" />
-      <p><strong>Mesaj:</strong></p>
-      <p style="background: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #eee;">${message}</p>
-    </div>
+  const innerContent = `
+    <h2 style="color: #db2777; margin-top: 0;">Yeni İletişim Mesajı Var!</h2>
+    <p><strong>Gönderen Kişi:</strong> ${name}</p>
+    <p><strong>E-posta Adresi:</strong> ${email}</p>
+    <hr style="border: none; border-top: 1px solid #eaeaea; margin: 20px 0;" />
+    <p><strong>Mesaj İçeriği:</strong></p>
+    <p style="background: #fdf2f8; padding: 15px; border-radius: 8px; border: 1px solid #fce7f3; color: #4a5568;">${message}</p>
   `;
 
+  const emailHtml = wrapEmailTemplate({
+    title: "Yeni İletişim Mesajı",
+    content: innerContent,
+  });
+
   await sendEmail({
-    to: process.env.SMTP_USER || "destek@eylulbutik.com", // Mesajın gideceği e-posta adresi
+    to: process.env.SMTP_USER || "destek@eylulbutik.com",
     subject: `Yeni İletişim Mesajı - ${name}`,
-    html: htmlContent,
+    html: emailHtml,
   });
 }
