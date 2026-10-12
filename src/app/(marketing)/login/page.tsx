@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signIn, getSession } from "next-auth/react"; // NextAuth client fonksiyonu
+import { signIn, getSession } from "next-auth/react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -11,6 +11,7 @@ import { Loading } from "../components/ui/loading";
 import { Eye, EyeOff } from "lucide-react";
 import { FiLogIn } from "react-icons/fi";
 import { SECRET_ADMIN_PATH } from "@/config/admin";
+import Swal from "sweetalert2";
 
 const schema = z.object({
   email: z.string().email("Geçerli bir e-posta adresi giriniz"),
@@ -41,26 +42,32 @@ export default function LoginPage() {
         password: data.password,
       });
 
+      // Eğer NextAuth bir hata fırlattıysa
       if (result?.error) {
-        throw new Error(result.error);
+        // authOptions içinde fırlattığımız gerçek hata mesajı result.error içinde gelir
+        await Swal.fire({
+          icon: "warning",
+          title: "Giriş Başarısız",
+          text: result.error, // 👈 authOptions içindeki spesifik hata mesajı doğrudan buraya yansır
+          confirmButtonText: "Tamam",
+          confirmButtonColor: "#db2777",
+        });
+        return;
       }
 
       if (result?.ok) {
-        // Session'ı alarak kullanıcının rolünü kontrol et
         const session = await getSession();
         const userRole = session?.user?.role;
 
         if (userRole === "ADMIN") {
-          // Admin ise gizli yola yönlendir
           router.push(`/${SECRET_ADMIN_PATH}`);
         } else {
-          // Normal kullanıcı ise account sayfasına yönlendir
           router.push("/account");
         }
         router.refresh();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Giriş yapılırken bir hata oluştu");
+      setError("Beklenmeyen bir hata oluştu.");
     }
   };
 
@@ -86,8 +93,8 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 text-xs font-semibold border border-rose-200 dark:border-rose-900">
-            {error}
+          <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 text-xs font-medium border border-rose-200 dark:border-rose-900 leading-relaxed space-y-1">
+            <p>{error}</p>
           </div>
         )}
 
@@ -131,7 +138,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>

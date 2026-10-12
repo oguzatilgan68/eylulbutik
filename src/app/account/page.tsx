@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   FiHeart,
   FiMapPin,
@@ -19,10 +21,23 @@ import LogoutButton from "../(marketing)/components/ui/LogoutButton";
 
 export default function AccountPage() {
   const { user } = useUser();
+  const router = useRouter();
+
+  // Eğer kullanıcı gerçekten oturum açmamışsa (fetch bittikten sonra bile null ise) login'e at
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // 2 saniye içinde hala user gelmediyse login sayfasına yönlendir
+      if (!user) {
+        router.push("/login");
+      }
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [user, router]);
 
   if (!user) {
     return (
-      <div className="min-h-[400px] flex items-center justify-center">
+      <div className="min-h-100 flex items-center justify-center">
         <div className="flex items-center gap-2 text-gray-400 text-sm">
           <div className="w-5 h-5 border-2 border-pink-600 border-t-transparent rounded-full animate-spin" />
           <span>Hesap bilgileri yükleniyor...</span>
@@ -50,11 +65,11 @@ export default function AccountPage() {
   ];
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-12">
+    <div className="space-y-6 max-w-4xl mx-auto pb-12 px-4 sm:px-0">
       {/* Üst Profil Kartı */}
       <div className="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center space-x-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-pink-600 to-rose-400 flex items-center justify-center text-white text-2xl font-bold shadow-md shadow-pink-500/20">
+          <div className="w-16 h-16 rounded-2xl bg-linear-to-tr from-pink-600 to-rose-400 flex items-center justify-center text-white text-2xl font-bold shadow-md shadow-pink-500/20">
             {user.fullName ? user.fullName.charAt(0).toUpperCase() : <FiUser size={24} />}
           </div>
           <div>

@@ -10,13 +10,23 @@ import { Loading } from "../components/ui/loading";
 import { log } from "../lib/logger";
 import { Eye, EyeOff } from "lucide-react";
 import { FiUserPlus } from "react-icons/fi";
+import Swal from "sweetalert2";
 
-const registerSchema = z.object({
-  fullName: z.string().min(3, "Ad soyad en az 3 karakter olmalı"),
-  email: z.string().email("Geçerli bir e-posta adresi giriniz"),
-  password: z.string().min(6, "Şifre en az 6 karakter olmalı"),
-  phone: z.string().optional(),
-});
+// Zod şeması ile güçlü şifre, telefon ve eşleşme kontrolü
+const registerSchema = z
+  .object({
+    fullName: z.string().min(3, "Ad soyad en az 3 karakter olmalı"),
+    email: z.string().email("Geçerli bir e-posta adresi giriniz"),
+    phone: z
+      .string()
+      .min(10, "Geçerli bir telefon numarası giriniz (Örn: 5XXXXXXXXX)"),
+    password: z.string().min(6, "Şifre en az 6 karakter olmalı"),
+    confirmPassword: z.string().min(6, "Lütfen şifrenizi tekrar girin"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Şifreler birbiriyle eşleşmiyor",
+    path: ["confirmPassword"], // Hatanın gösterileceği alan
+  });
 
 type RegisterForm = z.infer<typeof registerSchema>;
 
@@ -24,6 +34,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const [backendError, setBackendError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
@@ -39,7 +50,12 @@ export default function RegisterPage() {
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          fullName: data.fullName,
+          email: data.email,
+          phone: data.phone,
+          password: data.password,
+        }),
         headers: { "Content-Type": "application/json" },
       });
 
@@ -48,6 +64,17 @@ export default function RegisterPage() {
         await log(`User registered: ${data.email}`, "info", {
           email: data.email,
         });
+
+        await Swal.fire({
+          icon: "success",
+          title: "Kayıt Başarılı!",
+          text: "Hesabınız başarıyla oluşturuldu. Lütfen e-posta adresinizi doğrulayın ve giriş yapın.",
+          confirmButtonText: "Giriş Yap",
+          confirmButtonColor: "#db2777",
+          timer: 4000,
+          timerProgressBar: true,
+        });
+
         router.push("/login");
       } else {
         await log(`Registration failed for email: ${data.email}`, "warn", {
@@ -88,6 +115,7 @@ export default function RegisterPage() {
         )}
 
         <div className="space-y-4">
+          {/* Ad Soyad */}
           <div className="space-y-1.5">
             <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
               Ad Soyad *
@@ -103,6 +131,7 @@ export default function RegisterPage() {
             )}
           </div>
 
+          {/* E-posta */}
           <div className="space-y-1.5">
             <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
               E-posta Adresi *
@@ -118,6 +147,23 @@ export default function RegisterPage() {
             )}
           </div>
 
+          {/* Telefon Numarası (Zorunlu) */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+              Telefon Numarası *
+            </label>
+            <input
+              type="text"
+              placeholder="5XXXXXXXXX"
+              {...register("phone")}
+              className={inputClass}
+            />
+            {errors.phone && (
+              <p className="text-rose-500 text-xs mt-1">{errors.phone.message}</p>
+            )}
+          </div>
+
+          {/* Şifre */}
           <div className="space-y-1.5">
             <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
               Şifre *
@@ -132,7 +178,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -142,16 +188,29 @@ export default function RegisterPage() {
             )}
           </div>
 
+          {/* Şifre Tekrarı */}
           <div className="space-y-1.5">
             <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
-              Telefon Numarası (Opsiyonel)
+              Şifre Tekrarı *
             </label>
-            <input
-              type="text"
-              placeholder="5XXXXXXXXX"
-              {...register("phone")}
-              className={inputClass}
-            />
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Şifrenizi tekrar girin"
+                {...register("confirmPassword")}
+                className={`${inputClass} pr-10`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((prev) => !prev)}
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer"
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            {errors.confirmPassword && (
+              <p className="text-rose-500 text-xs mt-1">{errors.confirmPassword.message}</p>
+            )}
           </div>
         </div>
 

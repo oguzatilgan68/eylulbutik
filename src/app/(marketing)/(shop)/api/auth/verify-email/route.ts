@@ -14,8 +14,19 @@ export async function GET(req: NextRequest) {
     where: { emailVerificationToken: token },
   });
 
+  // Eğer token veritabanında yoksa, belki de ilk istekte zaten doğrulanıp temizlenmiştir.
+  // Kullanıcının daha önce doğrulanıp doğrulanmadığını kontrol edelim:
   if (!user) {
-    return NextResponse.json({ error: "Geçersiz token!" }, { status: 400 });
+    const alreadyVerifiedUser = await db.user.findFirst({
+      where: { emailVerified: true },
+    });
+    
+    // Eğer sistemde token yok ama kullanıcı doğrulanmışsa başarılı dön
+    if (alreadyVerifiedUser) {
+      return NextResponse.json({ message: "Email zaten doğrulanmış!" });
+    }
+
+    return NextResponse.json({ error: "Geçersiz veya süresi dolmuş token!" }, { status: 400 });
   }
 
   // Token süresini kontrol et
@@ -29,7 +40,6 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // Kullanıcıyı doğrula
   await db.user.update({
     where: { id: user.id },
     data: {

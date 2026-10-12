@@ -41,7 +41,6 @@ export async function POST(req: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Email doğrulama token üret
     const {
       token: emailVerificationToken,
       expires: emailVerificationTokenExpires,

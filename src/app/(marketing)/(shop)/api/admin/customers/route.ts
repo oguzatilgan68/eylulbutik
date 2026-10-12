@@ -47,13 +47,14 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+export async function DELETE(req: NextRequest) {
   try {
     await requireAdmin();
 
     const { id } = await req.json();
-    if (!id)
+    if (!id) {
       return NextResponse.json({ error: "User ID gerekli" }, { status: 400 });
+    }
 
     await db.user.delete({ where: { id } });
     return NextResponse.json({ success: true });

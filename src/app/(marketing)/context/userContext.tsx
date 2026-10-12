@@ -10,6 +10,7 @@ import {
 import { CouponProvider } from "./CouponContext";
 import { GenericData } from "@/generated/prisma";
 import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react"; // NextAuth çıkış fonksiyonu
 
 interface User {
   id: string;
@@ -26,6 +27,7 @@ interface UserContextType {
   logout: () => void;
   genericData: GenericData | null;
   setGenericData: (data: GenericData | null) => void;
+  isLoading: boolean; // 👈 Yükleme durumunu ekledik ki sayfa erkenden login'e atmasın
 }
 
 export const UserContext = createContext<UserContextType | undefined>(
@@ -34,32 +36,34 @@ export const UserContext = createContext<UserContextType | undefined>(
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true); // 👈 Başlangıçta yükleniyor
   const [genericData, setGenericData] = useState<GenericData | null>(null);
   const router = useRouter();
 
-  // 🧠 Kullanıcıyı bir kez çek
+  // 🧠 NextAuth oturumunu doğrudan Next.js'in kendi session endpoint'inden çekiyoruz
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await fetch("/api/auth/me", {
+        const res = await fetch("/api/auth/session", {
           method: "GET",
           cache: "no-store",
-          credentials: "include",
         });
-        const data = await res.json();
+        const session = await res.json();
 
-        if (res.status === 200 && data.user) {
-          setUser(data.user);
+        if (session && session.user) {
+          setUser(session.user);
         } else {
           setUser(null);
         }
       } catch (err) {
         setUser(null);
+      } finally {
+        setIsLoading(false); // 👈 İstek bittiğinde yükleme bitti
       }
     };
 
     fetchUser();
-  }, []); // router bağımlılığını kaldırdık ki gereksiz tetiklenmesin
+  }, []);
 
   useEffect(() => {
     const fetchGenericData = async () => {
@@ -68,16 +72,17 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           method: "GET",
           cache: "no-store",
         });
-        const data = await res.json();
+        if (!res.ok) return;
         
-        // Eğer dizi geldiyse ve içi boşsa bile en azından null atalım ki sayfa "Yükleniyor"da takılmasın
+        const text = await res.text();
+        const data = text ? JSON.parse(text) : null;
+        
         if (Array.isArray(data)) {
           setGenericData(data.length > 0 ? data[0] : null);
         } else {
           setGenericData(data || null);
         }
       } catch (err) {
-        console.error("Generic data çekilemedi:", err);
         setGenericData(null);
       }
     };
@@ -86,14 +91,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const logout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await signOut({ redirect: false }); // NextAuth çıkış işlemi
     setUser(null);
     router.push("/login");
   };
 
   return (
     <UserContext.Provider
-      value={{ user, setUser, logout, genericData, setGenericData }}
+      value={{ user, setUser, logout, genericData, setGenericData, isLoading }}
     >
       <CouponProvider>{children}</CouponProvider>
     </UserContext.Provider>

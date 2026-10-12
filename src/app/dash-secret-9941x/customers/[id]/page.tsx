@@ -1,8 +1,9 @@
 import { db } from "@/app/(marketing)/lib/db";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { User, Mail, Phone, Save, ArrowLeft, Shield } from "lucide-react";
+import { User, Mail, Phone, Save, ArrowLeft, Shield, CheckCircle2, XCircle } from "lucide-react";
 import { SECRET_ADMIN_PATH } from "../../../../config/admin";
+import { revalidatePath } from "next/cache";
 
 export default async function EditUserPage(
   props: {
@@ -12,6 +13,29 @@ export default async function EditUserPage(
   const params = await props.params;
   const user = await db.user.findUnique({ where: { id: params.id } });
   if (!user) return notFound();
+
+  // Müşteri bilgilerini ve onay durumunu güncelleyen Server Action
+  async function handleUpdate(formData: FormData) {
+    "use server";
+
+    const fullName = formData.get("fullName") as string;
+    const email = formData.get("email") as string;
+    const phone = formData.get("phone") as string;
+    const emailVerified = formData.get("emailVerified") === "true";
+
+    await db.user.update({
+      where: { id: params.id },
+      data: {
+        fullName,
+        email,
+        phone,
+        emailVerified,
+      },
+    });
+
+    revalidatePath(`/${SECRET_ADMIN_PATH}/customers`);
+    redirect(`/${SECRET_ADMIN_PATH}/customers`);
+  }
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-10">
@@ -38,13 +62,13 @@ export default async function EditUserPage(
               Müşteri Düzenle
             </h1>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Kullanıcıya ait kişisel bilgileri güncelleyin ve kaydedin.
+              Kullanıcıya ait kişisel bilgileri ve e-posta onay durumunu güncelleyin.
             </p>
           </div>
         </div>
 
         {/* Form Alanı */}
-        <form className="space-y-5">
+        <form action={handleUpdate} className="space-y-5">
           
           {/* Ad Soyad */}
           <div className="space-y-1.5">
@@ -57,9 +81,11 @@ export default async function EditUserPage(
               </span>
               <input
                 type="text"
+                name="fullName"
                 defaultValue={user.fullName}
                 placeholder="Örn: Ayşe Yılmaz"
                 className="w-full pl-11 pr-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all shadow-sm"
+                required
               />
             </div>
           </div>
@@ -75,9 +101,11 @@ export default async function EditUserPage(
               </span>
               <input
                 type="email"
+                name="email"
                 defaultValue={user.email}
                 placeholder="ornek@email.com"
                 className="w-full pl-11 pr-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all shadow-sm"
+                required
               />
             </div>
           </div>
@@ -93,10 +121,42 @@ export default async function EditUserPage(
               </span>
               <input
                 type="text"
+                name="phone"
                 defaultValue={user.phone || ""}
-                placeholder="05XXXXXXXXX"
+                placeholder="5XXXXXXXXX"
                 className="w-full pl-11 pr-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all shadow-sm"
               />
+            </div>
+          </div>
+
+          {/* E-posta Doğrulama Durumu (Manuel Onay / Red) */}
+          <div className="space-y-2 pt-2">
+            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+              E-posta Doğrulama Durumu
+            </label>
+            <div className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-2">
+                {user.emailVerified ? (
+                  <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold text-xs bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-900">
+                    <CheckCircle2 size={16} /> Doğrulanmış
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-rose-600 dark:text-rose-400 font-semibold text-xs bg-rose-50 dark:bg-rose-950/40 px-3 py-1.5 rounded-xl border border-rose-200 dark:border-rose-900">
+                    <XCircle size={16} /> Doğrulanmamış
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 ml-auto">
+                <select
+                  name="emailVerified"
+                  defaultValue={user.emailVerified ? "true" : "false"}
+                  className="px-3 py-2 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                >
+                  <option value="true">Onayla (Doğrulandı yap)</option>
+                  <option value="false">Reddet / Onayı Kaldır</option>
+                </select>
+              </div>
             </div>
           </div>
 

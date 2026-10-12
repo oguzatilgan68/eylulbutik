@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, XCircle, Search, UserPlus, Edit3, Trash2 } from "lucide-react";
+import { CheckCircle2, XCircle, UserPlus, Edit3, Trash2 } from "lucide-react";
 import Pagination from "@/app/(marketing)/components/ui/Pagination";
 import { FiUsers, FiSearch } from "react-icons/fi";
 import { SECRET_ADMIN_PATH } from "../../../config/admin";
@@ -61,10 +61,14 @@ export default function CustomersPage() {
 
   const totalPages = Math.ceil(total / limit);
 
+  // Ortak Stil Sınıfları (Kod Tekrarını Önlemek İçin)
+  const cardClass = "bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm";
+  const inputClass = "w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all shadow-sm";
+
   return (
     <div className="space-y-6">
       {/* Üst Başlık & Arama */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+      <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-5 ${cardClass}`}>
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <FiUsers className="text-pink-600" /> Müşteri Yönetimi
@@ -83,13 +87,13 @@ export default function CustomersPage() {
               placeholder="Müşteri ara..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all shadow-sm"
+              className={inputClass}
             />
           </div>
 
           <Link
             href={`/${SECRET_ADMIN_PATH}/customers/new`}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-sm font-medium shadow-md shadow-pink-500/20 transition-all whitespace-nowrap"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-sm font-medium shadow-md shadow-pink-500/25 transition-all whitespace-nowrap"
           >
             <UserPlus size={16} /> Yeni Müşteri
           </Link>
@@ -97,9 +101,9 @@ export default function CustomersPage() {
       </div>
 
       {/* Tablo Alanı */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+      <div className={`${cardClass} overflow-hidden`}>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse min-w-[700px]">
+          <table className="w-full text-left text-sm border-collapse min-w-175">
             <thead className="bg-gray-50 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 uppercase text-[11px] font-semibold tracking-wider border-b border-gray-200 dark:border-gray-800">
               <tr>
                 <th className="px-6 py-3.5">Müşteri Adı</th>
@@ -147,14 +151,14 @@ export default function CustomersPage() {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Link
-                          href={`/dash-secret-9941x/customers/${user.id}`}
+                          href={`/${SECRET_ADMIN_PATH}/customers/${user.id}`}
                           className="px-3.5 py-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-xs font-semibold flex items-center gap-1.5"
                         >
                           <Edit3 size={13} /> Düzenle
                         </Link>
                         <button
                           onClick={() => handleDelete(user.id)}
-                          className="px-3.5 py-1.5 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors text-xs font-semibold flex items-center gap-1.5"
+                          className="px-3.5 py-1.5 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
                         >
                           <Trash2 size={13} /> Sil
                         </button>

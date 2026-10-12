@@ -7,6 +7,7 @@ declare module "next-auth" {
   interface User {
     fullName?: string;
     role: string;
+    emailVerified: boolean;
   }
   interface Session {
     user: {
@@ -14,6 +15,7 @@ declare module "next-auth" {
       email: string;
       fullName?: string;
       role: string;
+      emailVerified: boolean;
     };
   }
 }
@@ -30,13 +32,16 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Lütfen email ve şifrenizi girin.");
         }
-
         const user = await db.user.findUnique({ where: { email: credentials.email } });
-
+        if (!user) {
+          throw new Error("Böyle bir kullanıcı bulunamadı.");
+        }
         if (!user || !user.passwordHash) {
           throw new Error("Email veya şifre hatalı.");
         }
-
+        if (!user.emailVerified) {
+          throw new Error("Lütfen önce e-posta adresinizi doğrulayın.");
+        }
         // 🔐 Hesap kilitli mi kontrolü
         if (user.isLocked) {
           if (user.lockedUntil && user.lockedUntil > new Date()) {
@@ -87,6 +92,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           fullName: user.fullName,
           role: user.role,
+          emailVerified: user.emailVerified,
         };
       },
     }),
@@ -108,6 +114,7 @@ export const authOptions: NextAuthOptions = {
         token.email = user.email;
         token.fullName = user.fullName;
         token.role = user.role;
+        token.emailVerified = user.emailVerified;
       }
       return token;
     },
@@ -118,6 +125,7 @@ export const authOptions: NextAuthOptions = {
           email: token.email as string,
           fullName: token.fullName as string,
           role: token.role as string,
+          emailVerified: token.emailVerified as boolean,
         };
       }
       return session;

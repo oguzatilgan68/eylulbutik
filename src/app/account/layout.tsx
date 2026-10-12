@@ -11,8 +11,8 @@ import {
   FaUser,
 } from "react-icons/fa";
 import { FaMessage } from "react-icons/fa6";
-import { FiLogOut } from "react-icons/fi"; // 👈 Çıkış ikonu eklendi
-import { useUser } from "@/app/(marketing)/context/userContext"; // 👈 Context bağlantısı
+import { FiLogOut } from "react-icons/fi";
+import { useUser } from "@/app/(marketing)/context/userContext";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
@@ -32,11 +32,11 @@ export default function AccountLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout } = useUser(); // 👈 Context'teki logout fonksiyonunu alıyoruz
+  const { logout } = useUser();
 
   const handleLogout = async () => {
-    await logout(); // State ve oturumu temizle
-    router.push("/"); // Ana sayfaya yönlendir
+    await logout();
+    router.push("/");
   };
 
   const normalizePath = (path: string) => path.replace(/\/+$/, "");
@@ -53,54 +53,56 @@ export default function AccountLayout({
   const title = matchedItem?.label || "Hesabım";
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-      {/* 🧭 Mobil Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 lg:hidden">
-        <button
-          onClick={() => router.back()}
-          className="text-sm text-gray-600 dark:text-gray-300"
-        >
-          ← Geri
-        </button>
-        <h1 className="text-base font-semibold">{title}</h1>
-        <div className="w-8" />
-      </header>
-
-      {/* 🖥️ Masaüstü düzen */}
-      <div className="flex flex-col lg:flex-row gap-6 w-full max-w-7xl mx-auto px-2 py-4 flex-1">
-        {/* Sol Menü — Sadece desktop görünümde */}
-        <aside className="hidden lg:block w-64 bg-white dark:bg-gray-800 rounded-2xl shadow p-4 space-y-2">
-          {menuItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition ${
-                pathname === item.href
-                  ? "bg-gray-100 dark:bg-gray-700 font-semibold"
-                  : ""
-              }`}
-            >
-              <span className="text-pink-500">{item.icon}</span>
-              <span>{item.label}</span>
-            </Link>
-          ))}
-
-          {/* 🚪 Profesyonel Çıkış Butonu Entegrasyonu */}
+    <div className="min-h-screen flex flex-col justify-between bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 pb-16 lg:pb-0">
+      <div>
+        {/* 🧭 Mobil Header */}
+        <header className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 lg:hidden bg-white dark:bg-gray-800 sticky top-0 z-40">
           <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition w-full cursor-pointer font-medium"
+            onClick={() => router.back()}
+            className="text-sm text-gray-600 dark:text-gray-300"
           >
-            <FiLogOut className="text-red-500 w-5 h-5" />
-            <span>Çıkış Yap</span>
+            ← Geri
           </button>
-        </aside>
+          <h1 className="text-base font-semibold">{title}</h1>
+          <div className="w-8" />
+        </header>
 
-        {/* İçerik Alanı */}
-        <main className="flex-1 w-full">{children}</main>
+        {/* 🖥️ Masaüstü ve İçerik Düzeni */}
+        <div className="flex flex-col lg:flex-row gap-6 w-full max-w-7xl mx-auto px-2 py-4">
+          {/* Sol Menü — Sadece desktop görünümde */}
+          <aside className="hidden lg:block w-64 bg-white dark:bg-gray-800 rounded-2xl shadow p-4 space-y-2 h-fit sticky top-6">
+            {menuItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition ${
+                  pathname === item.href
+                    ? "bg-gray-100 dark:bg-gray-700 font-semibold"
+                    : ""
+                }`}
+              >
+                <span className="text-pink-500">{item.icon}</span>
+                <span>{item.label}</span>
+              </Link>
+            ))}
+
+            {/* 🚪 Profesyonel Çıkış Butonu Entegrasyonu */}
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition w-full cursor-pointer font-medium"
+            >
+              <FiLogOut className="text-red-500 w-5 h-5" />
+              <span>Çıkış Yap</span>
+            </button>
+          </aside>
+
+          {/* İçerik Alanı */}
+          <main className="flex-1 w-full">{children}</main>
+        </div>
       </div>
 
-      {/* 📱 Mobil Alt Menü */}
-      <footer className="lg:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      {/* 📱 Mobil Alt Menü (Sabit Footer) */}
+      <footer className="lg:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 fixed bottom-0 left-0 w-full z-50 shadow-lg">
         <nav className="flex justify-around items-center py-2">
           {menuItems.slice(0, 4).map((item) => (
             <Link
@@ -109,7 +111,7 @@ export default function AccountLayout({
               className={cn(
                 "flex flex-col items-center text-xs",
                 pathname.startsWith(item.href)
-                  ? "text-pink-600 dark:text-pink-400"
+                  ? "text-pink-600 dark:text-pink-400 font-semibold"
                   : "text-gray-500 dark:text-gray-400"
               )}
             >
