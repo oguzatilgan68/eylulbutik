@@ -48,6 +48,7 @@ export async function proxy(req: NextRequest) {
   const nextAuthToken = await getToken({
     req,
     secret: process.env.NEXTAUTH_SECRET,
+    cookieName: `next-auth.session-token`,
   });
 
   // ------------------------
@@ -66,6 +67,18 @@ export async function proxy(req: NextRequest) {
     if (!nextAuthToken || nextAuthToken.role !== "ADMIN") {
       const res = NextResponse.redirect(new URL("/login", req.url));
       return res;
+    }
+  }
+
+  // ------------------------
+  // 🔓 Login sayfasını muaf tut (infinite redirect önlemesi için)
+  // ------------------------
+  if (pathname === "/login" && nextAuthToken) {
+    const userRole = nextAuthToken.role;
+    if (userRole === "ADMIN") {
+      return NextResponse.redirect(new URL(`/${SECRET_ADMIN_PATH}`, req.url));
+    } else {
+      return NextResponse.redirect(new URL("/account", req.url));
     }
   }
 

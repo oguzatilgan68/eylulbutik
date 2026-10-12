@@ -56,15 +56,19 @@ export default function LoginPage() {
       }
 
       if (result?.ok) {
+        // Cookie'nin set edilmesi için bekle
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        // Session'ı alarak kullanıcı rolünü kontrol et
         const session = await getSession();
         const userRole = session?.user?.role;
 
+        // Tam sayfa yönlendirmesi ile cookie senkronizasyonunu zorla
         if (userRole === "ADMIN") {
-          router.push(`/${SECRET_ADMIN_PATH}`);
+          window.location.href = `/${SECRET_ADMIN_PATH}`;
         } else {
-          router.push("/account");
+          window.location.href = "/account";
         }
-        router.refresh();
       }
     } catch (err) {
       setError("Beklenmeyen bir hata oluştu.");

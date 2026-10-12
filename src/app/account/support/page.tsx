@@ -96,7 +96,7 @@ const CustomerService: React.FC = () => {
 
           {genericData.phone && (
             <Link
-              href={`tel:+90${genericData.phone}`}
+              href={`tel:${genericData.phone}`}
               className="p-5 rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 hover:border-pink-500/50 transition-all flex flex-col items-center justify-center text-center space-y-2 group"
               aria-label="Telefon ile Ara"
             >

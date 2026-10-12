@@ -35,7 +35,7 @@ export default function AccountLayout({
   const { logout } = useUser();
 
   const handleLogout = async () => {
-    await logout();
+    logout();
     router.push("/");
   };
 
