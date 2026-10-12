@@ -28,6 +28,11 @@ export default function NewProductsCarousel() {
 
   if (error) return <p className="text-red-500 px-4">Ürünler yüklenemedi.</p>;
 
+  // Eğer yükleme bittiyse ve ürün yoksa bu bileşeni tamamen gizle
+  if (!isLoading && products.length === 0) {
+    return null;
+  }
+
   return (
     <section className="md:hidden py-4 bg-gray-50 dark:bg-gray-900">
       <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100 px-4 relative inline-block">
@@ -36,12 +41,12 @@ export default function NewProductsCarousel() {
       </h1>
 
       <div className="flex overflow-x-auto space-x-4 px-4 mt-3 scrollbar-hide">
-        {isLoading || !products.length
-          ? // 💨 Skeleton Loader (placeholder)
+        {isLoading
+          ? // 💨 Skeleton Loader (Yüklenirken gösterilir)
             Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                className="flex-shrink-0 w-24 md:w-32 flex flex-col items-center animate-pulse"
+                className="shrink-0 w-24 md:w-32 flex flex-col items-center animate-pulse"
               >
                 <div className="w-20 h-20 md:w-28 md:h-28 rounded-full bg-gray-200 dark:bg-gray-700" />
                 <div className="mt-2 h-3 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
@@ -53,7 +58,7 @@ export default function NewProductsCarousel() {
               <Link
                 key={product.id}
                 href={`/product/${product.slug}`}
-                className="flex-shrink-0 w-24 md:w-32"
+                className="shrink-0 w-24 md:w-32"
                 title={product.name}
               >
                 <div className="flex flex-col items-center">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import  { useState, useEffect } from "react";
 import Link from "next/link";
 import { useUser } from "../../context/userContext";
 import { FiMapPin, FiPlus, FiCheck, FiArrowRight, FiHome } from "react-icons/fi";

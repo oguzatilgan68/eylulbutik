@@ -10,7 +10,6 @@ const NewCategoryPage = () => {
   const handleCreate = async (data: any) => {
     "use server";
     await db.category.create({ data });
-    // HATA DÜZELTİLDİ: Çift tırnak yerine backtick (`) kullanıldı
     redirect(`/${SECRET_ADMIN_PATH}/categories`);
   };
 

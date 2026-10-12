@@ -13,6 +13,23 @@ interface CategoryFormProps {
   onSubmit: (data: any) => Promise<void>;
 }
 
+// Türkçe karakterleri İngilizceye çeviren slug oluşturma fonksiyonu
+const generateSlug = (text: string) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/ğ/g, "g")
+    .replace(/ü/g, "u")
+    .replace(/ş/g, "s")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ç/g, "c")
+    .replace(/[^a-z0-9 -]/g, "") // Özel karakterleri kaldır
+    .replace(/\s+/g, "-") // Boşlukları tire ile değiştir
+    .replace(/-+/g, "-"); // Çoklu tireleri teke düşür
+};
+
 export const CategoryForm = ({ initialData, onSubmit }: CategoryFormProps) => {
   const [name, setName] = useState(initialData?.name || "");
   const [slug, setSlug] = useState(initialData?.slug || "");
@@ -23,6 +40,15 @@ export const CategoryForm = ({ initialData, onSubmit }: CategoryFormProps) => {
   const [progress, setProgress] = useState(0);
   const [categories, setCategories] = useState<Category[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Kategori adı değiştikçe otomatik slug üret (Eğer kullanıcı manuel değiştirmediyse veya yeni oluşturuluyorsa)
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newName = e.target.value;
+    setName(newName);
+    if (!initialData) {
+      setSlug(generateSlug(newName));
+    }
+  };
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -53,11 +79,7 @@ export const CategoryForm = ({ initialData, onSubmit }: CategoryFormProps) => {
     setProgress(0);
   };
 
-  // ☁️ Supabase upload
-  const uploadImage = async (
-    file: File,
-    abortSignal?: AbortSignal
-  ): Promise<string | null> => {
+  const uploadImage = async (file: File): Promise<string | null> => {
     try {
       const fileExt = file.name.split(".").pop();
       const fileName = `${uuidv4()}.${fileExt}`;
@@ -84,24 +106,7 @@ export const CategoryForm = ({ initialData, onSubmit }: CategoryFormProps) => {
 
       return data.publicUrl;
     } catch (err: any) {
-      if (err.name === "AbortError") {
-        Swal.fire({
-          icon: "info",
-          title: "Yükleme iptal edildi",
-          toast: true,
-          timer: 2000,
-          position: "top-end",
-          showConfirmButton: false,
-        });
-        return null;
-      }
       console.error(err);
-      Swal.fire({
-        icon: "error",
-        title: "Görsel yüklenemedi",
-        text: "Bir hata oluştu.",
-        confirmButtonColor: "#dc2626",
-      });
       return null;
     }
   };
@@ -132,13 +137,19 @@ export const CategoryForm = ({ initialData, onSubmit }: CategoryFormProps) => {
         imageUrl: finalImageUrl || null,
       });
 
+      // Eğer Server Action yönlendirme yapmazsa burası çalışır
       Swal.fire({
         icon: "success",
         title: "Başarılı!",
         text: "Kategori başarıyla kaydedildi.",
         confirmButtonColor: "#db2777",
       });
-    } catch (err) {
+    } catch (err: any) {
+      // Next.js redirect hatasını hata olarak yakalamamak için kontrol
+      if (err?.message === "NEXT_REDIRECT" || err?.digest?.startsWith("NEXT_REDIRECT")) {
+        return; // Yönlendirme başarılı demektir, hatayı yoksay.
+      }
+
       console.error(err);
       Swal.fire({
         icon: "error",
@@ -176,7 +187,7 @@ export const CategoryForm = ({ initialData, onSubmit }: CategoryFormProps) => {
         <input
           type="text"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={handleNameChange}
           placeholder="Örn: Kadın Giyim"
           className={inputClass}
           required

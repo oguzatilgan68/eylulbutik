@@ -4,6 +4,7 @@ import { useTheme } from "next-themes";
 import { ShoppingCart, User, Heart } from "lucide-react";
 import { useUser } from "@/app/(marketing)/context/userContext";
 import { useState, useEffect } from "react";
+import { SECRET_ADMIN_PATH } from "@/config/admin";
 
 interface NavItem {
   href: string;
@@ -22,12 +23,20 @@ export const NavbarLinks = () => {
     setMounted(true);
   }, []);
 
+  // Kullanıcı admin mi kontrolü (Projenizdeki role yapısına göre user.role veya user.isAdmin olabilir)
+  const isAdmin = user?.role === "ADMIN";
+
+  // Giriş yapmışsa ve adminse admin paneline, normal kullanıcıysa hesabına yönlendir
+  const accountHref = !user ? "/login" : isAdmin ? `/${SECRET_ADMIN_PATH}` : "/account";
+  const accountLabel = !user ? "Giriş Yap" : isAdmin ? "Admin Panel" : "Hesabım";
+  const accountAria = !user ? "Giriş yap" : isAdmin ? "Admin paneline git" : "Hesabım sayfasına git";
+
   const navItems: NavItem[] = [
     {
-      href: user ? "/account" : "/login",
-      label: user ? "Hesabım" : "Giriş Yap",
+      href: accountHref,
+      label: accountLabel,
       icon: <User size={20} />,
-      ariaLabel: user ? "Hesabım sayfasına git" : "Giriş yap",
+      ariaLabel: accountAria,
     },
     {
       href: "/account/wishlist",
@@ -75,7 +84,7 @@ export const NavbarLinks = () => {
           {theme === "dark" ? "🌞" : "🌙"}
         </button>
       ) : (
-        <div className="w-8 h-8" /> // Kayma olmaması için boş bir yer tutucu
+        <div className="w-8 h-8" /> 
       )}
     </div>
   );

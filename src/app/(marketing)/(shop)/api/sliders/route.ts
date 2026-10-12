@@ -6,7 +6,7 @@ export async function GET() {
     const sliders = await db.slider.findMany({
       where: { isActive: true },
       orderBy: { order: "asc" },
-      include: { products: true }, // ürün bilgisi gerekirse
+      include: { products: true }, 
     });
 
     return NextResponse.json(sliders);
